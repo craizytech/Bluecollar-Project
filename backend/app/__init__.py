@@ -20,13 +20,13 @@ def create_app(config_class='config.Config'):
 
     # Register blueprints
     app.register_blueprint(main)
-    app.register_blueprint(auth)
-    app.register_blueprint(users)
-    app.register_blueprint(services)
-    app.register_blueprint(chats)
-    app.register_blueprint(invoices)
-    app.register_blueprint(bookings)
-    app.register_blueprint(locations)
-    app.register_blueprint(reviews)
+    app.register_blueprint(auth, url_prefix='/auth')
+    app.register_blueprint(users, url_prefix='/users')
+    app.register_blueprint(services, url_prefix='/services')
+    app.register_blueprint(chats, url_prefix='/chats')
+    app.register_blueprint(invoices, url_prefix='/invoices')
+    app.register_blueprint(bookings, url_prefix='/bookings')
+    app.register_blueprint(locations, url_prefix='/locations')
+    app.register_blueprint(reviews, url_prefix='/reviews')
 
     return app
