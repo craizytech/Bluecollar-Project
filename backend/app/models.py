@@ -11,6 +11,7 @@ class Role(db.Model):
 
 class User(db.Model):
     __tablename__ = 'users'
+
     user_id = db.Column(db.Integer, primary_key=True)
     user_name = db.Column(db.String(64), nullable=False)
     user_phone_number = db.Column(db.String(20), nullable=False)
@@ -27,7 +28,6 @@ class User(db.Model):
     provider_bookings = db.relationship('Booking', foreign_keys='Booking.provider_id', backref='provider', lazy=True)
     locations = db.relationship('Location', backref='user', lazy=True)
     reviews = db.relationship('Review', foreign_keys='Review.client_id', backref='client', lazy=True)
-    provider_reviews = db.relationship('Review', foreign_keys='Review.provider_id', backref='provider', lazy=True)
 
 class Service(db.Model):
     __tablename__ = 'services'
@@ -41,6 +41,7 @@ class Service(db.Model):
 
 class Chat(db.Model):
     __tablename__ = 'chats'
+
     chat_id = db.Column(db.Integer, primary_key=True)
     date_of_creation = db.Column(db.DateTime, default=datetime.utcnow)
     sent_from = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
@@ -50,6 +51,7 @@ class Chat(db.Model):
 
 class Invoice(db.Model):
     __tablename__ = 'invoices'
+
     invoice_id = db.Column(db.Integer, primary_key=True)
     date_of_creation = db.Column(db.DateTime, default=datetime.utcnow)
     service_cost = db.Column(db.Float, nullable=False)
@@ -60,6 +62,7 @@ class Invoice(db.Model):
 
 class Booking(db.Model):
     __tablename__ = 'bookings'
+
     booking_id = db.Column(db.Integer, primary_key=True)
     service_id = db.Column(db.Integer, db.ForeignKey('services.service_id'), nullable=False)
     client_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
@@ -70,6 +73,7 @@ class Booking(db.Model):
 
 class Location(db.Model):
     __tablename__ = 'locations'
+
     location_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
     latitude = db.Column(db.Float, nullable=False)
@@ -78,6 +82,7 @@ class Location(db.Model):
 
 class Review(db.Model):
     __tablename__ = 'reviews'
+
     review_id = db.Column(db.Integer, primary_key=True)
     service_id = db.Column(db.Integer, db.ForeignKey('services.service_id'), nullable=False)
     client_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
