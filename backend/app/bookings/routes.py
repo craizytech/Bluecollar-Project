@@ -1,13 +1,13 @@
 from flask import Blueprint, request, jsonify
 
-bookings = Blueprint('bookings', __name__)
+bookings_bp = Blueprint('bookings', __name__)
 
-@bookings.route('/bookings', methods=['GET'])
+@bookings_bp.route('/bookings', methods=['GET'])
 def get_bookings():
     # Add logic to retrieve bookings here
     return jsonify({"bookings": []}), 200
 
-@bookings.route('/bookings', methods=['POST'])
+@bookings_bp.route('/bookings', methods=['POST'])
 def create_booking():
     data = request.get_json()
     # Add logic to create a booking here

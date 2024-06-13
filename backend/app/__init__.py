@@ -1,32 +1,40 @@
-from flask import Flask
-from app.extensions import db, migrate
-from app.main.routes import main
-from app.auth.routes import auth
-from app.users.routes import users
-from app.services.routes import services
-from app.chats.routes import chats
-from app.invoices.routes import invoices
-from app.bookings.routes import bookings
-from app.locations.routes import locations
-from app.reviews.routes import reviews
+import os
+from dotenv import load_dotenv
 
-def create_app(config_class='config.Config'):
+from flask import Flask
+from app.extensions import db, migrate, cors
+from app.config import config
+
+def create_app(config_name='default'):
+    load_dotenv()  # Load environment variables from .env file
+
     app = Flask(__name__)
-    app.config.from_object(config_class)
+    app.config.from_object(config[config_name])
 
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
+    cors.init_app(app)  # Enable CORS for the app
 
-    # Register blueprints
-    app.register_blueprint(main)
-    app.register_blueprint(auth, url_prefix='/auth')
-    app.register_blueprint(users, url_prefix='/users')
-    app.register_blueprint(services, url_prefix='/services')
-    app.register_blueprint(chats, url_prefix='/chats')
-    app.register_blueprint(invoices, url_prefix='/invoices')
-    app.register_blueprint(bookings, url_prefix='/bookings')
-    app.register_blueprint(locations, url_prefix='/locations')
-    app.register_blueprint(reviews, url_prefix='/reviews')
+    # Register blueprints with /api prefix
+    from app.auth import auth_bp
+    from app.users import users_bp
+    from app.main import main_bp
+    from app.services import services_bp
+    from app.chats import chats_bp
+    from app.invoices import invoices_bp
+    from app.bookings import bookings_bp
+    from app.locations import locations_bp
+    from app.reviews import reviews_bp
+
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(users_bp, url_prefix='/api/users')
+    app.register_blueprint(main_bp, url_prefix='/api/main')
+    app.register_blueprint(services_bp, url_prefix='/api/services')
+    app.register_blueprint(chats_bp, url_prefix='/api/chats')
+    app.register_blueprint(invoices_bp, url_prefix='/api/invoices')
+    app.register_blueprint(bookings_bp, url_prefix='/api/bookings')
+    app.register_blueprint(locations_bp, url_prefix='/api/locations')
+    app.register_blueprint(reviews_bp, url_prefix='/api/reviews')
 
     return app

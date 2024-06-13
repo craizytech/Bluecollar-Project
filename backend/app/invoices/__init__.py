@@ -1,5 +1,5 @@
 from flask import Blueprint
 
-invoices = Blueprint('invoices', __name__)
+invoices_bp = Blueprint('invoices', __name__)
 
 from . import routes

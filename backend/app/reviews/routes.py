@@ -1,13 +1,13 @@
 from flask import Blueprint, request, jsonify
 
-reviews = Blueprint('reviews', __name__)
+reviews_bp = Blueprint('reviews', __name__)
 
-@reviews.route('/reviews', methods=['GET'])
+@reviews_bp.route('/reviews', methods=['GET'])
 def get_reviews():
     # Add logic to retrieve reviews here
     return jsonify({"reviews": []}), 200
 
-@reviews.route('/reviews', methods=['POST'])
+@reviews_bp.route('/reviews', methods=['POST'])
 def add_review():
     data = request.get_json()
     # Add logic to add a new review here
