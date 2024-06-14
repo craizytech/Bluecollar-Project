@@ -1,13 +1,37 @@
 from datetime import datetime
 from app.extensions import db
 
+
+class Permissions:
+    # All users
+    REGISTER_LOGIN = 0b000000000000001  # Register
+    SEARCH_SERVICE = 0b000000000000010  # Search for service
+    CHAT = 0b000000000000100  # Chat with other users
+    BOOK_SERVICE = 0b000000000001000  # Book a service
+    CANCEL_BOOKING = 0b000000000010000  # Cancel a booking
+    VIEW_BOOKINGS = 0b000000000100000  # View bookings
+    PAY_SERVICE = 0b000000001000000  # Pay for service
+
+    # Specialized user (does all of the above)
+    ACCEPT_BOOKING_REQUESTS = 0b000000010000000  # Accept a booking
+    DECLINE_BOOKING_REQUESTS = 0b000000100000000  # Decline a booking
+    GENERATE_INVOICE = 0b000001000000000  # User generates an invoice
+    
+    # Admin user (does all of the above)
+    ADD_USERS = 0b000010000000000  # Add users
+    REMOVE_USER = 0b000100000000000  # Delete a user
+    MEDIATE = 0b001000000000000  # Mediates the users
+    APPROVE_SPECIALIZED_USERS = 0b010000000000000  # Approves the service providers
+
+    
+
 class Role(db.Model):
     __tablename__ = 'roles'
     role_id = db.Column(db.Integer, primary_key=True)
     role_name = db.Column(db.String(64), nullable=False)
     
     # One-to-Many relationship with User
-    users = db.relationship('User', backref='role', lazy=True)
+    users = db.relationship('User', backref='role', lazy="dynamic")
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -66,7 +90,7 @@ class Invoice(db.Model):
     date_of_creation = db.Column(db.DateTime, default=datetime.utcnow)
     service_cost = db.Column(db.Float, nullable=False)
     booking_id = db.Column(db.Integer, db.ForeignKey('bookings.booking_id'), nullable=False)
-    
+ 
     # One-to-One relationship with Booking
     booking = db.relationship('Booking', backref='invoice', uselist=False)
 
