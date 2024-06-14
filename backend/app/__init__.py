@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 
 from flask import Flask
-from app.extensions import db, migrate, cors
+from app.extensions import db, migrate, cors, jwt
 from app.config import config
 
 def create_app(config_name='default'):
@@ -15,6 +15,7 @@ def create_app(config_name='default'):
     db.init_app(app)
     migrate.init_app(app, db)
     cors.init_app(app)  # Enable CORS for the app
+    jwt.init_app(app)
 
     # Register blueprints with /api prefix
     from app.auth import auth_bp
