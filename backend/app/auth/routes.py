@@ -13,3 +13,7 @@ def register():
     data = request.get_json()
     # Add registration logic here
     return jsonify({"message": "Registration successful"}), 201
+
+
+# normal
+# service_provider 

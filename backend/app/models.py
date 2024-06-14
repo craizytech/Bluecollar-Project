@@ -11,26 +11,26 @@ class Role(db.Model):
 
 class User(db.Model):
     __tablename__ = 'users'
+
     user_id = db.Column(db.Integer, primary_key=True)
     user_name = db.Column(db.String(64), nullable=False)
     user_phone_number = db.Column(db.String(20), nullable=False)
-    user_address = db.Column(db.String(128), nullable=True)
+    user_address = db.Column(db.String(128), nullable=False)
     user_email = db.Column(db.String(128), unique=True, nullable=False)
     role_id = db.Column(db.Integer, db.ForeignKey('roles.role_id'), nullable=False)
     date_of_creation = db.Column(db.DateTime, default=datetime.utcnow)
-    user_profile_picture = db.Column(db.String(256), nullable=True)
-    
-    # Enum for user types
-    user_type = db.Column(db.String(20), nullable=False)
+    user_password = db.Column(db.String(128), nullable=False)
+    user_location = db.Column(db.String(256), nullable=False)
+    user_profile_picture = db.Column(db.String(256), nullable=False)
     
     # One-to-Many relationships
     sent_chats = db.relationship('Chat', foreign_keys='Chat.sent_from', backref='sender', lazy=True)
     received_chats = db.relationship('Chat', foreign_keys='Chat.sent_to', backref='receiver', lazy=True)
     client_bookings = db.relationship('Booking', foreign_keys='Booking.client_id', backref='client', lazy=True)
     provider_bookings = db.relationship('Booking', foreign_keys='Booking.provider_id', backref='provider', lazy=True)
-    locations = db.relationship('Location', backref='user', lazy=True)
-    reviews = db.relationship('Review', foreign_keys='Review.client_id', backref='client', lazy=True)
-    provided_reviews = db.relationship('Review', foreign_keys='Review.provider_id', backref='provider', lazy=True)
+    reviews_written = db.relationship('Review', foreign_keys='Review.client_id', backref='client', lazy=True)
+    reviews_received = db.relationship('Review', foreign_keys='Review.provider_id', backref='provider', lazy=True)
+
 
 class ServiceCategory(db.Model):
     __tablename__ = 'service_categories'
@@ -79,14 +79,6 @@ class Booking(db.Model):
     booking_date = db.Column(db.Date, nullable=False)
     status = db.Column(db.String(20), nullable=False)
     location = db.Column(db.String(256), nullable=False)
-
-class Location(db.Model):
-    __tablename__ = 'locations'
-    location_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
-    latitude = db.Column(db.Float, nullable=False)
-    longitude = db.Column(db.Float, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Review(db.Model):
     __tablename__ = 'reviews'
