@@ -29,9 +29,10 @@ class Role(db.Model):
     __tablename__ = 'roles'
     role_id = db.Column(db.Integer, primary_key=True)
     role_name = db.Column(db.String(64), nullable=False)
-    
-    # One-to-Many relationship with User
+    permissions = db.Column(db.Integer, default=0)
+
     users = db.relationship('User', backref='role', lazy="dynamic")
+
 
 class User(db.Model):
     __tablename__ = 'users'
