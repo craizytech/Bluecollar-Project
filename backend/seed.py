@@ -28,6 +28,8 @@ with app.app_context():
         Permissions.PAY_SERVICE
     ))
     
+    # Creating Categories and services
+    
     db.session.add(admin_role)
     db.session.add(specialized_role)
     db.session.add(general_role)

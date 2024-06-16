@@ -9,7 +9,7 @@ def get_categories():
     categories_list = [{'category_id': category.category_id, 'category_name': category.category_name} for category in categories]
     return jsonify(categories_list), 200
 
-@main_bp.route('/services', methods=['GET'])
+@main_bp.route('/', methods=['GET'])
 def get_services():
     services = Service.query.all()
     services_list = [{
