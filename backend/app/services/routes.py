@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models import Service, ServiceCategory, User, Permissions
+from app.models import Service, Permissions
 from app.extensions import db
 from app.utils.decorators import permission_required
 
