@@ -57,6 +57,8 @@ with app.app_context():
     db.session.add(broken_pipes)
     db.session.commit()
 
+    
+
 
 
     db.session.commit()
