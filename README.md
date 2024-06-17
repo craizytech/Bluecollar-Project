@@ -1,4 +1,4 @@
-                                BLUECOLLAR PROJECT
+                                  BLUECOLLAR PROJECT
 Authors: Eammon Kiprotich
          Lennox Kabo
          Praise Waweru
