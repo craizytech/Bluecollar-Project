@@ -4,7 +4,7 @@ import React from 'react'
 
 function BusinessList({ title }) {
     return (
-        <div className="mt-5">
+        <div className="mt-5 mb-10">
             <h2 className="font-bold text-[22px]">{title}</h2>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:girf-cols-4 gap-6 mt-5 shadow-sm">
