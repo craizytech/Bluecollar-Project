@@ -70,6 +70,7 @@ class Service(db.Model):
     service_id = db.Column(db.Integer, primary_key=True)
     service_name = db.Column(db.String(64), nullable=False)
     service_description = db.Column(db.String(256), nullable=True)
+    service_provider = #TO DO
     category_id = db.Column(db.Integer, db.ForeignKey('service_categories.category_id'), nullable=False)
     
     # One-to-Many relationships
