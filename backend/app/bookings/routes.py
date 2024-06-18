@@ -27,6 +27,11 @@ def create_booking():
     except ValueError:
         return jsonify({"error": "Invalid date format"}), 400
 
+    # Check if the provider is already booked on the given date
+    existing_booking = Booking.query.filter_by(provider_id=provider_id, booking_date=booking_date).first()
+    if existing_booking:
+        return jsonify({"error": "The service provider is already booked on this date"}), 400
+
     client_id = get_jwt_identity()
     booking = Booking(
         service_id=service_id,
