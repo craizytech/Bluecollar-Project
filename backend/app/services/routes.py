@@ -6,23 +6,30 @@ from app.utils.decorators import permission_required
 
 services_bp = Blueprint('services', __name__)
 
+# Helper function to validate required fields
+def validate_fields(data, required_fields):
+    for field in required_fields:
+        if not data.get(field):
+            return False, f"Missing required field: {field}"
+    return True, None
+
 # Route to create a new service
 @services_bp.route('/create', methods=['POST'])
 @jwt_required()
 @permission_required(Permissions.ACCEPT_BOOKING_REQUESTS)
 def create_service():
     data = request.get_json()
-    service_name = data.get('service_name')
-    service_description = data.get('service_description')
-    category_id = data.get('category_id')
-
-    if not service_name or not category_id:
-        return jsonify({"error": "Missing required fields"}), 400
+    required_fields = ['service_name', 'category_id', 'provider_id', 'service_description']
+    is_valid, error_message = validate_fields(data, required_fields)
+    
+    if not is_valid:
+        return jsonify({"error": error_message}), 400
 
     service = Service(
-        service_name=service_name,
-        service_description=service_description,
-        category_id=category_id
+        service_name=data['service_name'],
+        service_description=data['service_description'],
+        category_id=data['category_id'],
+        provider_id=data['provider_id']
     )
 
     db.session.add(service)
@@ -43,6 +50,7 @@ def update_service(service_id):
     service.service_name = data.get('service_name', service.service_name)
     service.service_description = data.get('service_description', service.service_description)
     service.category_id = data.get('category_id', service.category_id)
+    service.provider_id = data.get('provider_id', service.provider_id)
 
     db.session.commit()
     return jsonify({"message": "Service updated successfully"}), 200
@@ -69,7 +77,8 @@ def view_services_by_category(category_id):
             "service_id": service.service_id,
             "service_name": service.service_name,
             "service_description": service.service_description,
-            "category_id": service.category_id
+            "category_id": service.category_id,
+            "provider_id": service.provider_id
         }
         for service in services
     ]
@@ -84,7 +93,8 @@ def view_all_services():
             "service_id": service.service_id,
             "service_name": service.service_name,
             "service_description": service.service_description,
-            "category_id": service.category_id
+            "category_id": service.category_id,
+            "provider_id": service.provider_id
         }
         for service in services
     ]
