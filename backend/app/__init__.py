@@ -25,7 +25,6 @@ def create_app(config_name='default'):
     from app.chats import chats_bp
     from app.invoices import invoices_bp
     from app.bookings import bookings_bp
-    from app.locations import locations_bp
     from app.reviews import reviews_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
@@ -35,7 +34,6 @@ def create_app(config_name='default'):
     app.register_blueprint(chats_bp, url_prefix='/api/chats')
     app.register_blueprint(invoices_bp, url_prefix='/api/invoices')
     app.register_blueprint(bookings_bp, url_prefix='/api/bookings')
-    app.register_blueprint(locations_bp, url_prefix='/api/locations')
     app.register_blueprint(reviews_bp, url_prefix='/api/reviews')
 
     return app

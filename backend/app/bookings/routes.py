@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import Booking, Service, User, Permissions
 from app.extensions import db
 from app.utils.decorators import permission_required
+from datetime import datetime
 
 bookings_bp = Blueprint('bookings', __name__)
 
@@ -14,11 +15,17 @@ def create_booking():
     data = request.get_json()
     service_id = data.get('service_id')
     provider_id = data.get('provider_id')
-    booking_date = data.get('booking_date')
+    booking_date_str = data.get('booking_date')
     location = data.get('location')
 
-    if not service_id or not provider_id or not booking_date or not location:
+    if not service_id or not provider_id or not booking_date_str or not location:
         return jsonify({"error": "Missing required fields"}), 400
+    
+    try:
+        # Convert the date string to a datetime object
+        booking_date = datetime.fromisoformat(booking_date_str)
+    except ValueError:
+        return jsonify({"error": "Invalid date format"}), 400
 
     client_id = get_jwt_identity()
     booking = Booking(
