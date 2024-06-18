@@ -1,7 +1,6 @@
 from datetime import datetime
 from app.extensions import db
 
-
 class Permissions:
     # All users
     REGISTER_LOGIN = 0b000000000000001  # Register
@@ -23,8 +22,6 @@ class Permissions:
     MEDIATE = 0b001000000000000  # Mediates the users
     APPROVE_SPECIALIZED_USERS = 0b010000000000000  # Approves the service providers
 
-    
-
 class Role(db.Model):
     __tablename__ = 'roles'
     role_id = db.Column(db.Integer, primary_key=True)
@@ -32,7 +29,6 @@ class Role(db.Model):
     permissions = db.Column(db.Integer, default=0)
 
     users = db.relationship('User', backref='role', lazy="dynamic")
-
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -55,7 +51,9 @@ class User(db.Model):
     provider_bookings = db.relationship('Booking', foreign_keys='Booking.provider_id', backref='provider', lazy=True)
     reviews_written = db.relationship('Review', foreign_keys='Review.client_id', backref='client', lazy=True)
     reviews_received = db.relationship('Review', foreign_keys='Review.provider_id', backref='provider', lazy=True)
-
+    
+    # One-to-Many relationship with Services (as a provider)
+    services_provided = db.relationship('Service', backref='provider', lazy=True)
 
 class ServiceCategory(db.Model):
     __tablename__ = 'service_categories'
@@ -70,8 +68,8 @@ class Service(db.Model):
     service_id = db.Column(db.Integer, primary_key=True)
     service_name = db.Column(db.String(64), nullable=False)
     service_description = db.Column(db.String(256), nullable=True)
-    service_provider = #TO DO
     category_id = db.Column(db.Integer, db.ForeignKey('service_categories.category_id'), nullable=False)
+    provider_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
     
     # One-to-Many relationships
     bookings = db.relationship('Booking', backref='service', lazy=True)
