@@ -14,7 +14,7 @@ function Header() {
             </div>
         </div>
         <div>
-            <Button>Get Started</Button>
+            <Button>Login/Sign Up</Button>
         </div>
         
     </div>
