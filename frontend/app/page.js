@@ -1,7 +1,7 @@
 import Image from "next/image";
-import UserProfile from "./_components/UserProfile";
-import ServiceDetails from "./_components/ServiceDetails";
-import SuggestedBusinessList from "./_components/SuggestedBusinessList";
+import UserProfile from "./(routes)/details/_components/UserProfile";
+import ServiceDetails from "./(routes)/details/_components/ServiceDetails";
+import SuggestedBusinessList from "./(routes)/details/_components/SuggestedBusinessList";
 
 
 

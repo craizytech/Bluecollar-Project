@@ -9,7 +9,7 @@ export function isAuthenticated() {
 // Function to store the hardcoded JWT token
 export function handleLogin() {
     try {
-        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxODY3NDQ4NSwianRpIjoiYmQ3OTllMGMtNjVkZi00MDA0LWI4ZWItN2FkMTY3NzBmYjU1IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6MSwibmJmIjoxNzE4Njc0NDg1LCJjc3JmIjoiMWM1ZGVlNjgtN2E1Yi00NTI4LWIwZjMtOGRlYzE5MTI2NzgxIiwiZXhwIjoxNzE4Njc1Mzg1fQ.LCSGKOCYGzlsHLie5RSa_9-7rFcYGlz-7MfWyrj8OfU";
+        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxODY3NTU2NiwianRpIjoiOWRiZDYxNjMtNjhhNy00NzVlLTk5ZmUtMDhiM2RjNmJjOTczIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6MSwibmJmIjoxNzE4Njc1NTY2LCJjc3JmIjoiZTdmZmM3ZDEtNjcwMC00NWM1LWEyZjktNDQxMWE4ZGM0MzU3IiwiZXhwIjoxNzE4Njc2NDY2fQ.gGHWqWxvFINMT35tpreSSvONV6l8dFdUA9AhUeHJzfE";
 
         // Store token in local storage
         localStorage.setItem('accessToken', token);

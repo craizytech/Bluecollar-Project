@@ -1,21 +1,32 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetFooter, SheetClose, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { Day } from 'react-day-picker';
 
 function BookingSection({ children }) {
     const [date, setDate] = useState(null);
     const [serviceId, setServiceId] = useState(null);
     const [providerId, setProviderId] = useState(null);
     const [location, setLocation] = useState('');
+    const [bookedSlot, setBookedSlot] = useState([]);
 
     const isDateSelected = date !== null;
 
     const handleLocationChange = (e) => {
         setLocation(e.target.value);
     };
+
+    useEffect(()=>{
+        
+    },[date])
+
+    // Get selected Date Business Booked Slot
+    const BusinessBookedSlot=()=>{
+        setBookedSlot();
+    }
 
     const saveBooking = async () => {
         try {
@@ -29,7 +40,7 @@ function BookingSection({ children }) {
                 body: JSON.stringify({
                     service_id: serviceId,
                     provider_id: providerId,
-                    booking_date: date.toISOString(),
+                    booking_date: moment(date).format('DD-MMM-yyyy').toISOString(),
                     location: location
                 })
             });
@@ -46,6 +57,10 @@ function BookingSection({ children }) {
             toast('Error saving booking');
         }
     };
+
+    const isSlotBooked=()=>{
+
+    }
 
     return (
         <div>
@@ -64,6 +79,18 @@ function BookingSection({ children }) {
                                     selected={date}
                                     onSelect={setDate}
                                     className="rounded-md border"
+                                    renderDay={(day) => {
+                                        const isBooked = isSlotBooked(day);
+                                        return (
+                                            <Day
+                                                day={day}
+                                                disabled={isBooked}
+                                                className={isBooked ? 'bg-red-500 text-white' : ''}
+                                            >
+                                                {day.getDate()}
+                                            </Day>
+                                        );
+                                    }}
                                 />
                                 <input type="text" value={location} onChange={handleLocationChange} placeholder="Enter location" className="rounded-md border mt-4 p-2 w-full" />
                             </div>
