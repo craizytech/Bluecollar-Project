@@ -1,17 +1,18 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetFooter, SheetClose, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Day } from 'react-day-picker';
+import moment from 'moment';
+import { createBooking, checkSlotBooked } from '../../../_services/GlobalApi';
 
 function BookingSection({ children }) {
     const [date, setDate] = useState(null);
     const [serviceId, setServiceId] = useState(null);
     const [providerId, setProviderId] = useState(null);
     const [location, setLocation] = useState('');
-    const [bookedSlot, setBookedSlot] = useState([]);
 
     const isDateSelected = date !== null;
 
@@ -19,48 +20,35 @@ function BookingSection({ children }) {
         setLocation(e.target.value);
     };
 
-    useEffect(()=>{
-        
-    },[date])
-
-    // Get selected Date Business Booked Slot
-    const BusinessBookedSlot=()=>{
-        setBookedSlot();
-    }
-
-    const saveBooking = async () => {
+    const handleSaveBooking = async () => {
         try {
-            const token = localStorage.getItem('accessToken');
-            const response = await fetch('http://localhost:5000/api/bookings/create', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    service_id: serviceId,
-                    provider_id: providerId,
-                    booking_date: moment(date).format('DD-MMM-yyyy').toISOString(),
-                    location: location
-                })
-            });
+            const bookingData = {
+                service_id: serviceId,
+                provider_id: providerId,
+                booking_date: moment(date).toISOString(),
+                location: location
+            };
 
-            if (response.ok) {
-                console.log('Booking successful');
-                toast('Service Booked sucessfully!');
-            } else {
-                console.error('Booking failed:', response.statusText);
-                toast('Booking failed');
-            }
+            await createBooking(bookingData);
+            toast('Service Booked successfully!');
         } catch (error) {
             console.error('Error saving booking:', error);
             toast('Error saving booking');
         }
     };
 
-    const isSlotBooked=()=>{
-
-    }
+    const renderDay = async (day) => {
+        const isBooked = await checkSlotBooked(moment(day).toISOString());
+        return (
+            <Day
+                day={day}
+                disabled={isBooked}
+                className={isBooked ? 'bg-red-500 text-white' : ''}
+            >
+                {day.getDate()}
+            </Day>
+        );
+    };
 
     return (
         <div>
@@ -74,25 +62,16 @@ function BookingSection({ children }) {
                         <SheetDescription>
                             <div>
                                 <h2 className='font-bold mb-5'>Select Date to book a Service</h2>
-                                <Calendar
-                                    mode="single"
-                                    selected={date}
-                                    onSelect={setDate}
-                                    className="rounded-md border"
-                                    renderDay={(day) => {
-                                        const isBooked = isSlotBooked(day);
-                                        return (
-                                            <Day
-                                                day={day}
-                                                disabled={isBooked}
-                                                className={isBooked ? 'bg-red-500 text-white' : ''}
-                                            >
-                                                {day.getDate()}
-                                            </Day>
-                                        );
-                                    }}
-                                />
-                                <input type="text" value={location} onChange={handleLocationChange} placeholder="Enter location" className="rounded-md border mt-4 p-2 w-full" />
+                                <div className="calendar-wrapper">
+                                    <Calendar
+                                        mode="single"
+                                        selected={date}
+                                        onSelect={setDate}
+                                        className="rounded-md border"
+                                        renderDay={renderDay}
+                                    />
+                                </div>
+                                {/* <input type="text" value={location} onChange={handleLocationChange} placeholder="Enter location" className="rounded-md border mt-4 p-2 w-full" /> */}
                             </div>
                         </SheetDescription>
                     </SheetHeader>
@@ -102,7 +81,7 @@ function BookingSection({ children }) {
                                 <Button variant="destructive" className="">Cancel</Button>
                                 <Button
                                     disabled={!isDateSelected}
-                                    onClick={saveBooking}
+                                    onClick={handleSaveBooking}
                                 >
                                     Book
                                 </Button>

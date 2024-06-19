@@ -31,7 +31,7 @@ function SuggestedBusinessList() {
         hover:border rounded-lg p-2
         cursor-pointer hover:shadow-md
         border-primary'>
-          <Image src={'logo.svg'}
+          <Image src={'/business.jpg'}
             alt='image'
             width={80}
             height={80}

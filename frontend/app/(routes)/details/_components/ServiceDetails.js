@@ -40,7 +40,7 @@ function ServiceDetails({ categoryId }) {
       <h2 className='font-bold text-[25px] mt-8'>Gallery</h2>
       <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 
       gap-5 mt-5'>
-        <Image src={'logo.svg'}
+        <Image src={'/business.jpg'}
             alt="image"
             width={700}
             height={200}
