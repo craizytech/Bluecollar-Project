@@ -1,8 +1,11 @@
+import BusinessList from '@/app/_components/BusinessList'
 import React from 'react'
 
 function BusinessByCategory() {
   return (
-    <div>BusinessByCategory</div>
+    <div>
+        <BusinessList title={'Cleaning'}/>
+    </div>
   )
 }
 
