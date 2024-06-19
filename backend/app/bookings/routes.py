@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import Booking, Service, User, Permissions
 from app.extensions import db
 from app.utils.decorators import permission_required
-from datetime import datetime
+from datetime import datetime, timedelta
 
 bookings_bp = Blueprint('bookings', __name__)
 
@@ -27,12 +27,17 @@ def create_booking():
     except ValueError:
         return jsonify({"error": "Invalid date format"}), 400
 
+    client_id = get_jwt_identity()
+
     # Check if the provider is already booked on the given date
-    existing_booking = Booking.query.filter_by(provider_id=provider_id, booking_date=booking_date).first()
+    existing_booking = Booking.query.filter(
+        Booking.provider_id == provider_id,
+        db.func.date(Booking.booking_date) == booking_date.date()
+    ).first()
+    
     if existing_booking:
         return jsonify({"error": "The service provider is already booked on this date"}), 400
 
-    client_id = get_jwt_identity()
     booking = Booking(
         service_id=service_id,
         client_id=client_id,
@@ -57,8 +62,29 @@ def update_booking(booking_id):
         return jsonify({"error": "Booking not found"}), 404
 
     data = request.get_json()
-    booking.booking_date = data.get('booking_date', booking.booking_date)
-    booking.location = data.get('location', booking.location)
+    new_booking_date_str = data.get('booking_date')
+    new_location = data.get('location', booking.location)
+
+    # If the booking date is provided, convert it to a datetime object
+    if new_booking_date_str:
+        try:
+            new_booking_date = datetime.fromisoformat(new_booking_date_str)
+        except ValueError:
+            return jsonify({"error": "Invalid date format"}), 400
+        
+        # Check if the provider is already booked on the new date
+        existing_booking = Booking.query.filter(
+            Booking.provider_id == booking.provider_id,
+            Booking.booking_id != booking_id,  # Exclude the current booking from the check
+            db.func.date(Booking.booking_date) == new_booking_date.date()
+        ).first()
+        
+        if existing_booking:
+            return jsonify({"error": "The service provider is already booked on this date"}), 400
+        
+        booking.booking_date = new_booking_date
+
+    booking.location = new_location
 
     db.session.commit()
     return jsonify({"message": "Booking updated successfully"}), 200
