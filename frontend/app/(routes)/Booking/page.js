@@ -1,23 +1,25 @@
-import React from 'react'
-import UserProfile from './_components/UserProfile'
-import ServiceDetails from './_components/ServiceDetails'
-import SuggestedBusinessList from './_components/SuggestedBusinessList'
+"use client";
+import { useState } from 'react';
+import ServiceDetails from './_components/ServiceDetails';
+import SuggestedBusinessList from './_components/SuggestedBusinessList';
+import UserProfile from './_components/UserProfile';
 
-function booking() {
+function Page() {
+  const [serviceId, setServiceId] = useState(null);
+
   return (
-    <div className='py-8 md:px-20 px-10 md:px-36'>
-        <UserProfile />
-
-        <div className='grid grid-cols-3 mt-16'>
-            <div className='col-span-3 md:col-span-2 order-last md:order-first'>
-                <ServiceDetails />
-            </div>
-            <div>
-                <SuggestedBusinessList />
-            </div>
+    <div className='py-8 px-10 md:px-36'>
+      <UserProfile setServiceId={setServiceId} />
+      <div className='grid grid-cols-3 mt-16'>
+        <div className='col-span-3 md:col-span-2 order-last md:order-first'>
+          <ServiceDetails serviceId={serviceId} />
         </div>
+        <div>
+          <SuggestedBusinessList serviceId={serviceId} />
+        </div>
+      </div>
     </div>
-  )
+  );
 }
 
-export default booking
+export default Page;
