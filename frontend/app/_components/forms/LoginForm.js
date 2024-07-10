@@ -1,4 +1,6 @@
-import React from 'react'
+"use client";
+import React, { useState} from 'react'
+import { useRouter } from 'next/navigation';
 import Link from "next/link";
 // import { useFormState } from "react-dom";
 // import { loginUserAction } from "@/data/actions/auth-actions";
@@ -26,11 +28,48 @@ const INITIAL_STATE = {
   message: null,
 };
 
-function LoginForm() {
-//   const [formState, formAction] = useFormState(loginUserAction, INITIAL_STATE);
+const LoginForm = ({ setToken }) => {
+  const [user_email, setEmail] = useState('');
+    const [user_password, setPassword] = useState('');
+    const [token, updateToken] = useState('');
+    const [profile, setProfile] = useState(null);
+    const [error, setError] = useState('');
+
+    const router = useRouter();
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ user_email, user_password }),
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                updateToken(data.access_token);
+                setToken(data.access_token);
+                if (typeof window !== 'undefined') {
+                    localStorage.setItem('access_token', data.access_token);
+                }
+                
+                // fetchUserProfile(data.access_token);
+
+                router.push('/')
+            } else {
+                setError(data.error);
+            }
+        } catch (error) {
+            console.error('Login failed:', error);
+            setError('Failed to login');
+        }
+      };
   return (
     <div className="w-full max-w-md">
-      <form>
+      <form onSubmit={handleSubmit}>
         <Card>
           <CardHeader className="space-y-1">
             <CardTitle className="text-3xl font-bold">Sign In</CardTitle>
@@ -46,6 +85,7 @@ function LoginForm() {
                 name="identifier"
                 type="text"
                 placeholder="username or email"
+                value={user_email} onChange={(e) => setEmail(e.target.value)} required
               />
               {/* <ZodErrors error={formState?.zodErrors?.identifier} /> */}
             </div>
@@ -56,6 +96,7 @@ function LoginForm() {
                 name="password"
                 type="password"
                 placeholder="password"
+                value={user_password} onChange={(e) => setPassword(e.target.value)} required
               />
               {/* <ZodErrors error={formState.zodErrors?.password} /> */}
             </div>
@@ -63,7 +104,7 @@ function LoginForm() {
           <CardFooter className="flex flex-col">
             <Button
               className="w-full"
-              loadingText="Loading"
+              // loadingText="Loading"
             > Sign In </Button>
             {/* <StrapiErrors error={formState?.strapiErrors} /> */}
           </CardFooter>

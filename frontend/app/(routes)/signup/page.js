@@ -1,9 +1,14 @@
-import { SignupForm } from '@/app/_components/forms/SignupForm'
-import React from 'react'
+"use client"
+import React, { useState} from 'react'
+import SignupForm from '@/app/_components/forms/SignupForm'
 
-function signup() {
+
+const signup = () => {
+  const [token, setToken] = useState('');
   return (
-    <SignupForm/>
+    <div>
+      <SignupForm setToken={setToken}/>
+    </div>
   )
 }
 
