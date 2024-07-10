@@ -1,11 +1,8 @@
-"use client";
-import { useSearchParams } from 'next/navigation';
-import React, { useState, useEffect } from 'react';
+"use client"
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
-function ServiceDetails() {
-    const searchParams = useSearchParams();
-    const serviceId = searchParams.get('serviceId');
+function ServiceDetails({ serviceId }) {
     const [serviceDetails, setServiceDetails] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -76,7 +73,6 @@ function ServiceDetails() {
             ) : (
                 <p>No reviews available</p>
             )}
-            {/* <SuggestedBusinessList categoryId={serviceDetails.category_id} /> */}
         </div>
     );
 }

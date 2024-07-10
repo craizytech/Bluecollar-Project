@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetClose, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from '@/components/ui/button';
@@ -16,13 +16,40 @@ async function checkSlotBooked(date) {
     return false;
 }
 
-function BookingSection({ children, serviceId, providerId, onBookingSuccess }) {
-    console.log('BookingSection Props:', { serviceId, providerId }); // Log props to verify
+async function fetchProviderId(serviceId, categoryId) {
+    try {
+        const response = await fetch(`http://localhost:5000/api/services/category/${categoryId}`);
+        if (response.ok) {
+            const data = await response.json();
+            const service = data.find(service => service.service_id === serviceId);
+            if (service) {
+                return service.provider_id;
+            }
+        }
+        throw new Error('Provider ID not found for the given service');
+    } catch (error) {
+        console.error('Error fetching provider ID:', error);
+        return null; // Handle appropriately in your application
+    }
+}
 
+function BookingSection({ children, serviceId, categoryId, onBookingSuccess }) {
+    console.log('BookingSection Props:', { serviceId, categoryId }); // Log props to verify
+
+    const [providerId, setProviderId] = useState(null);
     const [date, setDate] = useState(null);
     const [location, setLocation] = useState('');
 
     const isDateSelected = date !== null;
+
+    useEffect(() => {
+        // Fetch provider ID when serviceId or categoryId changes
+        const fetchProvider = async () => {
+            const id = await fetchProviderId(serviceId, categoryId);
+            setProviderId(id);
+        };
+        fetchProvider();
+    }, [serviceId, categoryId]);
 
     const handleLocationChange = (e) => {
         setLocation(e.target.value);

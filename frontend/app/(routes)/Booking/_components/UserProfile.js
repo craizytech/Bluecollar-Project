@@ -18,7 +18,7 @@ function UserProfile({ setServiceId }) {
 
         async function fetchData() {
             try {
-                const token = localStorage.getItem('accessToken');
+                const token = localStorage.getItem('access_token');
                 if (!token) {
                     console.error('No token found in localStorage');
                     return;
@@ -48,7 +48,8 @@ function UserProfile({ setServiceId }) {
                         provider_profile_picture: serviceData.provider_profile_picture,
                     });
 
-                    setServiceId(serviceId); // Set the serviceId
+                    setServiceId(serviceId); 
+            
 
                 } else {
                     console.error('Failed to fetch service details:', serviceResponse.statusText);
@@ -61,7 +62,7 @@ function UserProfile({ setServiceId }) {
         }
 
         fetchData();
-    }, [serviceId, setServiceId]);
+    }, [serviceId]);
 
     if (loading) {
         return <div>Loading...</div>;
@@ -86,9 +87,9 @@ function UserProfile({ setServiceId }) {
                     <h2 className='text-primary p-1 px-3 text-lg bg-purple-100 rounded-full'>
                         {serviceDetails.category_name || 'Not available'}
                     </h2>
-                    <h2 className='text-primary p-1 px-3 text-lg bg-purple-100 rounded-full'>
+                    {/* <h2 className='text-primary p-1 px-3 text-lg bg-purple-100 rounded-full'>
                         {serviceId || 'Service ID not available'}
-                    </h2>
+                    </h2> */}
                     <h3 className='text-[20px] font-bold'>{serviceDetails.service_name}</h3>
 
                     <h2 className='flex gap-2 text-lg text-gray-500'>
