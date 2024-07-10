@@ -43,64 +43,7 @@ const LoginFform = ({ setToken }) => {
         }
     };
 
-    // useEffect(() => {
-    //     if (typeof window !== 'undefined') {
-    //         const storedToken = localStorage.getItem('access_token');
-    //         updateToken(storedToken || '');
-    //         setToken(storedToken || '');
-    //         if (storedToken) {
-    //             fetchUserProfile(storedToken);
-    //         }
-    //     }
-    // }, [setToken]);
-
-
-    // const fetchUserProfile = async (token) => {
-    //     try {
-    //         const response = await fetch('http://localhost:5000/api/users/profile', {
-    //             headers: {
-    //                 'Authorization': `Bearer ${token}`,
-    //             },
-    //         });
-
-    //         if (response.ok) {
-    //             const userData = await response.json();
-    //             setProfile(userData);
-    //         } else {
-    //             const errorData = await response.json();
-    //             setError(errorData.error);
-    //         }
-    //     } catch (error) {
-    //         console.error('Error fetching profile:', error);
-    //         setError('Failed to fetch user profile');
-    //     }
-    // };
-
-    // if (token && profile) {
-    //     return (
-    //         <div>
-    //             <h2>User Profile</h2>
-    //             <Image
-    //                 src={`data:image/jpeg;base64,${profile.user_profile_picture}`}
-    //                 alt={profile.user_name || 'User profile picture'}
-    //                 width={150}
-    //                 height={200}
-    //                 className='rounded-full h-[150px] object-cover'
-    //              />
-    //             <p>Email: {profile.user_email}</p>
-    //             <p>Name: {profile.user_name}</p>
-    //             <p>Phone Number: {profile.user_phone_number}</p>
-    //             <p>Address: {profile.user_address}</p>
-    //             <p>Location: {profile.user_location}</p>
-    //             <button onClick={() => {
-    //                 localStorage.removeItem('access_token');
-    //                 updateToken('');
-    //                 setProfile(null);
-    //             }}>Logout</button>
-    //         </div>
-    //     );
-    // }
-
+    
     return (
         <div>
             <h2>Login</h2>
