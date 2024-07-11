@@ -1,6 +1,6 @@
 "use client"
 import React, { useState} from 'react'
-import SignupFform from '../register/_components/SignupFform';
+import SignupFform from './_components/SignupFform';
 
 const page = () => {
     const [token, setToken] = useState('');
