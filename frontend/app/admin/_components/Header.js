@@ -50,7 +50,7 @@ function Header() {
           Categories
         </Link>
         <Link
-          href="#"
+          href="transactions"
           className="text-muted-foreground transition-colors hover:text-foreground"
         >
           Transactions
