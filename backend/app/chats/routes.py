@@ -4,6 +4,7 @@ from app.models import User, Chat, Permissions
 from app.utils.permissions import permission_required
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
+import bleach
 
 chats_bp = Blueprint('chats', __name__)
 
@@ -22,6 +23,9 @@ def send_message():
 
     if sender_id == receiver_id:
         return jsonify({'error': 'You cannot send a message to yourself.'}), 400
+
+    # Sanitize message
+    message = bleach.clean(message)
 
     chat = Chat(
         sent_from=sender_id,

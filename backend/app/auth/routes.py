@@ -20,22 +20,28 @@ def register():
     if User.query.filter_by(user_email=data.get('user_email')).first():
         return jsonify({"error": "User already exists"}), 409
 
-    # Create new user
-    new_user = User(
-        user_name=data.get('user_name'),
-        user_email=data.get('user_email'),
-        user_password=generate_password_hash(data.get('user_password')),
-        user_phone_number=data.get('user_phone_number', ''),
-        user_address=data.get('user_address', ''),
-        user_location=data.get('user_location', ''),
-        user_profile_picture=data.get('user_profile_picture', ''),
-        role_id=data.get('role_id', 2)  # Assuming 2 is the role ID for a normal user
-    )
+    try:
+        # Create new user
+        new_user = User(
+            user_name=data.get('user_name'),
+            user_email=data.get('user_email'),
+            user_password=generate_password_hash(data.get('user_password')),
+            user_phone_number=data.get('user_phone_number', ''),
+            user_address=data.get('user_address', ''),
+            user_location=data.get('user_location', ''),
+            user_profile_picture=data.get('user_profile_picture', ''),
+            role_id=data.get('role_id', 2)  # Assuming 2 is the role ID for a normal user
+        )
 
-    db.session.add(new_user)
-    db.session.commit()
+        db.session.add(new_user)
+        db.session.commit()
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "An error occurred during registration. Please try again."}), 500
 
     return jsonify({"message": "Registration successful"}), 201
+
 
 
 @auth_bp.route('/login', methods=['POST'])
