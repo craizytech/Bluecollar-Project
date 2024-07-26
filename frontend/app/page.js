@@ -1,15 +1,23 @@
-import { Button } from "@/components/ui/button";
-import Hero from "./_components/Hero";
-import CategoryList from "./_components/CategoryList";
-import BusinessList from "./_components/BusinessList";
+"use client"
+import React from 'react';
+import { CategoryProvider, useCategoryContext } from '@/app/(routes)/search/_components/CategoryContext';
+import BusinessList from './(routes)/search/[category]/BusinessList';
+import Hero from './_components/Hero';
+import CategoryList from './_components/CategoryList';
 
-export default function Home() {
+function Home() {
+  // const { categoryId } = useCategoryContext();
+
   return (
-    <div>
-       <Hero/>
-       <CategoryList/>
-       <BusinessList title={'Popular Business'}/>
-    </div>
+    <CategoryProvider>
+      <div>
+        <Hero />
+        <CategoryList />
+        
+        <BusinessList title={"Popular Business"} />
+      </div>
+    </CategoryProvider>
   );
 }
 
+export default Home;
