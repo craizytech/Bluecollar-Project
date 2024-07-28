@@ -24,7 +24,7 @@ function UserProfile({ setServiceId }) {
                     return;
                 }
 
-                const SERVICE_DETAILS_URL = `http://localhost:5000/api/services/${serviceId}`;
+                const SERVICE_DETAILS_URL = `http://localhost:8080/api/services/${serviceId}`;
                 console.log('Fetching service details from:', SERVICE_DETAILS_URL);
 
                 const serviceResponse = await fetch(SERVICE_DETAILS_URL, {

@@ -20,7 +20,7 @@ function SuggestedBusinessList({ serviceId }) {
 
     async function fetchSimilarBusinesses() {
       try {
-        const response = await fetch(`http://localhost:5000/api/services/${serviceId}`);
+        const response = await fetch(`http://localhost:8080/api/services/${serviceId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch similar businesses');
         }

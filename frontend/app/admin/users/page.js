@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -9,10 +9,10 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown, MoreHorizontal } from "lucide-react";
+import { BadgeInfo, CheckCircle, ChevronDown, MoreHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,10 +22,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-
-
+} from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -44,33 +41,45 @@ import {
 } from "@/components/ui/table";
 
 export function UsersPage() {
-  const [sorting, setSorting] = React.useState([]);
-  const [columnFilters, setColumnFilters] = React.useState([]);
-  const [columnVisibility, setColumnVisibility] = React.useState({});
-  const [rowSelection, setRowSelection] = React.useState({});
-  const [data, setData] = React.useState([]);
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [rowSelection, setRowSelection] = useState({});
+  const [data, setData] = useState([]);
   const [deleteUserId, setDeleteUserId] = useState(null);
+  const [alert, setAlert] = useState(null); // State for managing alerts
   const token = localStorage.getItem('access_token');
   console.log(token);
 
-  React.useEffect(() => {
-    fetch("http://localhost:5000/api/users/all", {
-      // headers: {
-      //   "Authorization": `Bearer ${token}`
-      // }
-    })
+  useEffect(() => {
+    fetch("http://localhost:8080/api/users/all")
       .then((response) => response.json())
       .then((data) => setData(data))
       .catch((error) => console.error("Error fetching users:", error));
   }, []);
 
+  useEffect(() => {
+    if (alert) {
+      const timer = setTimeout(() => {
+        setAlert(null);
+      }, 3000); // Alert disappears after 3 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [alert]);
+
   const handleViewUser = (userId) => {
-    console.log("Viewing user with ID: ", userId);
+    console.log("pressed");
+    setAlert({
+      variant: "default",
+      title: "Information",
+      description: `Viewing user with ID: ${userId}`,
+      icon: <BadgeInfo className="h-4 w-4" />,
+    });
   };
 
   const handleDeleteUser = async (userId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/users/profile`, {
+      const response = await fetch(`http://localhost:8080/api/users/profile/${userId}`, {
         method: "DELETE",
         headers: {
           'Content-Type': 'application/json',
@@ -80,6 +89,12 @@ export function UsersPage() {
 
       if (response.ok) {
         setData((prevData) => prevData.filter((user) => user.user_id != userId));
+        setAlert({
+          variant: "success",
+          title: "Success",
+          description: "User deleted successfully.",
+          icon: <CheckCircle className="h-4 w-4" />,
+        });
       } else {
         console.error("Failed to delete user");
       }
@@ -122,14 +137,12 @@ export function UsersPage() {
       {
         header: "Actions",
         cell: ({ row }) => {
-
           return (
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="ml-auto">
                   <span className="sr-only">Open actions</span>
-                  <MoreHorizontal className="h-4 w-4"/>
+                  <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -141,10 +154,12 @@ export function UsersPage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          )
-        }
-      }
-    ], []); // Replace with your actual column definitions
+          );
+        },
+      },
+    ],
+    []
+  );
 
   const table = useReactTable({
     data,
@@ -166,13 +181,20 @@ export function UsersPage() {
   });
 
   return (
-    <div className="w-full">
+    <div className="w-full relative">
+      {alert && (
+        <div className="fixed top-20 right-20 flex items-center justify-center z-50 w-auto">
+          <Alert variant={alert.variant}>
+            {alert.icon}
+            <AlertTitle>{alert.title}</AlertTitle>
+            <AlertDescription>{alert.description}</AlertDescription>
+          </Alert>
+        </div>
+      )}
       <div className="flex items-center py-4">
         <Input
           placeholder="Filter emails..."
-          onChange={(event) =>
-            table.getColumn("email")?.setFilterValue(event.target.value)
-          }
+          onChange={(event) => table.getColumn("user_email")?.setFilterValue(event.target.value)}
           className="max-w-sm"
         />
         <DropdownMenu>
@@ -182,21 +204,16 @@ export function UsersPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => (
-                <DropdownMenuCheckboxItem
-                  key={column.id}
-                  className="capitalize"
-                  checked={column.getIsVisible()}
-                  onCheckedChange={(value) =>
-                    column.toggleVisibility(!!value)
-                  }
-                >
-                  {column.id}
-                </DropdownMenuCheckboxItem>
-              ))}
+            {table.getAllColumns().filter((column) => column.getCanHide()).map((column) => (
+              <DropdownMenuCheckboxItem
+                key={column.id}
+                className="capitalize"
+                checked={column.getIsVisible()}
+                onCheckedChange={(value) => column.toggleVisibility(!!value)}
+              >
+                {column.id}
+              </DropdownMenuCheckboxItem>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -207,12 +224,7 @@ export function UsersPage() {
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
               </TableRow>
@@ -221,14 +233,9 @@ export function UsersPage() {
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
+                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
+                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                   ))}
                 </TableRow>
               ))
@@ -244,24 +251,13 @@ export function UsersPage() {
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+          {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
         <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
+          <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
             Previous
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
+          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
             Next
           </Button>
         </div>
@@ -272,8 +268,7 @@ export function UsersPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your
-              account and remove your data from our servers.
+              This action cannot be undone. This will permanently delete your account and remove your data from our servers.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

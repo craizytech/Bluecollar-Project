@@ -8,7 +8,7 @@ import { Day } from 'react-day-picker';
 import moment from 'moment';
 
 async function checkSlotBooked(date) {
-    const response = await fetch(`http://localhost:5000/api/bookings/check?date=${date}`);
+    const response = await fetch(`http://localhost:8080/api/bookings/check?date=${date}`);
     if (response.ok) {
         const data = await response.json();
         return data.isBooked;
@@ -18,7 +18,7 @@ async function checkSlotBooked(date) {
 
 async function fetchProviderId(serviceId, categoryId) {
     try {
-        const response = await fetch(`http://localhost:5000/api/services/category/${categoryId}`);
+        const response = await fetch(`http://localhost:8080/api/services/category/${categoryId}`);
         if (response.ok) {
             const data = await response.json();
             const service = data.find(service => service.service_id === serviceId);
@@ -66,7 +66,7 @@ function BookingSection({ children, serviceId, categoryId, onBookingSuccess }) {
 
             console.log('Booking Data:', bookingData);
 
-            const response = await fetch('http://localhost:5000/api/bookings/create', {
+            const response = await fetch('http://localhost:8080/api/bookings/create', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
