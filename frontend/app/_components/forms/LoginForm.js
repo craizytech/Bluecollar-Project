@@ -1,7 +1,8 @@
 "use client";
-import React, { useState} from 'react'
+import React, { useContext, useState } from 'react'
 import { useRouter } from 'next/navigation';
 import Link from "next/link";
+import AuthContext from './AuthContext';
 // import { useFormState } from "react-dom";
 // import { loginUserAction } from "@/data/actions/auth-actions";
 
@@ -35,6 +36,7 @@ const LoginForm = ({ setToken }) => {
     const [profile, setProfile] = useState(null);
     const [error, setError] = useState('');
 
+    const { setTokenAndProfile } = useContext(AuthContext);
     const router = useRouter();
 
     const handleSubmit = async (e) => {
@@ -50,15 +52,15 @@ const LoginForm = ({ setToken }) => {
 
             const data = await response.json();
             if (response.ok) {
-                updateToken(data.access_token);
-                setToken(data.access_token);
-                if (typeof window !== 'undefined') {
-                    localStorage.setItem('access_token', data.access_token);
-                }
+                // updateToken(data.access_token);
+                // setToken(data.access_token);
+                // if (typeof window !== 'undefined') {
+                //     localStorage.setItem('access_token', data.access_token);
+                // }
                 
                 // fetchUserProfile(data.access_token);
-
-                router.push('/')
+                setTokenAndProfile(data.access_token);
+                router.push('/');
             } else {
                 setError(data.error);
             }

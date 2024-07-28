@@ -1,0 +1,11 @@
+{
+    "sqltools.useNodeRuntime": true,
+    "sqltools.connections": [
+        {
+            "previewLimit": 200,
+            "driver": "SQLite",
+            "name": "bluecollar",
+            "database": "${workspaceFolder:BluecollarProject Main}/backend/instance/app.db"
+        }
+    ]
+}

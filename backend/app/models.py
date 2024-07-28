@@ -59,6 +59,7 @@ class ServiceCategory(db.Model):
     __tablename__ = 'service_categories'
     category_id = db.Column(db.Integer, primary_key=True)
     category_name = db.Column(db.String(64), nullable=False)
+    date_of_creation = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     
     # One-to-Many relationship with Services
     services = db.relationship('Service', backref='category', lazy=True)
@@ -113,3 +114,8 @@ class Review(db.Model):
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.String(512), nullable=True)
     date_of_creation = db.Column(db.DateTime, default=datetime.utcnow)
+
+class TokenBlockList(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    jti = db.Column(db.String(36), nullable=False, unique=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=db.func.now())

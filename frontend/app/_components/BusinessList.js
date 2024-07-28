@@ -88,7 +88,6 @@ function BusinessList({ title }) {
                     </div>
                 ))}
             </div>
-            <Button className="mt-10"><Link href={'/testAuth'}>Login</Link></Button>
         </div>
     );
 }

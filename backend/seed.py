@@ -1,6 +1,7 @@
 from app import create_app, db
 from app.models import Role, Permissions, ServiceCategory, Service, User
 from werkzeug.security import generate_password_hash
+from datetime import datetime
 
 app = create_app()
 
@@ -103,10 +104,10 @@ with app.app_context():
     db.session.commit()
 
     # Create service categories
-    electrical_category = ServiceCategory(category_name="Electrical")
-    plumbing_category = ServiceCategory(category_name="Plumbing")
-    cleaning_category = ServiceCategory(category_name="Cleaning")
-    masonry_category = ServiceCategory(category_name="Masonry")
+    electrical_category = ServiceCategory(category_name="Electrical", date_of_creation=datetime.utcnow())
+    plumbing_category = ServiceCategory(category_name="Plumbing", date_of_creation=datetime.utcnow())
+    cleaning_category = ServiceCategory(category_name="Cleaning", date_of_creation=datetime.utcnow())
+    masonry_category = ServiceCategory(category_name="Masonry", date_of_creation=datetime.utcnow())
 
     db.session.add_all([electrical_category, plumbing_category, cleaning_category, masonry_category])
     db.session.commit()

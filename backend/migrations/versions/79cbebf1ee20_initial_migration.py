@@ -27,6 +27,7 @@ def upgrade():
     op.create_table('service_categories',
     sa.Column('category_id', sa.Integer(), nullable=False),
     sa.Column('category_name', sa.String(length=64), nullable=False),
+    sa.Column('date_of_creation', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('category_id')
     )
     op.create_table('users',
