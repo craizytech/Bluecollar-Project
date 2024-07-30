@@ -29,7 +29,7 @@ function CategoryList() {
     return (
         <div className="mt-14 mx-4 md:mx-22 lg:mx-52 grid grid-cols md:grid-cols-2 lg:grid-cols-4 gap-6">
             {categories.map((category) => (
-            <Link key={category.id} href={`/search/${category.name.toLowerCase()}`} className="flex flex-col items-center justify-center gap-2 bg-blue-50 p-4 rounded-lg hover:cursor-pointer hover:scale-110 transition-all ease-in-out">
+            <Link key={category.id} href={`/search/${category.id}`} passHref className="flex flex-col items-center justify-center gap-2 bg-blue-50 p-4 rounded-lg hover:cursor-pointer hover:scale-110 transition-all ease-in-out">
                 <Image src={`/${category.name.toLowerCase()}.png`}
                     alt="icon"
                     width={35}

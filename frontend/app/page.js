@@ -1,23 +1,20 @@
-"use client"
-import React from 'react';
-import { CategoryProvider, useCategoryContext } from '@/app/(routes)/search/_components/CategoryContext';
-import BusinessList from './(routes)/search/[category]/BusinessList';
-import Hero from './_components/Hero';
-import CategoryList from './_components/CategoryList';
+"use client";
+import LoginForm from '@/app/_components/forms/LoginForm';
+import React, { useState } from 'react';
 
-function Home() {
-  // const { categoryId } = useCategoryContext();
+function Login() {
+  const [token, setToken] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('access_token') || '';
+    }
+    return '';
+  });
 
   return (
-    <CategoryProvider>
-      <div>
-        <Hero />
-        <CategoryList />
-        
-        <BusinessList title={"Popular Business"} />
-      </div>
-    </CategoryProvider>
+    <div>
+      <LoginForm setToken={setToken} />
+    </div>
   );
 }
 
-export default Home;
+export default Login;

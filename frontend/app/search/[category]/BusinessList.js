@@ -3,10 +3,8 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
 import React, { useState, useEffect } from 'react';
-import { useCategoryContext } from '../_components/CategoryContext';
 
-function BusinessList({ title }) {
-    const { categoryId: contextCategoryId } = useCategoryContext(); // Rename categoryId to contextCategoryId
+function BusinessList({ title, categoryId }) {
     const [services, setServices] = useState([]);
     const [token, setToken] = useState('');
 
@@ -18,16 +16,18 @@ function BusinessList({ title }) {
 
         async function fetchServices() {
             try {
-                console.log(`Fetching services for category ID: ${contextCategoryId}`); // Use contextCategoryId from context
-                const url = contextCategoryId
-                    ? `http://localhost:5000/api/services/category/${contextCategoryId}`
+                console.log(`Fetching services for category ID: ${categoryId}`);
+                const url = categoryId
+                    ? `http://localhost:5000/api/services/category/${categoryId}`
                     : 'http://localhost:5000/api/services/all';
-                
+
+
                 const response = await fetch(url, {
                     headers: {
                         'Authorization': `Bearer ${storedToken}`,
                     },
                 });
+
 
                 if (!response.ok) {
                     throw new Error('Failed to fetch services');
@@ -35,13 +35,16 @@ function BusinessList({ title }) {
 
                 const servicesData = await response.json();
 
-                if (!contextCategoryId) {
+
+
+                if (!categoryId) {
                     const servicesWithDetails = await Promise.all(servicesData.map(async (service) => {
                         const detailsResponse = await fetch(`http://localhost:5000/api/services/${service.service_id}`, {
                             headers: {
                                 'Authorization': `Bearer ${storedToken}`,
                             },
                         });
+
 
                         if (!detailsResponse.ok) {
                             throw new Error('Failed to fetch service details');
@@ -59,7 +62,13 @@ function BusinessList({ title }) {
                         };
                     }));
 
-                    setServices(servicesWithDetails);
+                    console.log('Services with Details:', servicesWithDetails);
+
+                    try {
+                        setServices(servicesWithDetails);
+                    } catch (error) {
+                        console.error('Error setting services:', error);
+                    }
                 } else {
                     setServices(servicesData);
                 }
@@ -71,7 +80,7 @@ function BusinessList({ title }) {
         if (token) {
             fetchServices();
         }
-    }, [token, contextCategoryId]); // Use contextCategoryId in dependencies
+    }, [token, categoryId]);
 
     const handleBookNowClick = (serviceId, categoryId, providerId) => {
         console.log('Clicked Book Now for service ID:', serviceId, 'with category ID:', categoryId, 'and provider ID:', providerId);

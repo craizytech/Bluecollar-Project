@@ -34,7 +34,7 @@ const SignupForm = ({setToken}) => {
     const [user_password, setPassword] = useState('');
     const [confirm_password, setConfirmPassword] = useState('');
     const [user_profile_picture, setProfilePicture] = useState('');
-    const [role_id, setRoleId] = useState(2);
+    const [role_id, setRoleId] = useState(3);
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
 
@@ -81,7 +81,7 @@ const SignupForm = ({setToken}) => {
             if (response.ok) {
                 setSuccess('Signup successful! Redirecting to login...');
                 setTimeout(() => {
-                    router.push('/login');
+                    router.push('/');
                 }, 2000);
             } else {
                 setError(data.error);
@@ -206,7 +206,7 @@ const SignupForm = ({setToken}) => {
         </Card>
         <div className="mt-4 text-center text-sm">
           Have an account?
-          <Link className="underline ml-2" href="login">
+          <Link className="underline ml-2 " href="/">
             Sign In
           </Link>
         </div>

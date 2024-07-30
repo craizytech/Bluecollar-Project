@@ -1,11 +1,9 @@
-"use client"
+"use client";
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useCategoryContext } from './_components/CategoryContext';
 
-function CategorySideBar() {
-    const { handleCategorySelect } = useCategoryContext();
+function CategorySideBar({ setCategoryId }) {
     const [categories, setCategories] = useState([]);
 
     useEffect(() => {
@@ -27,8 +25,7 @@ function CategorySideBar() {
 
     const handleClick = (categoryId) => {
         console.log(`Category ${categoryId} clicked`);
-        handleCategorySelect(categoryId);
-        
+        setCategoryId(categoryId);
     };
 
     return (

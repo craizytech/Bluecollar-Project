@@ -1,19 +1,11 @@
-"use client"
-import { useCategoryContext } from '../_components/CategoryContext';
-import React, { useEffect, useState } from 'react';
-import BusinessList from '@/app/(routes)/search/[category]/BusinessList';
+import React from 'react'
+import BusinessByCategory from './BusinessByCategory'
 
-function BusinessByCategory() {
-  const { categoryId } = useCategoryContext();
-
-    return (
-        <div>
-           {categoryId && (
-              <BusinessList title={`Services in Category ${categoryId}`} categoryId={categoryId} />
-            )}
-        </div>
-    );
+function page({ params }) {
+  const categoryId = params.category
+  return (
+    <BusinessByCategory categoryId={categoryId}/>
+  )
 }
 
-export default BusinessByCategory;
-
+export default page
