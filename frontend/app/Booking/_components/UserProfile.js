@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Clock, Mail, MapPin, Phone, Share, User } from 'lucide-react';
+import { useCategory } from '@/app/context/CategoryContext';
 
 function UserProfile({ setServiceId }) {
     const searchParams = useSearchParams();
     const serviceId = searchParams.get('serviceId');
+    const { categoryId } = useCategory();
     const [providerDetails, setProviderDetails] = useState({});
     const [serviceDetails, setServiceDetails] = useState({});
     const [loading, setLoading] = useState(true);

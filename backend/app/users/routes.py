@@ -6,11 +6,34 @@ from app.utils.decorators import permission_required
 
 users_bp = Blueprint('users', __name__)
 
-# Route to get user profile
+def allowed_file(filename):
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Route to get logged-in user profile
 @users_bp.route('/profile', methods=['GET'])
 @jwt_required()
 def get_profile():
     user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if user:
+        user_data = {
+            "user_id": user.user_id,
+            "user_name": user.user_name,
+            "user_email": user.user_email,
+            "user_phone_number": user.user_phone_number,
+            "user_address": user.user_address,
+            "user_location": user.user_location,
+            "user_profile_picture": user.user_profile_picture,
+            "role_id": user.role_id
+        }
+        return jsonify(user_data), 200
+    return jsonify({"error": "User not found"}), 404
+
+# Route to get user profile by user ID
+@users_bp.route('/profile/<int:user_id>', methods=['GET'])
+@jwt_required()
+def get_user_profile(user_id):
     user = User.query.get(user_id)
     if user:
         user_data = {
@@ -43,10 +66,10 @@ def update_profile():
         return jsonify({"message": "Profile updated successfully"}), 200
     return jsonify({"error": "User not found"}), 404
 
+
 # Route to perform an admin action
 @users_bp.route('/admin-action', methods=['POST'])
 @jwt_required()
 @permission_required(Permissions.ADD_USERS)
 def admin_action():
-    # Your admin action here
     return jsonify({"message": "Admin action performed"}), 200
