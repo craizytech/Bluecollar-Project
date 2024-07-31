@@ -1,13 +1,22 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import BookingHistoryList from './_component/BookingHistoryList';
+import BookingHistoryList from '../mybooking/_component/BookingHistoryList';
 import { toast, Toaster } from 'sonner';
 
-function MyBooking() {
+function ToDoServices() {
   const [bookingHistory, setBookingHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const deduplicateBookings = (bookings) => {
+    const seen = new Set();
+    return bookings.filter(booking => {
+      const isDuplicate = seen.has(booking.booking_id);
+      seen.add(booking.booking_id);
+      return !isDuplicate;
+    });
+  };
 
   const GetUserBookingHistory = async () => {
     try {
@@ -21,7 +30,9 @@ function MyBooking() {
 
       if (response.ok) {
         const data = await response.json();
-        setBookingHistory(data);
+        const deduplicatedData = deduplicateBookings(data);
+        setBookingHistory(deduplicatedData);
+        console.log('Fetched Booking History:', deduplicatedData); // Log the deduplicated data
         setLoading(false);
       } else {
         const errorData = await response.json();
@@ -46,22 +57,22 @@ function MyBooking() {
 
   return (
     <div className='my-10 mx-5 md:mx-36'>
-      <h2 className='font-bold text-[20px] my-2'>My Bookings</h2>
+      <h2 className='font-bold text-[20px] my-2'>To Do Services</h2>
       <Toaster />
-      <Tabs defaultValue="bookedClient" className="w-full">
+      <Tabs defaultValue="pendingProvider" className="w-full">
         <TabsList className="w-full justify-start">
-          <TabsTrigger value="bookedClient">Booked Services</TabsTrigger>
-          <TabsTrigger value="completedClient">Completed Services</TabsTrigger>
+          <TabsTrigger value="pendingProvider">Pending Services</TabsTrigger>
+          <TabsTrigger value="completedProvider">Completed Services</TabsTrigger>
         </TabsList>
-        <TabsContent value="bookedClient">
-          <BookingHistoryList bookingHistory={bookingHistory} role="client" statuses={['pending', 'declined', 'accepted']} />
+        <TabsContent value="pendingProvider">
+          <BookingHistoryList bookingHistory={bookingHistory} role="provider" statuses={['pending', 'declined', 'accepted']} />
         </TabsContent>
-        <TabsContent value="completedClient">
-          <BookingHistoryList bookingHistory={bookingHistory} role="client" statuses={['completed']} />
+        <TabsContent value="completedProvider">
+          <BookingHistoryList bookingHistory={bookingHistory} role="provider" statuses={['completed']} />
         </TabsContent>
       </Tabs>
     </div>
   );
 }
 
-export default MyBooking;
+export default ToDoServices;

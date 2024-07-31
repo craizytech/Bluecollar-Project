@@ -130,6 +130,7 @@ def view_service_details(service_id):
         "service_name": service.service_name,
         "service_description": service.service_description,
         "category_name": category.category_name if category else None,
+        "provider_id": service.provider_id,
         "provider_name": provider.user_name if provider else None,
         "provider_location": provider.user_location if provider else None,
         "reviews": reviews_list,

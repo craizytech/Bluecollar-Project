@@ -77,18 +77,38 @@ def cancel_booking(booking_id):
 @permission_required(Permissions.VIEW_BOOKINGS)
 def view_user_bookings():
     user_id = get_jwt_identity()
-    bookings = Booking.query.filter_by(client_id=user_id).all()
-    booking_list = [
-        {
+    bookings_as_client = Booking.query.filter_by(client_id=user_id).all()
+    bookings_as_provider = Booking.query.filter_by(provider_id=user_id).all()
+    booking_list = []
+    for booking in bookings_as_client:
+        service = Service.query.get(booking.service_id)
+        provider = User.query.get(booking.provider_id)
+        booking_list.append({
             "booking_id": booking.booking_id,
             "service_id": booking.service_id,
+            "service_name": service.service_name if service else "Unknown Service",
             "provider_id": booking.provider_id,
+            "provider_name": provider.user_name if provider else "Unknown Provider",
             "booking_date": booking.booking_date,
             "status": booking.status,
-            "location": booking.location
-        }
-        for booking in bookings
-    ]
+            "location": booking.location,
+            "role": "client"
+        })
+        
+        for booking in bookings_as_provider:
+            service = Service.query.get(booking.service_id)
+            client = User.query.get(booking.client_id)
+            booking_list.append({
+                "booking_id": booking.booking_id,
+                "service_id": booking.service_id,
+                "service_name": service.service_name if service else "Unknown Service",
+                "client_id": booking.client_id,
+                "client_name": client.user_name if client else "Unkown Client",
+                "booking_date": booking.booking_date,
+                "status": booking.status,
+                "location": booking.location,
+                "role": "provider"
+            })
     return jsonify(booking_list), 200
 
 # Route for providers to accept/decline a booking
@@ -103,7 +123,7 @@ def update_booking_status(booking_id):
     data = request.get_json()
     new_status = data.get('status')
 
-    if new_status not in ["accepted", "declined"]:
+    if new_status not in ["accepted", "declined", "completed"]:
         return jsonify({"error": "Invalid status"}), 400
 
     booking.status = new_status

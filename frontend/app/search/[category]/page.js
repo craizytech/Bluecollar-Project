@@ -1,12 +1,11 @@
-import BusinessList from '@/app/_components/BusinessList'
 import React from 'react'
+import BusinessByCategory from './BusinessByCategory'
 
-function BusinessByCategory() {
+function page({ params }) {
+  const categoryId = params.category
   return (
-    <div>
-        <BusinessList title={'Cleaning'}/>
-    </div>
+    <BusinessByCategory categoryId={categoryId}/>
   )
 }
 
-export default BusinessByCategory
+export default page

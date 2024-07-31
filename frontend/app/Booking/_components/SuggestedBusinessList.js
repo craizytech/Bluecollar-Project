@@ -1,10 +1,10 @@
 "use client";
+import React, { useEffect, useState } from 'react';
+import BookingSection from './BookingSection';
 import { Button } from '@/components/ui/button';
 import { NotebookPen } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
-import BookingSection from './BookingSection';
 
 function SuggestedBusinessList({ serviceId }) {
   const [similarBusinesses, setSimilarBusinesses] = useState([]);
@@ -29,16 +29,13 @@ function SuggestedBusinessList({ serviceId }) {
         if (Array.isArray(data)) {
           setSimilarBusinesses(data);
         } else if (data && typeof data === 'object' && data.similarBusinesses) {
-          console.log('Fetched data contains similarBusinesses key:', data.similarBusinesses);
           setSimilarBusinesses(data.similarBusinesses);
           setProviderId(data.provider_id); // Assuming provider_id is part of the response
         } else {
-          console.error('Unexpected data structure:', data);
           setSimilarBusinesses([]);
         }
 
         setLoading(false);
-        console.log('Similar businesses fetched successfully:', data);
       } catch (error) {
         console.error('Error fetching similar businesses:', error);
         setLoading(false);
@@ -48,12 +45,9 @@ function SuggestedBusinessList({ serviceId }) {
     fetchSimilarBusinesses();
   }, [serviceId]);
 
-  useEffect(() => {
-    console.log('Current state:');
-    console.log('serviceId:', serviceId);
-    console.log('similarBusinesses:', similarBusinesses);
-    console.log('loading:', loading);
-  }, [serviceId, similarBusinesses, loading]);
+  const handleBookingSuccess = () => {
+    console.log('Booking was successful!');
+  };
 
   const filteredBusinesses = Array.isArray(similarBusinesses)
     ? similarBusinesses.filter((business) => business.service_id !== serviceId)
@@ -61,7 +55,7 @@ function SuggestedBusinessList({ serviceId }) {
 
   return (
     <div className='md:pl-10'>
-      <BookingSection serviceId={serviceId} providerId={providerId}>
+      <BookingSection serviceId={serviceId} onBookingSuccess={handleBookingSuccess}>
         <Button className="flex gap-2 w-full">
           <NotebookPen />
           Book Appointment
