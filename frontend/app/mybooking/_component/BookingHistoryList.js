@@ -69,7 +69,10 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
                       <User /> {booking.provider_name}
                     </h2>
                     <div className='text-green-500'>
-                      Service has been completed. Leave a review?
+                      Service has been completed. 
+                      <Link href={`reviews/writeReview?service_id=${booking.service_id}&provider_id=${booking.provider_id}`} className='ml-2 text-blue-500'>
+                      Leave a review?
+                      </Link>
                     </div>
                   </>
                 ) : (
@@ -79,6 +82,9 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
                     </h2>
                     <div className='text-green-500'>
                       Service has been completed.
+                      <Link href={`/reviews/${booking.service_id}`} className='ml-2 text-blue-500'>
+                        View review
+                      </Link>
                     </div>
                   </>
                 )}
