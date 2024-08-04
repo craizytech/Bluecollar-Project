@@ -48,7 +48,7 @@ function ServiceDetails({ serviceId }) {
             <h2 className='font-bold text-[25px]'>Description</h2>
             <p className='mt-4 text-lg text-gray-600'>{serviceDetails.service_description}</p>
 
-            <h2 className='font-bold text-[25px] mt-8'>Gallery</h2>
+            {/* <h2 className='font-bold text-[25px] mt-8'>Gallery</h2>
             <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mt-5'>
                 <Image
                     src='/person3.jpg'
@@ -57,22 +57,28 @@ function ServiceDetails({ serviceId }) {
                     height={200}
                     className='rounded-lg'
                 />
-            </div>
+            </div> */}
 
-            <h2 className='font-bold text-[25px] mt-8'>Reviews</h2>
-            {serviceDetails.reviews.length > 0 ? (
+            <h2 className='font-bold text-2xl mt-16 mb-4 text-gray-800'>Reviews</h2>
+                {serviceDetails.reviews.length > 0 ? (
                 serviceDetails.reviews.map((review, index) => (
-                    <div key={index} className='mt-4'>
-                        <p className='text-lg text-gray-400'>{review.date_of_creation}</p>
-                        <p className='text-lg text-gray-600'><strong>{review.client_name}:</strong> {review.comment}</p>
-                        <p className='text-lg text-gray-600'>
-                            <strong>Rating:</strong> {renderStars(review.rating)}
+                <div key={index} className='bg-white shadow-lg rounded-lg p-4 mt-4 border border-gray-200'>
+                    <p className='text-sm text-gray-500'>{review.date_of_creation}</p>
+                    <div className='mt-2'>
+                        <p className='text-lg text-gray-800 font-semibold'>
+                            <span className='text-primary'>{review.client_name}</span>:
+                        </p>
+                        <p className='text-lg text-gray-700 mt-1'>{review.comment}</p>
+                        <p className='text-lg text-gray-700 mt-2'>
+                            <strong className='text-gray-800'>Rating:</strong> {renderStars(review.rating)}
                         </p>
                     </div>
-                ))
+                </div>
+            ))
             ) : (
-                <p>No reviews available</p>
+                <p className='text-gray-600 mt-4'>No reviews available.</p>
             )}
+
         </div>
     );
 }

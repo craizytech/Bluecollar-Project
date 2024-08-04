@@ -52,8 +52,19 @@ def update_booking(booking_id):
         return jsonify({"error": "Booking not found"}), 404
 
     data = request.get_json()
-    booking.booking_date = data.get('booking_date', booking.booking_date)
+    
+     # Convert ISO date string to a Python date object
+    booking_date_str = data.get('booking_date')
+    if booking_date_str:
+        try:
+            # Parse the ISO string into a datetime object and extract the date
+            booking_date = datetime.fromisoformat(booking_date_str.replace('Z', '+00:00')).date()
+            booking.booking_date = booking_date
+        except ValueError:
+            return jsonify({"error": "Invalid date format"}), 400
+        
     booking.location = data.get('location', booking.location)
+    
 
     db.session.commit()
     return jsonify({"message": "Booking updated successfully"}), 200
@@ -129,3 +140,37 @@ def update_booking_status(booking_id):
     booking.status = new_status
     db.session.commit()
     return jsonify({"message": "Booking status updated successfully"}), 200
+
+
+# Route to fetch all booked dates for a specific provider
+@bookings_bp.route('/booked-dates', methods=['GET'])
+@jwt_required()
+def get_booked_dates():
+    provider_id = request.args.get('providerId')
+    
+    if not provider_id:
+        return jsonify({"error": "Missing providerId parameter"}), 400
+
+    bookings = Booking.query.with_entities(Booking.booking_date).filter_by(provider_id=provider_id).all()
+    booked_dates = [booking.booking_date.isoformat() for booking in bookings]
+    return jsonify({"bookedDates": booked_dates}), 200
+
+# Route to check if a date is booked
+@bookings_bp.route('/check', methods=['GET'])
+@jwt_required()
+def check_date_booked():
+    date_str = request.args.get('date')
+    
+    if not date_str:
+        return jsonify({"error": "Missing date parameter"}), 400
+
+    try:
+        # Convert the date string to a datetime object
+        date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+    except ValueError:
+        return jsonify({"error": "Invalid date format"}), 400
+
+    # Query to check if there's any booking on the given date
+    is_booked = Booking.query.filter_by(booking_date=date).first() is not None
+
+    return jsonify({"isBooked": is_booked}), 200

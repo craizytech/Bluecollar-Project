@@ -1,4 +1,8 @@
+"use client";
 import React, { useEffect, useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFile, faImage } from '@fortawesome/free-solid-svg-icons';
+import { format, isSameDay } from 'date-fns';
 
 function ChatComponent({ userId, receiverId }) { 
   const [chats, setChats] = useState([]);
@@ -8,6 +12,10 @@ function ChatComponent({ userId, receiverId }) {
   const [receiverProfilePicture, setReceiverProfilePicture] = useState('');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [image, setImage] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+
 
   useEffect(() => {
     const fetchChatHistory = async () => {
@@ -58,6 +66,7 @@ function ChatComponent({ userId, receiverId }) {
 
     if (userId && receiverId) {
       fetchChatHistory();
+
     }
   }, [userId, receiverId]);
 
@@ -107,6 +116,59 @@ function ChatComponent({ userId, receiverId }) {
     }
   };
 
+  const handleFileChange = (event) => {
+    const selectedFile = event.target.files[0];
+    setFile(selectedFile);
+
+    if (selectedFile) {
+      setFilePreview(URL.createObjectURL(selectedFile));
+    }
+  };
+
+  const handleImageChange = (event) => {
+    const selectedImage = event.target.files[0];
+    setImage(selectedImage);
+
+    if (selectedImage) {
+      setImagePreview(URL.createObjectURL(selectedImage));
+    }
+  };
+
+
+  const renderChats = () => {
+    let lastDate = null;
+
+    return chats.map((chat) => {
+      const chatDate = new Date(chat.date_of_creation);
+      const isNewDate = !lastDate || !isSameDay(chatDate, lastDate);
+      lastDate = chatDate;
+      const formattedDate = format(chatDate, 'MMMM d, yyyy');
+
+      const isUserMessage = chat.sent_from && chat.sent_from.toString() === userId.toString();
+      const messageAlignment = isUserMessage ? 'self-end text-right bg-green-200' : 'self-start text-left bg-blue-100';
+
+      return (
+        <React.Fragment key={chat.chat_id}>
+          {isNewDate && (
+            <div className="flex justify-center my-2">
+              <span className="px-4 py-2 bg-gray-200 rounded-full">{formattedDate}</span>
+            </div>
+          )}
+          <div
+            className={`flex flex-col mb-4 p-4 rounded-lg ${messageAlignment}`}
+            style={{ maxWidth: '75%', wordWrap: 'break-word' }} // Adjust the width based on content
+          >
+            <p className="m-0">{chat.message}</p>
+            <div className="text-sm text-gray-500 mt-1">
+              {isUserMessage && chat.status === 'sent' && <span>Sent</span>}
+            </div>
+            <span className="text-sm text-gray-500">{new Date(chat.date_of_creation).toLocaleTimeString()}</span>
+          </div>
+        </React.Fragment>
+      );
+    });
+  };
+
   return (
     <div className="flex flex-col max-h-500 overflow-y-auto border border-gray-300 bg-gray-100">
       {loading && <p>Loading chat history...</p>}
@@ -120,25 +182,25 @@ function ChatComponent({ userId, receiverId }) {
         </div>
       </div>
       <div className="flex-1 p-4 overflow-y-auto flex flex-col">
-        {chats.map((chat) => {
-          const isUserMessage = chat.sent_from.toString() === userId.toString();
-          const messageAlignment = isUserMessage ? 'self-end text-right bg-green-200' : 'self-start text-left bg-blue-100';
-
-          return (
-            <div
-              key={chat.chat_id}
-              className={`flex flex-col mb-4 p-4 rounded-lg ${messageAlignment}`}
-              style={{ maxWidth: '75%', wordWrap: 'break-word' }} // Adjust the width based on content
-            >
-              <p className="m-0">{chat.message}</p>
-              <div className="text-sm text-gray-500 mt-1">
-                {isUserMessage && chat.status === 'sent' && <span>Sent</span>}
-              </div>
-              <span className="text-sm text-gray-500">{new Date(chat.date_of_creation).toLocaleTimeString()}</span>
-            </div>
-          );
-        })}
+        {renderChats()}
       </div>
+
+      {/* Display file preview */}
+      {filePreview && (
+          <div className="my-2">
+            <p>File Selected:</p>
+            <a href={filePreview} download>{filePreview}</a>
+          </div>
+        )}
+
+        {/* Display image preview */}
+        {imagePreview && (
+          <div className="my-2">
+            <p>Image Selected:</p>
+            <img src={imagePreview} alt="Selected preview" className="max-w-full h-auto" />
+          </div>
+        )}
+
       <div className="flex p-4 border-t border-gray-300 bg-white">
         <input
           type="text"
@@ -147,6 +209,28 @@ function ChatComponent({ userId, receiverId }) {
           placeholder="Type a message..."
           className="flex-1 p-2 border border-gray-300 rounded-lg mr-2"
         />
+
+        <label htmlFor="file-upload" className="cursor-pointer">
+          <FontAwesomeIcon icon={faFile} size="lg" className="mr-2" />
+          <input
+            id="file-upload"
+            type="file"
+            accept="*/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        </label>
+        <label htmlFor="image-upload" className="cursor-pointer">
+          <FontAwesomeIcon icon={faImage} size="lg" className="mr-2" />
+          <input
+            id="image-upload"
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="hidden"
+          />
+        </label>
+
         <button
           onClick={handleSendMessage}
           disabled={sending}

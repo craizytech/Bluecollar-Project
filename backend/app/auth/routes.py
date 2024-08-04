@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from app.extensions import db
 from app.models import User
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -58,3 +58,12 @@ def login():
             ), 200
     else:
         return jsonify({"error": "Invalid credentials"}), 401
+    
+@auth_bp.route('/check-session', methods=['GET'])
+@jwt_required()
+def check_session():
+    current_user = get_jwt_identity()
+    if current_user:
+        return jsonify({"message": "Session is valid"}), 200
+    else:
+        return jsonify({"message": "Session expired"}), 401

@@ -61,7 +61,12 @@ def update_profile():
         user.user_phone_number = data.get('user_phone_number', user.user_phone_number)
         user.user_address = data.get('user_address', user.user_address)
         user.user_location = data.get('user_location', user.user_location)
-        user.user_profile_picture = data.get('user_profile_picture', user.user_profile_picture)
+       
+        # Update user_profile_picture only if provided
+        user_profile_picture = data.get('user_profile_picture')
+        if user_profile_picture is not None:
+            user.user_profile_picture = user_profile_picture
+            
         db.session.commit()
         return jsonify({"message": "Profile updated successfully"}), 200
     return jsonify({"error": "User not found"}), 404

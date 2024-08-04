@@ -3,12 +3,12 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Clock, Mail, MapPin, Phone, Share, User } from 'lucide-react';
-import { useCategory } from '@/app/context/CategoryContext';
+import { useCategory } from '@/app/context/CategoryContext'; // Adjust the path as necessary
 
 function UserProfile({ setServiceId }) {
     const searchParams = useSearchParams();
     const serviceId = searchParams.get('serviceId');
-    const { categoryId } = useCategory();
+    const { setCategoryId } = useCategory();
     const [providerDetails, setProviderDetails] = useState({});
     const [serviceDetails, setServiceDetails] = useState({});
     const [loading, setLoading] = useState(true);
@@ -27,7 +27,6 @@ function UserProfile({ setServiceId }) {
                 }
 
                 const SERVICE_DETAILS_URL = `http://localhost:5000/api/services/${serviceId}`;
-                console.log('Fetching service details from:', SERVICE_DETAILS_URL);
 
                 const serviceResponse = await fetch(SERVICE_DETAILS_URL, {
                     method: 'GET',
@@ -40,19 +39,41 @@ function UserProfile({ setServiceId }) {
                 if (serviceResponse.ok) {
                     const serviceData = await serviceResponse.json();
                     console.log('Service details fetched:', serviceData);
+
                     setServiceDetails(serviceData);
 
-                    setProviderDetails({
-                        provider_name: serviceData.provider_name,
-                        provider_location: serviceData.provider_location,
-                        provider_email: serviceData.provider_email,
-                        provider_phone_number: serviceData.provider_phone_number,
-                        provider_profile_picture: serviceData.provider_profile_picture,
+                    // Fetch provider details using providerId
+                    const PROVIDER_PROFILE_URL = `http://localhost:5000/api/users/profile/${serviceData.provider_id}`;
+                    const providerResponse = await fetch(PROVIDER_PROFILE_URL, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        }
                     });
 
-                    setServiceId(serviceId); 
-            
+                    if (providerResponse.ok) {
+                        const providerData = await providerResponse.json();
+                        console.log('Provider details fetched:', providerData);
 
+                        setProviderDetails({
+                            provider_name: providerData.user_name,
+                            provider_location: providerData.user_location,
+                            provider_email: providerData.user_email,
+                            provider_phone_number: providerData.user_phone_number,
+                            provider_profile_picture: providerData.user_profile_picture,
+                        });
+
+                        setServiceId(serviceId); 
+
+                        if (serviceData.category_id) {
+                            setCategoryId(serviceData.category_id);
+                        } else {
+                            console.log('CategoryId is not available in service data.');
+                        }                    
+                    } else {
+                        console.error('Failed to fetch provider profile:', providerResponse.statusText);
+                    }
                 } else {
                     console.error('Failed to fetch service details:', serviceResponse.statusText);
                 }
@@ -64,7 +85,7 @@ function UserProfile({ setServiceId }) {
         }
 
         fetchData();
-    }, [serviceId]);
+    }, [serviceId, setServiceId, setCategoryId]);
 
     if (loading) {
         return <div>Loading...</div>;
@@ -89,9 +110,6 @@ function UserProfile({ setServiceId }) {
                     <h2 className='text-primary p-1 px-3 text-lg bg-purple-100 rounded-full'>
                         {serviceDetails.category_name || 'Not available'}
                     </h2>
-                    {/* <h2 className='text-primary p-1 px-3 text-lg bg-purple-100 rounded-full'>
-                        {serviceId || 'Service ID not available'}
-                    </h2> */}
                     <h3 className='text-[20px] font-bold'>{serviceDetails.service_name}</h3>
 
                     <h2 className='flex gap-2 text-lg text-gray-500'>

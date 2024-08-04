@@ -21,7 +21,7 @@ def write_review():
     client_id = get_jwt_identity()
     
      # Check if the user has already reviewed this service
-    existing_review = Review.query.filter_by(service_id=service_id, client_id=client_id).first()
+    existing_review = Review.query.filter_by(service_id=service_id, provider_id=provider_id, client_id=client_id).first()
     if existing_review:
         return jsonify({"msg": "You have already submitted a review for this service"}), 400
     

@@ -8,6 +8,7 @@ function Header() {
   const [userEmail, setUserEmail] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [newMessage, setNewMessage] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -30,6 +31,10 @@ function Header() {
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
+
+    if (newMessage) {
+      setNewMessage(false);
+    }
   };
 
   const isServiceProvider = () => {
@@ -74,7 +79,10 @@ function Header() {
                     </li>
                   )}
                   <li>
-                    <Link href="/chat" className="block px-4 py-2 hover:bg-gray-100">Messages</Link>
+                    <Link href="/chat" className="block px-4 py-2 hover:bg-gray-100">
+                    Messages
+                    {newMessage && <span className="bg-red-500 text-white rounded-full w-3 h-3 inline-block ml-2"></span>}
+                    </Link>
                   </li>
                   <li>
                     <Link href="/settings" className="block px-4 py-2 hover:bg-gray-100">Settings</Link>

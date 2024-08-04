@@ -1,18 +1,22 @@
 "use client";
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
-import CategoryContext from '@/app/context/CategoryContext';
+import { CategoryContext } from '@/app/context/CategoryContext';
 
 function ServiceProvider() {
   const [userId, setUserId] = useState('');
   const [email, setEmail] = useState('');
   const [categories, setCategories] = useState([]);
   const [services, setServices] = useState([]);
-  const { categoryId, setCategoryId } = useContext(CategoryContext); // Use the context
+  const context = useContext(CategoryContext);
+
+  if (!context) {
+    console.error('CategoryContext is not available');
+    return null;
+  }
+
+  const { categoryId, setCategoryId } = context;
   const [selectedService, setSelectedService] = useState('');
-  const [showNewServiceForm, setShowNewServiceForm] = useState(false);
-  const [newServiceName, setNewServiceName] = useState('');
-  const [newServiceDescription, setNewServiceDescription] = useState('');
   const [message, setMessage] = useState('');
 
   useEffect(() => {
@@ -31,7 +35,7 @@ function ServiceProvider() {
         });
 
         setEmail(response.data.user_email);
-        setUserId(response.data.user_id); // Assuming the response contains user_id
+        setUserId(response.data.user_id);
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
@@ -56,6 +60,7 @@ function ServiceProvider() {
     const fetchServices = async () => {
       if (categoryId) {
         try {
+          console.log('Fetching services for categoryId:', categoryId);
           const response = await axios.get(`http://localhost:5000/api/services/category/${categoryId}`);
           setServices(response.data);
         } catch (error) {
@@ -68,63 +73,8 @@ function ServiceProvider() {
   }, [categoryId]);
 
   const handleApply = async (e) => {
-    // e.preventDefault();
-
-    // try {
-    //   const token = localStorage.getItem('access_token');
-    //   if (!token) {
-    //     throw new Error('No token found');
-    //   }
-
-    //   const data = {
-    //     email,
-    //     category_id: categoryId,
-    //     service_id: selectedService
-    //   };
-
-    //   const response = await axios.post('http://localhost:5000/api/apply-provider', data, {
-    //     headers: {
-    //       Authorization: `Bearer ${token}`
-    //     }
-    //   });
-
-      setMessage('Your application has been submitted. Please wait for approval by the admin.');
-    // } catch (error) {
-    //   console.error('Error submitting application:', error);
-    //   setMessage('There was an error submitting your application. Please try again.');
-    // }
-  };
-
-  const handleCreateService = async (e) => {
     e.preventDefault();
-
-    try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        throw new Error('No token found');
-      }
-
-      const data = {
-        service_name: newServiceName,
-        service_description: newServiceDescription,
-        category_id: categoryId,
-        provider_id: userId
-      };
-
-      await axios.post('http://localhost:5000/api/services/create', data, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      setMessage('Your service creation request has been submitted. Please wait for approval by the admin.');
-      setNewServiceName('');
-      setNewServiceDescription('');
-      setShowNewServiceForm(false);
-    } catch (error) {
-      console.error('Error creating service:', error);
-      setMessage('There was an error creating the service. Please try again.');
-    }
+    setMessage('Your application has been submitted. Please wait for approval by the admin.');
   };
 
   return (
@@ -148,7 +98,7 @@ function ServiceProvider() {
             id="category"
             name="category"
             className="w-full px-3 py-2 border rounded-md"
-            value={categoryId}
+            value={categoryId || ''}
             onChange={(e) => setCategoryId(e.target.value)}
           >
             <option value="">Select a category</option>
@@ -166,14 +116,7 @@ function ServiceProvider() {
             name="service"
             className="w-full px-3 py-2 border rounded-md"
             value={selectedService}
-            onChange={(e) => {
-              if (e.target.value === 'new') {
-                setShowNewServiceForm(true);
-              } else {
-                setShowNewServiceForm(false);
-                setSelectedService(e.target.value);
-              }
-            }}
+            onChange={(e) => setSelectedService(e.target.value)}
             disabled={!categoryId}
           >
             <option value="">Select a service</option>
@@ -182,42 +125,8 @@ function ServiceProvider() {
                 {service.service_name}
               </option>
             ))}
-            <option value="new" className='text-green-500'>Add New Service</option>
           </select>
         </div>
-        {showNewServiceForm && (
-          <div className="mb-4">
-            <h3 className="text-lg font-bold mb-2">New Service</h3>
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2" htmlFor="newServiceName">Service Name</label>
-              <input
-                type="text"
-                id="newServiceName"
-                name="newServiceName"
-                className="w-full px-3 py-2 border rounded-md"
-                value={newServiceName}
-                onChange={(e) => setNewServiceName(e.target.value)}
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2" htmlFor="newServiceDescription">Service Description</label>
-              <textarea
-                id="newServiceDescription"
-                name="newServiceDescription"
-                className="w-full px-3 py-2 border rounded-md"
-                value={newServiceDescription}
-                onChange={(e) => setNewServiceDescription(e.target.value)}
-              />
-            </div>
-            <button
-              type="button"
-              className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition duration-300"
-              onClick={handleCreateService}
-            >
-              Request Service Creation
-            </button>
-          </div>
-        )}
         <div className="mb-6">
           <button
             type="submit"
