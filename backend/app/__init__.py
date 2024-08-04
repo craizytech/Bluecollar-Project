@@ -26,7 +26,7 @@ def create_app(config_name='default'):
     from app.invoices import invoices_bp
     from app.bookings import bookings_bp
     from app.reviews import reviews_bp
-    from .categories import register_categories_blueprint
+    from app.categories import categories_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(users_bp, url_prefix='/api/users')
@@ -36,7 +36,7 @@ def create_app(config_name='default'):
     app.register_blueprint(invoices_bp, url_prefix='/api/invoices')
     app.register_blueprint(bookings_bp, url_prefix='/api/bookings')
     app.register_blueprint(reviews_bp, url_prefix='/api/reviews')
-    register_categories_blueprint(app)
+    app.register_blueprint(categories_bp, url_prefix='/api/categories')
 
 
     return app

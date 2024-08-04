@@ -1,5 +1,6 @@
 from datetime import datetime
 from app.extensions import db
+from sqlalchemy.orm import validates
 
 class Permissions:
     # All users
@@ -54,6 +55,12 @@ class User(db.Model):
     
     # One-to-Many relationship with Services (as a provider)
     services_provided = db.relationship('Service', backref='provider', lazy=True)
+    invoices = db.relationship('Invoice', foreign_keys='Invoice.user_id', backref='user', lazy=True)
+
+    @validates('user_email')
+    def validate_email(self, key, address):
+        assert '@' in address, "Provided email is not valid"
+        return address
 
 class ServiceCategory(db.Model):
     __tablename__ = 'service_categories'
@@ -87,12 +94,14 @@ class Chat(db.Model):
 class Invoice(db.Model):
     __tablename__ = 'invoices'
     invoice_id = db.Column(db.Integer, primary_key=True)
-    date_of_creation = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
     service_cost = db.Column(db.Float, nullable=False)
     booking_id = db.Column(db.Integer, db.ForeignKey('bookings.booking_id'), nullable=False)
- 
+    status = db.Column(db.String(50), default='pending')
+    date_of_creation = db.Column(db.DateTime, default=datetime.utcnow)
+    
     # One-to-One relationship with Booking
-    booking = db.relationship('Booking', backref='invoice', uselist=False)
+    booking = db.relationship('Booking', back_populates='invoice', uselist=False)
 
 class Booking(db.Model):
     __tablename__ = 'bookings'
@@ -103,6 +112,9 @@ class Booking(db.Model):
     booking_date = db.Column(db.Date, nullable=False)
     status = db.Column(db.String(20), nullable=False)
     location = db.Column(db.String(256), nullable=False)
+    
+    # One-to-One relationship with Invoice
+    invoice = db.relationship('Invoice', back_populates='booking', uselist=False)
 
 class Review(db.Model):
     __tablename__ = 'reviews'
