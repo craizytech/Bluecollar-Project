@@ -4,8 +4,7 @@ from app.models import User, Chat, Permissions
 from app.utils.permissions import permission_required
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
-
-chats_bp = Blueprint('chats', __name__)
+from app.chats import chats_bp
 
 # Send a chat message
 @chats_bp.route('/send', methods=['POST'])
@@ -31,35 +30,13 @@ def send_message():
         status='sent'
     )
     
-    db.session.add(chat)
-    db.session.commit()
-
-    return jsonify({'message': 'Message sent successfully'}), 201
-
-# Retrieve the user's chat history
-# @chats_bp.route('/history/<int:user_id>', methods=['GET'])
-# @jwt_required()
-# @permission_required(Permissions.CHAT)
-# def chat_history(user_id):
-#     current_user_id = get_jwt_identity()
-
-#     if current_user_id != user_id:
-#         return jsonify({'error': 'You can only view your own chat history.'}), 403
-
-#     chats = Chat.query.filter(
-#         (Chat.sent_from == current_user_id) | (Chat.sent_to == current_user_id)
-#     ).order_by(Chat.date_of_creation).all()
-
-#     chat_history = [{
-#         'chat_id': chat.chat_id,
-#         'sent_from': chat.sent_from,
-#         'sent_to': chat.sent_to,
-#         'message': chat.message,
-#         'date_of_creation': chat.date_of_creation,
-#         'status': chat.status
-#     } for chat in chats]
-
-#     return jsonify(chat_history), 200
+    try:
+        db.session.add(chat)
+        db.session.commit()
+        return jsonify({'message': 'Message sent successfully'}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 # Retrieve the user's chat history with a specific receiver
 @chats_bp.route('/history', methods=['GET'])
@@ -67,7 +44,8 @@ def send_message():
 @permission_required(Permissions.CHAT)
 def chat_history():
     current_user_id = get_jwt_identity()
-    receiver_id = request.args.get('receiver_id', type=int)
+    data = request.get_json()
+    receiver_id = data.get('receiver_id')
 
     if not receiver_id:
         return jsonify({'error': 'Missing receiver_id'}), 400
@@ -88,7 +66,6 @@ def chat_history():
 
     return jsonify(chat_history), 200
 
-
 # Retrieve the list of chat partners
 @chats_bp.route('/partners', methods=['GET'])
 @jwt_required()
@@ -96,12 +73,10 @@ def chat_history():
 def get_chat_partners():
     current_user_id = get_jwt_identity()
 
-    # Retrieve all distinct chat partners
     chat_partners = Chat.query.filter(
         (Chat.sent_from == current_user_id) | (Chat.sent_to == current_user_id)
     ).distinct(Chat.sent_from, Chat.sent_to).all()
 
-    # Extract unique partners
     partners = set()
     for chat in chat_partners:
         if chat.sent_from != current_user_id:

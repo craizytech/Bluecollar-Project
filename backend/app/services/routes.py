@@ -3,8 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import Service, ServiceCategory, Review, User, Permissions
 from app.extensions import db
 from app.utils.decorators import permission_required
-
-services_bp = Blueprint('services', __name__)
+from app.services import services_bp
 
 # Helper function to validate required fields
 def validate_fields(data, required_fields):
@@ -32,10 +31,13 @@ def create_service():
         provider_id=data['provider_id']
     )
 
-    db.session.add(service)
-    db.session.commit()
-
-    return jsonify({"message": "Service created successfully"}), 201
+    try:
+        db.session.add(service)
+        db.session.commit()
+        return jsonify({"message": "Service created successfully"}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 # Route to update a service
 @services_bp.route('/<int:service_id>', methods=['PUT'])
@@ -52,8 +54,12 @@ def update_service(service_id):
     service.category_id = data.get('category_id', service.category_id)
     service.provider_id = data.get('provider_id', service.provider_id)
 
-    db.session.commit()
-    return jsonify({"message": "Service updated successfully"}), 200
+    try:
+        db.session.commit()
+        return jsonify({"message": "Service updated successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 # Route to delete a service
 @services_bp.route('/<int:service_id>', methods=['DELETE'])
@@ -64,66 +70,77 @@ def delete_service(service_id):
     if not service:
         return jsonify({"error": "Service not found"}), 404
 
-    db.session.delete(service)
-    db.session.commit()
-    return jsonify({"message": "Service deleted successfully"}), 200
+    try:
+        db.session.delete(service)
+        db.session.commit()
+        return jsonify({"message": "Service deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 # Route to view services by category
 @services_bp.route('/category/<int:category_id>', methods=['GET'])
 def view_services_by_category(category_id):
-    services = Service.query.filter_by(category_id=category_id).all()
-    service_list = [
-        {
-            "service_id": service.service_id,
-            "service_name": service.service_name,
-            "service_description": service.service_description,
-            "category_id": service.category_id,
-            "provider_id": service.provider_id
-        }
-        for service in services
-    ]
-    return jsonify(service_list), 200
+    try:
+        services = Service.query.filter_by(category_id=category_id).all()
+        service_list = [
+            {
+                "service_id": service.service_id,
+                "service_name": service.service_name,
+                "service_description": service.service_description,
+                "category_id": service.category_id,
+                "provider_id": service.provider_id
+            }
+            for service in services
+        ]
+        return jsonify(service_list), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # Route to view all services
 @services_bp.route('/all', methods=['GET'])
 def view_all_services():
-    services = Service.query.all()
-    service_list = [
-        {
-            "service_id": service.service_id,
-            "service_name": service.service_name,
-            "service_description": service.service_description,
-            "category_id": service.category_id,
-            "provider_id": service.provider_id
-        }
-        for service in services
-    ]
-    return jsonify(service_list), 200
+    try:
+        services = Service.query.all()
+        service_list = [
+            {
+                "service_id": service.service_id,
+                "service_name": service.service_name,
+                "service_description": service.service_description,
+                "category_id": service.category_id,
+                "provider_id": service.provider_id
+            }
+            for service in services
+        ]
+        return jsonify(service_list), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # Route to view a specific service with detailed information
 @services_bp.route('/<int:service_id>', methods=['GET'])
 def view_service_details(service_id):
-    service = Service.query.get(service_id)
-    if not service:
-        return jsonify({"error": "Service not found"}), 404
+    try:
+        service = Service.query.get(service_id)
+        if not service:
+            return jsonify({"error": "Service not found"}), 404
 
-    category = ServiceCategory.query.get(service.category_id)
-    provider = User.query.get(service.provider_id)
-    reviews = Review.query.filter_by(service_id=service.service_id).all()
-    
-    reviews_list = [
-        {
-            "review_id": review.review_id,
-            "client_id": review.client_id,
-            "client_name": User.query.get(review.client_id).user_name,
-            "rating": review.rating,
-            "comment": review.comment,
-            "date_of_creation": review.date_of_creation
-        }
-        for review in reviews
-    ]
-    
-    average_rating = sum(review.rating for review in reviews) / len(reviews) if reviews else None
+        category = ServiceCategory.query.get(service.category_id)
+        provider = User.query.get(service.provider_id)
+        reviews = Review.query.filter_by(service_id=service.service_id).all()
+        
+        reviews_list = [
+            {
+                "review_id": review.review_id,
+                "client_id": review.client_id,
+                "client_name": User.query.get(review.client_id).user_name,
+                "rating": review.rating,
+                "comment": review.comment,
+                "date_of_creation": review.date_of_creation
+            }
+            for review in reviews
+        ]
+        
+        average_rating = sum(review.rating for review in reviews) / len(reviews) if reviews else None
 
     service_details = {
         "service_id": service.service_id,

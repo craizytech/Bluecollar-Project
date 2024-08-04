@@ -1,11 +1,12 @@
 from flask import Blueprint, jsonify
-
 from app.models import ServiceCategory
+from app.categories import categories_bp
 
-categories_bp = Blueprint('categories', __name__)
-
-@categories_bp.route('/api/categories/all', methods=['GET'])
+@categories_bp.route('/all', methods=['GET'])
 def get_categories():
-    categories = ServiceCategory.query.all()
-    categories_list = [{'id': category.category_id, 'name': category.category_name} for category in categories]
-    return jsonify(categories_list)
+    try:
+        categories = ServiceCategory.query.all()
+        categories_list = [{'id': category.category_id, 'name': category.category_name} for category in categories]
+        return jsonify(categories_list), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

@@ -3,8 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import User, Permissions
 from app.extensions import db
 from app.utils.decorators import permission_required
-
-users_bp = Blueprint('users', __name__)
+from app.users import users_bp
 
 def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -70,11 +69,3 @@ def update_profile():
         db.session.commit()
         return jsonify({"message": "Profile updated successfully"}), 200
     return jsonify({"error": "User not found"}), 404
-
-
-# Route to perform an admin action
-@users_bp.route('/admin-action', methods=['POST'])
-@jwt_required()
-@permission_required(Permissions.ADD_USERS)
-def admin_action():
-    return jsonify({"message": "Admin action performed"}), 200
