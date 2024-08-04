@@ -15,7 +15,7 @@ def get_invoices():
         {
             "invoice_id": invoice.invoice_id,
             "user_id": invoice.user_id,
-            "amount": invoice.amount,
+            "service_cost": invoice.service_cost,
             "status": invoice.status,
             "date_of_creation": invoice.date_of_creation
         }
@@ -29,7 +29,7 @@ def get_invoices():
 @permission_required(Permissions.GENERATE_INVOICE)
 def create_invoice():
     data = request.get_json()
-    required_fields = ['user_id', 'amount']
+    required_fields = ['user_id', 'service_cost', 'booking_id']
 
     # Validate required fields
     for field in required_fields:
@@ -38,7 +38,8 @@ def create_invoice():
 
     invoice = Invoice(
         user_id=data['user_id'],
-        amount=data['amount'],
+        service_cost=data['service_cost'],
+        booking_id=data['booking_id'],
         status=data.get('status', 'pending'),  # Default status to 'pending'
         date_of_creation=datetime.utcnow()
     )
@@ -52,14 +53,14 @@ def create_invoice():
         return jsonify({"error": str(e)}), 500
 
 # Route to update an existing invoice
-@invoices_bp.route('/invoices/<int:invoice_id>', methods=['PUT'])
+@invoices_bp.route('/<int:invoice_id>', methods=['PUT'])
 @jwt_required()
 @permission_required(Permissions.GENERATE_INVOICE)
 def update_invoice(invoice_id):
     invoice = Invoice.query.get_or_404(invoice_id)
     data = request.get_json()
 
-    invoice.amount = data.get('amount', invoice.amount)
+    invoice.service_cost = data.get('service_cost', invoice.service_cost)
     invoice.status = data.get('status', invoice.status)
 
     try:
@@ -92,7 +93,7 @@ def get_invoice(invoice_id):
     invoice_data = {
         "invoice_id": invoice.invoice_id,
         "user_id": invoice.user_id,
-        "amount": invoice.amount,
+        "service_cost": invoice.service_cost,
         "status": invoice.status,
         "date_of_creation": invoice.date_of_creation
     }
