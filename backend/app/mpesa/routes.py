@@ -6,16 +6,18 @@ from datetime import datetime
 from app.mpesa import mpesa_bp
 from app.utils.decorators import permission_required
 from app.extensions import db
+from app.config import Config
+import time  # Import the time module
 
 # Constants
-SHORT_CODE = "174379"
-PASSKEY = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
-CONSUMER_KEY = "1O1lSMa6wDIf5ymXEB6mTiWr2E3MwDbbCebC8rjDvO84DZdG"
-CONSUMER_SECRET = "CGmcveiwMdGLt2d081Ied7vWMTYZtNqxQaIT5G0sa1yLRvS88okA1NfqqILHo8SK"
-CALLBACK_URL = "https://aee9-41-89-227-171.ngrok-free.app/api/mpesa/callback"
-TRANSACTION_TYPE = "CustomerPayBillOnline"
-ACCOUNT_REFERENCE = "Bluecollar app"
-TRANSACTION_DESC = "test"
+SHORT_CODE = Config.SHORT_CODE
+PASSKEY = Config.PASSKEY
+CONSUMER_KEY = Config.CONSUMER_KEY
+CONSUMER_SECRET = Config.CONSUMER_SECRET
+CALLBACK_URL = Config.CALLBACK_URL
+TRANSACTION_TYPE = Config.TRANSACTION_TYPE
+ACCOUNT_REFERENCE = Config.ACCOUNT_REFERENCE
+TRANSACTION_DESC = Config.TRANSACTION_DESC
 
 def get_timestamp():
     return datetime.now().strftime('%Y%m%d%H%M%S')
@@ -66,6 +68,22 @@ def stk_push_payment(access_token, phone_number, amount, callback_url, business_
     except requests.exceptions.RequestException as e:
         return {"error": str(e)}
 
+def confirm_pay(access_token, checkout_request_id):
+    payload = {
+        "BusinessShortCode": SHORT_CODE,
+        "Password": generate_stk_password(SHORT_CODE, PASSKEY, get_timestamp()),
+        "Timestamp": get_timestamp(),
+        "CheckoutRequestID": checkout_request_id
+    }
+    headers = {'Authorization': f"Bearer {access_token}", 'Content-Type': "application/json"}
+    saf_url = "https://sandbox.safaricom.co.ke/mpesa/stkpushquery/v1/query"
+    try:
+        response = requests.post(saf_url, headers=headers, json=payload)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        return {"error": str(e)}
+
 @mpesa_bp.route('/')
 def home():
     return "M-Pesa Integration with Flask"
@@ -78,5 +96,12 @@ def pay():
     
     access_token = generate_access_token(CONSUMER_KEY, CONSUMER_SECRET)
     response = stk_push_payment(access_token, phone_number, amount, CALLBACK_URL, SHORT_CODE, PASSKEY)
+    time.sleep(15)
 
+    if response.get("ResponseCode") == "0":
+        checkout_request_id = response.get("CheckoutRequestID")
+        # time.sleep(15)
+        confirm_response = confirm_pay(access_token, checkout_request_id)
+        return jsonify(confirm_response)
+    
     return jsonify(response)
