@@ -142,18 +142,20 @@ def view_service_details(service_id):
         
         average_rating = sum(review.rating for review in reviews) / len(reviews) if reviews else None
 
-    service_details = {
-        "service_id": service.service_id,
-        "service_name": service.service_name,
-        "service_description": service.service_description,
-        "category_id": category.category_id,
-        "category_name": category.category_name if category else None,
-        "provider_id": service.provider_id,
-        "provider_name": provider.user_name if provider else None,
-        "provider_location": provider.user_location if provider else None,
-        "reviews": reviews_list,
-        "average_rating": average_rating
-    }
-    
-    return jsonify(service_details), 200
+        service_details = {
+            "service_id": service.service_id,
+            "service_name": service.service_name,
+            "service_description": service.service_description,
+            "category_id": category.category_id,
+            "category_name": category.category_name if category else None,
+            "provider_id": service.provider_id,
+            "provider_name": provider.user_name if provider else None,
+            "provider_location": provider.user_location if provider else None,
+            "reviews": reviews_list,
+            "average_rating": average_rating
+        }
+        
+        return jsonify(service_details), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 

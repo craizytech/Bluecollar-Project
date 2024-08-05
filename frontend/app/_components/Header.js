@@ -1,7 +1,7 @@
 "use client";
 import Image from 'next/image';
 import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 function Header() {
@@ -10,6 +10,7 @@ function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [newMessage, setNewMessage] = useState(false);
   const router = useRouter();
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     const email = typeof window !== 'undefined' ? localStorage.getItem('user_email') : null;
@@ -17,6 +18,24 @@ function Header() {
     setUserEmail(email);
     setUserRole(role);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   const userInitial = userEmail ? userEmail.charAt(0).toUpperCase() : '';
 
@@ -38,15 +57,11 @@ function Header() {
   };
 
   const isServiceProvider = () => {
-    if (typeof window !== 'undefined') {
-      const userRole = localStorage.getItem('user_role');
-      return userRole === '2';
-    }
-    return false;
+    return userRole === '2';
   };
 
   return (
-    <div className="p-5 shadow-sm flex justify-between">
+    <div className="p-5 shadow-sm flex justify-between items-center">
       <div className="flex items-center gap-8">
         <Image src='/logo.svg' alt='logo' width={180} height={100} />
         <div className="md:flex items-center gap-6 hidden">
@@ -58,38 +73,46 @@ function Header() {
       <div className="flex items-center gap-4 relative">
         {userEmail ? (
           <>
-            <button
-              className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center"
-              onClick={toggleDropdown}
-            >
-              {userInitial}
-            </button>
-            {dropdownOpen && (
-              <div className="absolute right-0 w-48 bg-white shadow-lg rounded-lg mt-64">
-                <ul className="list-none p-2">
-                  <li>
-                    <Link href="/profile" className="block px-4 py-2 hover:bg-gray-100">Profile</Link>
-                  </li>
-                  <li>
-                    <Link href="/mybooking" className="block px-4 py-2 hover:bg-gray-100">My Bookings</Link>
-                  </li>
-                  {isServiceProvider() && (
+            <div className="relative">
+              <button
+                className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center"
+                onClick={toggleDropdown}
+              >
+                {userInitial}
+              </button>
+              {dropdownOpen && (
+                <div ref={dropdownRef} className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg z-10">
+                  <ul className="list-none p-2">
                     <li>
-                      <Link href="/todoServices" className="block px-4 py-2 hover:bg-gray-100">To Do Services</Link>
+                      <Link href="/profile" className="block px-4 py-2 hover:bg-gray-100" onClick={() => setDropdownOpen(false)}>Profile</Link>
                     </li>
-                  )}
-                  <li>
-                    <Link href="/chat" className="block px-4 py-2 hover:bg-gray-100">
-                    Messages
-                    {newMessage && <span className="bg-red-500 text-white rounded-full w-3 h-3 inline-block ml-2"></span>}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/settings" className="block px-4 py-2 hover:bg-gray-100">Settings</Link>
-                  </li>
-                  
-                </ul>
-              </div>
+                    <li>
+                      <Link href="/mybooking" className="block px-4 py-2 hover:bg-gray-100" onClick={() => setDropdownOpen(false)}>My Bookings</Link>
+                    </li>
+                    {isServiceProvider() && (
+                      <li>
+                        <Link href="/todoServices" className="block px-4 py-2 hover:bg-gray-100" onClick={() => setDropdownOpen(false)}>To Do Services</Link>
+                      </li>
+                    )}
+                    <li>
+                      <Link href="/chat" className="block px-4 py-2 hover:bg-gray-100" onClick={() => setDropdownOpen(false)}>
+                        Messages
+                        {newMessage && <span className="bg-red-500 text-white rounded-full w-3 h-3 inline-block ml-2"></span>}
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/settings" className="block px-4 py-2 hover:bg-gray-100" onClick={() => setDropdownOpen(false)}>Settings</Link>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
+            {isServiceProvider() && (
+              <Link href="/invoice">
+                <button className="bg-primary text-white rounded-lg py-2 px-4 hover:bg-primary-dark">
+                  Create Invoice
+                </button>
+              </Link>
             )}
             <button
               className="bg-red-500 text-white rounded-lg py-2 px-4 hover:bg-red-600"

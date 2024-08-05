@@ -39,13 +39,11 @@ def send_message():
         return jsonify({'error': str(e)}), 500
 
 # Retrieve the user's chat history with a specific receiver
-@chats_bp.route('/history', methods=['GET'])
+@chats_bp.route('/history/<int:receiver_id>', methods=['GET'])
 @jwt_required()
 @permission_required(Permissions.CHAT)
-def chat_history():
+def chat_history(receiver_id):
     current_user_id = get_jwt_identity()
-    data = request.get_json()
-    receiver_id = data.get('receiver_id')
 
     if not receiver_id:
         return jsonify({'error': 'Missing receiver_id'}), 400

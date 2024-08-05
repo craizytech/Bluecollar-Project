@@ -16,7 +16,6 @@ function ChatComponent({ userId, receiverId }) {
   const [filePreview, setFilePreview] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
 
-
   useEffect(() => {
     const fetchChatHistory = async () => {
       setLoading(true);
@@ -24,35 +23,37 @@ function ChatComponent({ userId, receiverId }) {
       try {
         // Fetch receiver's profile information
         const profileResponse = await fetch(`http://localhost:5000/api/users/profile/${receiverId}`, {
+          method: 'GET',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           },
         });
-
+    
         if (!profileResponse.ok) {
           const profileErrorData = await profileResponse.json();
           console.error('Profile fetch error:', profileErrorData.error);
           setError(profileErrorData.error || 'An error occurred while fetching profile.');
           return;
         }
-
+    
         const profileData = await profileResponse.json();
         setReceiverName(profileData.user_name); 
         setReceiverProfilePicture(profileData.user_profile_picture);
-
+    
         // Fetch chat history
-        const response = await fetch(`http://localhost:5000/api/chats/history?receiver_id=${receiverId}`, {
+        const chatResponse = await fetch(`http://localhost:5000/api/chats/history/${receiverId}`, {
           headers: {
+            'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           },
         });
-
-        if (!response.ok) {
-          const errorData = await response.json();
+    
+        if (!chatResponse.ok) {
+          const errorData = await chatResponse.json();
           console.error('Fetch error:', errorData.error);
           setError(errorData.error || 'An error occurred while fetching chat history.');
         } else {
-          const data = await response.json();
+          const data = await chatResponse.json();
           console.log('Chat history data:', data);
           setChats(data);
         }
@@ -63,10 +64,10 @@ function ChatComponent({ userId, receiverId }) {
         setLoading(false);
       }
     };
+    
 
     if (userId && receiverId) {
       fetchChatHistory();
-
     }
   }, [userId, receiverId]);
 
@@ -118,7 +119,8 @@ function ChatComponent({ userId, receiverId }) {
 
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
-    setFile(selectedFile);
+    setImage(null);
+    setFilePreview(null);
 
     if (selectedFile) {
       setFilePreview(URL.createObjectURL(selectedFile));
@@ -134,19 +136,24 @@ function ChatComponent({ userId, receiverId }) {
     }
   };
 
-
   const renderChats = () => {
     let lastDate = null;
-
+  
     return chats.map((chat) => {
       const chatDate = new Date(chat.date_of_creation);
+  
+      if (isNaN(chatDate.getTime())) {
+        console.error('Invalid date value:', chat.date_of_creation);
+        return null; // Skip rendering if the date is invalid
+      }
+  
       const isNewDate = !lastDate || !isSameDay(chatDate, lastDate);
       lastDate = chatDate;
       const formattedDate = format(chatDate, 'MMMM d, yyyy');
-
+  
       const isUserMessage = chat.sent_from && chat.sent_from.toString() === userId.toString();
       const messageAlignment = isUserMessage ? 'self-end text-right bg-green-200' : 'self-start text-left bg-blue-100';
-
+  
       return (
         <React.Fragment key={chat.chat_id}>
           {isNewDate && (
@@ -162,12 +169,13 @@ function ChatComponent({ userId, receiverId }) {
             <div className="text-sm text-gray-500 mt-1">
               {isUserMessage && chat.status === 'sent' && <span>Sent</span>}
             </div>
-            <span className="text-sm text-gray-500">{new Date(chat.date_of_creation).toLocaleTimeString()}</span>
+            <span className="text-sm text-gray-500">{chatDate.toLocaleTimeString()}</span>
           </div>
         </React.Fragment>
       );
     });
   };
+  
 
   return (
     <div className="flex flex-col max-h-500 overflow-y-auto border border-gray-300 bg-gray-100">
@@ -187,19 +195,19 @@ function ChatComponent({ userId, receiverId }) {
 
       {/* Display file preview */}
       {filePreview && (
-          <div className="my-2">
-            <p>File Selected:</p>
-            <a href={filePreview} download>{filePreview}</a>
-          </div>
-        )}
+        <div className="my-2">
+          <p>File Selected:</p>
+          <a href={filePreview} download>{filePreview}</a>
+        </div>
+      )}
 
-        {/* Display image preview */}
-        {imagePreview && (
-          <div className="my-2">
-            <p>Image Selected:</p>
-            <img src={imagePreview} alt="Selected preview" className="max-w-full h-auto" />
-          </div>
-        )}
+      {/* Display image preview */}
+      {imagePreview && (
+        <div className="my-2">
+          <p>Image Selected:</p>
+          <img src={imagePreview} alt="Selected preview" className="max-w-full h-auto" />
+        </div>
+      )}
 
       <div className="flex p-4 border-t border-gray-300 bg-white">
         <input
