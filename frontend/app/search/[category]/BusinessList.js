@@ -16,66 +16,66 @@ function BusinessList({ title, categoryId }) {
 
         async function fetchServices() {
             try {
-                console.log(`Fetching services for category ID: ${categoryId}`);
+        
                 const url = categoryId
                     ? `http://localhost:5000/api/services/category/${categoryId}`
                     : 'http://localhost:5000/api/services/all';
-
-
+        
                 const response = await fetch(url, {
                     headers: {
                         'Authorization': `Bearer ${storedToken}`,
                     },
                 });
-
-
+        
                 if (!response.ok) {
                     throw new Error('Failed to fetch services');
                 }
-
+        
                 const servicesData = await response.json();
-
-
-
-                if (!categoryId) {
-                    const servicesWithDetails = await Promise.all(servicesData.map(async (service) => {
-                        const detailsResponse = await fetch(`http://localhost:5000/api/services/${service.service_id}`, {
-                            headers: {
-                                'Authorization': `Bearer ${storedToken}`,
-                            },
-                        });
-
-
-                        if (!detailsResponse.ok) {
-                            throw new Error('Failed to fetch service details');
-                        }
-
-                        const detailsData = await detailsResponse.json();
-
-                        return {
-                            ...service,
-                            details: {
-                                ...detailsData,
-                                category_id: service.category_id,
-                                provider_id: service.provider_id,
+                console.log('Services Data:', servicesData);
+        
+                // Check if servicesData is an array or object
+                if (Array.isArray(servicesData)) {
+                    if (!categoryId) {
+                        // Fetch details for each service
+                        const servicesWithDetails = await Promise.all(servicesData.map(async (service) => {
+                            const detailsResponse = await fetch(`http://localhost:5000/api/services/${service.service_id}`, {
+                                headers: {
+                                    'Authorization': `Bearer ${storedToken}`,
+                                },
+                            });
+        
+        
+                            if (!detailsResponse.ok) {
+                                throw new Error('Failed to fetch service details');
                             }
-                        };
-                    }));
-
-                    console.log('Services with Details:', servicesWithDetails);
-
-                    try {
+        
+                            const detailsData = await detailsResponse.json();
+        
+                            return {
+                                ...service,
+                                details: {
+                                    ...detailsData,
+                                    category_id: service.category_id,
+                                    provider_id: service.provider_id,
+                                }
+                            };
+                        }));
+        
+                        console.log('Services with Details:', servicesWithDetails);
                         setServices(servicesWithDetails);
-                    } catch (error) {
-                        console.error('Error setting services:', error);
+                    } else {
+                        // If categoryId is present, we only need the services
+                        setServices(servicesData);
                     }
                 } else {
-                    setServices(servicesData);
+                    console.error('Expected servicesData to be an array, but got:', servicesData);
                 }
             } catch (error) {
                 console.error('Error fetching services or details:', error);
             }
         }
+        
 
         if (token) {
             fetchServices();

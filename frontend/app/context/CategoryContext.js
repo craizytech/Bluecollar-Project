@@ -1,10 +1,13 @@
-"use client";
-import React, { createContext, useState, useContext } from 'react';
+"use client"
+import React, { createContext, useContext, useState } from 'react';
 
 const CategoryContext = createContext();
 
+export function useCategory() {
+    return useContext(CategoryContext);
+}
 
-export const CategoryProvider = ({ children }) => {
+export function CategoryProvider({ children }) {
     const [categoryId, setCategoryId] = useState(null);
 
     return (
@@ -12,8 +15,6 @@ export const CategoryProvider = ({ children }) => {
             {children}
         </CategoryContext.Provider>
     );
-};
+}
 
-
-export const useCategory = () => useContext(CategoryContext);
-export default CategoryContext;
+export { CategoryContext };

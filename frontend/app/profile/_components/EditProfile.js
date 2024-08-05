@@ -2,6 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 function EditProfile() {
   const [fullname, setFullname] = useState('');
@@ -66,8 +72,12 @@ function EditProfile() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setProfilePicture(file);
-      setProfilePictureUrl(URL.createObjectURL(file));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePicture(reader.result);
+        setProfilePictureUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -80,19 +90,15 @@ function EditProfile() {
         throw new Error('No token found');
       }
 
-      const formData = new FormData();
-      formData.append('user_name', fullname);
-      formData.append('user_phone_number', phoneNumber);
-      formData.append('user_address', address);
-      formData.append('user_location', location);
-
-      if (profilePicture) {
-        formData.append('user_profile_picture', profilePicture);
-      }
-
-      const response = await axios.put('http://localhost:5000/api/users/profile', formData, {
+      const response = await axios.put('http://localhost:5000/api/users/profile', {
+        user_name: fullname,
+        user_phone_number: phoneNumber,
+        user_address: address,
+        user_location: location,
+        user_profile_picture: profilePicture // Send base64 data URL
+      }, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         }
       });
@@ -114,12 +120,21 @@ function EditProfile() {
       <div className="flex mb-6 justify-between items-center">
         <div className="flex items-center">
           <div className="relative mr-4">
-            <img
-              src={profilePictureUrl || '/default-profile.png'}
-              alt="Profile"
-              className="w-24 h-24 rounded-full object-cover cursor-pointer"
-              onClick={handleProfilePictureClick}
-            />
+          <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <img
+                    src={profilePictureUrl || '/default-profile.png'}
+                    alt="Profile"
+                    className="w-24 h-24 rounded-full object-cover cursor-pointer"
+                    onClick={handleProfilePictureClick}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Click to update your profile picture</p>
+                </TooltipContent>
+              </Tooltip>
+          </TooltipProvider>
             <input
               type="file"
               id="profilePictureInput"

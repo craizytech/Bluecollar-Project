@@ -4,6 +4,7 @@ import BusinessList from '../search/[category]/BusinessList';
 import Hero from '../_components/Hero';
 import CategoryList from '../_components/CategoryList';
 import useGeolocation from '../hooks/useGoelocation';
+import SessionCheck from '../_components/common/SessionCheck';
 
 function Home() {
   const { location, error } = useGeolocation();
@@ -19,6 +20,7 @@ function Home() {
 
   return (
     <div>
+    <SessionCheck />
       <Hero />
       <CategoryList />
       <BusinessList title={"Popular Business"} />

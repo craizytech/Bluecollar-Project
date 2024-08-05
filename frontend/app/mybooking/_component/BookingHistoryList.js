@@ -1,12 +1,22 @@
-import { Calendar, MapPin, User, Check, X, Clock, MessageSquare } from 'lucide-react';
+import { Calendar as CalendarIcon, MapPin, User, Check, X, Clock, MessageSquare } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
+import { Edit } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Calendar } from "@/components/ui/calendar";
+import { Day } from 'react-day-picker';
+import moment from 'moment';
 
 function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
   const [updatedBookings, setUpdatedBookings] = useState(bookingHistory);
   const [activeTab, setActiveTab] = useState(statuses[0] || '');
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [newLocation, setNewLocation] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     setUpdatedBookings(bookingHistory);
@@ -40,6 +50,111 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
     }
   };
 
+  const formattedBookings = updatedBookings.map(booking => ({
+    ...booking,
+    booking_date: moment(booking.booking_date).format('MMMM D, YYYY') // Format date
+  }));
+
+  const handleSaveChanges = async () => {
+    if (!selectedDate || !newLocation) {
+      toast.error('Please select a date and enter a new location.');
+      return;
+    }
+
+    const isoDate = moment(selectedDate).toISOString();
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/bookings/${selectedBooking}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: JSON.stringify({ booking_date: isoDate, location: newLocation }),
+      });
+
+      if (response.ok) {
+        toast.success('Booking updated successfully');
+        const updatedBookingIndex = updatedBookings.findIndex(b => b.booking_id === selectedBooking);
+        const updatedBooking = { ...updatedBookings[updatedBookingIndex], booking_date: selectedDate, location: newLocation };
+        const updatedBookingList = [...updatedBookings];
+        updatedBookingList[updatedBookingIndex] = updatedBooking;
+        setUpdatedBookings(updatedBookingList);
+        setShowUpdateModal(false);
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || 'Failed to update booking');
+      }
+    } catch (err) {
+      toast.error('An error occurred while updating booking');
+    }
+  };
+
+  const handleUpdateBooking = (bookingId) => {
+    setSelectedBooking(bookingId);
+    const booking = updatedBookings.find(b => b.booking_id === bookingId);
+    setSelectedDate(booking?.booking_date ? new Date(booking.booking_date) : null);
+    setNewLocation(booking?.location || '');
+    setShowUpdateModal(true);
+  };
+
+  const handleCancelBooking = async (bookingId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/bookings/${bookingId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+
+      if (response.ok) {
+        toast.success('Booking canceled successfully');
+        const updatedBookingList = updatedBookings.filter(b => b.booking_id !== bookingId);
+        setUpdatedBookings(updatedBookingList);
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || 'Failed to cancel booking');
+      }
+    } catch (err) {
+      toast.error('An error occurred while canceling booking');
+    }
+  };
+
+  const handleUpdateLocation = async () => {
+    if (!newLocation) {
+      toast.error('Location cannot be empty');
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/bookings/${selectedBooking}/location`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: JSON.stringify({ location: newLocation }),
+      });
+
+      if (response.ok) {
+        toast.success('Location updated successfully');
+        const updatedBookingIndex = updatedBookings.findIndex(b => b.booking_id === selectedBooking);
+        const updatedBooking = { ...updatedBookings[updatedBookingIndex], location: newLocation };
+        const updatedBookingList = [...updatedBookings];
+        updatedBookingList[updatedBookingIndex] = updatedBooking;
+        setUpdatedBookings(updatedBookingList);
+        setShowLocationUpdate(false);
+        setNewLocation('');
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || 'Failed to update location');
+      }
+    } catch (err) {
+      toast.error('An error occurred while updating location');
+    }
+  };
+
   // Separate bookings into pending services and completed services
   const pendingBookings = updatedBookings.filter(
     booking => booking.status !== 'completed' && (role === 'client' ? booking.client_id === userId : booking.provider_id === userId)
@@ -55,8 +170,60 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
     return acc;
   }, {});
 
+  const renderDay = async (day) => {
+    const isoDate = moment(day).toISOString();
+    const isBooked = await checkSlotBooked(isoDate);
+    return (
+        <Day
+            day={day}
+            disabled={isBooked}
+            className={isBooked ? 'bg-red-500 text-white' : ''}
+        >
+            {day.getDate()}
+        </Day>
+    );
+};
+
   return (
     <div className='mx-5 md:mx-36'>
+    {showUpdateModal && selectedBooking && (
+        <div className="fixed inset-0 z-50 bg-white p-4 shadow-lg">
+          <button onClick={() => setShowUpdateModal(false)} className="absolute top-4 right-4 text-gray-500">
+            <X />
+          </button>
+          <h2 className='text-lg font-bold mb-4'>Update Booking</h2>
+          <div className="mb-4">
+            <label className='block mb-2 text-gray-700'>Select Date</label>
+            <div className="calendar-wrapper">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => setSelectedDate(date)}
+                className="rounded-md border"
+              />
+            </div>
+          </div>
+          <div className="mb-4">
+            <label className='block mb-2 text-gray-700'>New Location</label>
+            <input
+              type="text"
+              value={newLocation}
+              onChange={(e) => setNewLocation(e.target.value)}
+              className='border border-gray-300 p-2 w-full'
+              placeholder='Enter new location'
+            />
+          </div>
+          <button
+            onClick={handleSaveChanges}
+            className='bg-blue-500 text-white px-4 py-2 rounded-lg'
+          >
+            Save Changes
+          </button>
+        </div>
+      )}
+
+
+
       {statuses.includes('completed') ? (
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           {completedBookings.length ? completedBookings.map((booking, index) => (
@@ -94,7 +261,7 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
                       <MapPin className='text-primary' /> {booking.location}
                     </h2>
                     <h2 className='flex gap-2 text-gray-500'>
-                      <Calendar className='text-primary' /> Service on: {booking.booking_date}
+                      <CalendarIcon className='text-primary' /> Service on: {moment(booking.booking_date).format('MMMM D, YYYY')}
                     </h2>
                   </>
                 )}
@@ -143,14 +310,31 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
                               </Link>
                             </div>
                           )}
+                          {booking.status === 'pending' && (
+                            <div className='flex gap-2'>
+                              <button
+                                onClick={() => handleUpdateBooking(booking.booking_id)}
+                                className='flex items-center gap-1 px-3 py-1 bg-blue-500 text-white rounded-lg'
+                              >
+                                <Edit /> Update
+                              </button>
+                              <button
+                                onClick={() => handleCancelBooking(booking.booking_id)}
+                                className='flex items-center gap-1 px-3 py-1 bg-red-500 text-white rounded-lg'
+                              >
+                                <X /> Cancel
+                              </button>
+                            </div>
+                          )}
                           {(booking.status !== 'declined' && booking.status !== 'accepted') && (
                             <>
                               <h2 className='flex gap-2 text-gray-500'>
                                 <MapPin className='text-primary' /> {booking.location}
                               </h2>
                               <h2 className='flex gap-2 text-gray-500'>
-                                <Calendar className='text-primary' /> Service on: {booking.booking_date}
+                                <CalendarIcon className='text-primary' /> Service on: {moment(booking.booking_date).format('MMMM D, YYYY')}
                               </h2>
+
                             </>
                           )}
                         </>
@@ -205,7 +389,7 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
                                 <MapPin className='text-primary' /> {booking.location}
                               </h2>
                               <h2 className='flex gap-2 text-gray-500'>
-                                <Calendar className='text-primary' /> Service on: {booking.booking_date}
+                                <CalendarIcon className='text-primary' /> Service on: {moment(booking.booking_date).format('MMMM D, YYYY')}
                               </h2>
                             </>
                           )}
