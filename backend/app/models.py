@@ -125,3 +125,16 @@ class Review(db.Model):
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.String(512), nullable=True)
     date_of_creation = db.Column(db.DateTime, default=datetime.utcnow)
+
+class ServiceProviderApplication(db.Model):
+    __tablename__ = 'service_provider_applications'
+    application_id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(128), nullable=False)
+    service_category_id = db.Column(db.Integer, db.ForeignKey('service_categories.category_id'), nullable=False)
+    service_id = db.Column(db.Integer, db.ForeignKey('services.service_id'), nullable=False)
+    status = db.Column(db.String(20), default='pending')
+    date_of_application = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    service_category = db.relationship('ServiceCategory', backref=db.backref('applications', lazy=True))
+    service = db.relationship('Service', backref=db.backref('applications', lazy=True))

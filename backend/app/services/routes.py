@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models import Service, ServiceCategory, Review, User, Permissions
+from app.models import Service, ServiceCategory, Review, User, Permissions, ServiceProviderApplication
 from app.extensions import db
 from app.utils.decorators import permission_required
 from app.services import services_bp
@@ -159,3 +159,27 @@ def view_service_details(service_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@services_bp.route('/apply_service', methods=['POST'])
+@jwt_required()
+def apply_service():
+    data = request.get_json()
+    email = data.get('email')
+    service_category_id = data.get('service_category_id')
+    service_id = data.get('service_id')
+
+    if not email or not service_category_id or not service_id:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    new_application = ServiceProviderApplication(
+        email=email,
+        service_category_id=service_category_id,
+        service_id=service_id
+    )
+
+    try:
+        db.session.add(new_application)
+        db.session.commit()
+        return jsonify({"message": "Application submitted successfully"}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
