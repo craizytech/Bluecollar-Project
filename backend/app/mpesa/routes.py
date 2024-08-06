@@ -1,13 +1,12 @@
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import request, jsonify
 import requests
 import base64
 from datetime import datetime
 from app.mpesa import mpesa_bp
-from app.utils.decorators import permission_required
 from app.extensions import db
 from app.config import Config
-import time  # Import the time module
+import time
+from app.models import User, Transaction, Invoice
 
 # Constants
 SHORT_CODE = Config.SHORT_CODE
@@ -90,18 +89,52 @@ def home():
 
 @mpesa_bp.route('/pay', methods=['POST'])
 def pay():
-    data = request.get_json()
-    phone_number = data['phone_number']
-    amount = data['amount']
-    
-    access_token = generate_access_token(CONSUMER_KEY, CONSUMER_SECRET)
-    response = stk_push_payment(access_token, phone_number, amount, CALLBACK_URL, SHORT_CODE, PASSKEY)
-    time.sleep(15)
+    try:
+        data = request.get_json()
+        phone_number = data['phone_number']
+        amount = data['amount']
+        invoice_id = data.get('invoice_id')
+        
+        access_token = generate_access_token(CONSUMER_KEY, CONSUMER_SECRET)
+        response = stk_push_payment(access_token, phone_number, amount, CALLBACK_URL, SHORT_CODE, PASSKEY)
+        time.sleep(15)
 
-    if response.get("ResponseCode") == "0":
-        checkout_request_id = response.get("CheckoutRequestID")
-        # time.sleep(15)
-        confirm_response = confirm_pay(access_token, checkout_request_id)
-        return jsonify(confirm_response)
-    
-    return jsonify(response)
+        if response.get("ResponseCode") == "0":
+            checkout_request_id = response.get("CheckoutRequestID")
+            confirm_response = confirm_pay(access_token, checkout_request_id)
+            
+            # Get user details and invoice information
+            user = User.query.filter_by(user_phone_number=phone_number).first()
+            invoice = Invoice.query.get(invoice_id)
+            
+            if not user or not invoice:
+                return jsonify({"error": "Invalid user or invoice information"}), 400
+            
+            if confirm_response.get("ResultCode") == "0":
+                status = "paid"
+            elif confirm_response.get("ResultCode") == "1032":
+                status = "cancelled"
+            else:
+                status = "failed"
+            
+            # Record transaction
+            transaction = Transaction(
+                payer_name=user.user_name,
+                payer_phone_number=phone_number,
+                payee_name=invoice.user.user_name,  # Assuming invoice.user is the service provider
+                amount_paid=amount,
+                status=status,
+                invoice_id=invoice_id
+            )
+            
+            try:
+                db.session.add(transaction)
+                db.session.commit()
+                return jsonify(confirm_response)
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({"error": str(e)}), 500
+        
+        return jsonify(response)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
