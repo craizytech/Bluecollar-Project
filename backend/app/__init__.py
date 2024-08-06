@@ -27,6 +27,7 @@ def create_app(config_name='default'):
     from app.bookings import bookings_bp
     from app.reviews import reviews_bp
     from app.categories import categories_bp
+    from app.mpesa import mpesa_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(users_bp, url_prefix='/api/users')
@@ -37,6 +38,7 @@ def create_app(config_name='default'):
     app.register_blueprint(bookings_bp, url_prefix='/api/bookings')
     app.register_blueprint(reviews_bp, url_prefix='/api/reviews')
     app.register_blueprint(categories_bp, url_prefix='/api/categories')
+    app.register_blueprint(mpesa_bp, url_prefix='/api/mpesa')
 
 
     return app

@@ -7,7 +7,7 @@ from app.invoices import invoices_bp
 from datetime import datetime
 
 # Route to retrieve all invoices
-@invoices_bp.route('/invoices', methods=['GET'])
+@invoices_bp.route('/all', methods=['GET'])
 @jwt_required()
 def get_invoices():
     invoices = Invoice.query.all()
@@ -24,7 +24,7 @@ def get_invoices():
     return jsonify({"invoices": invoice_list}), 200
 
 # Route to create a new invoice
-@invoices_bp.route('/invoices', methods=['POST'])
+@invoices_bp.route('/create', methods=['POST'])
 @jwt_required()
 @permission_required(Permissions.GENERATE_INVOICE)
 def create_invoice():
@@ -71,7 +71,7 @@ def update_invoice(invoice_id):
         return jsonify({"error": str(e)}), 500
 
 # Route to delete an invoice
-@invoices_bp.route('/invoices/<int:invoice_id>', methods=['DELETE'])
+@invoices_bp.route('/<int:invoice_id>', methods=['DELETE'])
 @jwt_required()
 @permission_required(Permissions.GENERATE_INVOICE)
 def delete_invoice(invoice_id):
@@ -86,7 +86,7 @@ def delete_invoice(invoice_id):
         return jsonify({"error": str(e)}), 500
 
 # Route to retrieve a specific invoice by ID
-@invoices_bp.route('/invoices/<int:invoice_id>', methods=['GET'])
+@invoices_bp.route('/<int:invoice_id>', methods=['GET'])
 @jwt_required()
 def get_invoice(invoice_id):
     invoice = Invoice.query.get_or_404(invoice_id)
