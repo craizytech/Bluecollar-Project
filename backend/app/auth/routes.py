@@ -5,9 +5,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token
 from app.auth import auth_bp
 
-# This line is redundant as the blueprint is already created in __init__.py
-# auth_bp = Blueprint('auth', __name__)
-
 @auth_bp.route('/register', methods=['POST'])
 def register():
     data = request.get_json()

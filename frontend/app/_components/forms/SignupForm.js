@@ -6,7 +6,7 @@ import { CardTitle, CardDescription, CardHeader, CardContent, CardFooter, Card }
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import useGeolocation from "@/app/hooks/useGoelocation";
+import useGeolocation from "@/app/hooks/useGeolocation";
 import counties from "@/app/data/counties";
 
 const SignupForm = ({ setToken, defaultLocation }) => {
