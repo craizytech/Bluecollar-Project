@@ -144,7 +144,6 @@ class Transaction(db.Model):
     transaction_id = db.Column(db.Integer, primary_key=True)
     payer_name = db.Column(db.String(128), nullable=False)
     payer_phone_number = db.Column(db.String(20), nullable=False)
-    payee_name = db.Column(db.String(128), nullable=False)
     amount_paid = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(20), nullable=False)
     invoice_id = db.Column(db.Integer, db.ForeignKey('invoices.invoice_id'), nullable=False)

@@ -7,6 +7,7 @@ from app.extensions import db
 from app.config import Config
 import time
 from app.models import User, Transaction, Invoice
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 # Constants
 SHORT_CODE = Config.SHORT_CODE
@@ -88,6 +89,7 @@ def home():
     return "M-Pesa Integration with Flask"
 
 @mpesa_bp.route('/pay', methods=['POST'])
+@jwt_required()
 def pay():
     try:
         data = request.get_json()
@@ -104,7 +106,8 @@ def pay():
             confirm_response = confirm_pay(access_token, checkout_request_id)
             
             # Get user details and invoice information
-            user = User.query.filter_by(user_phone_number=phone_number).first()
+            user_id = get_jwt_identity()
+            user = User.query.get(user_id)
             invoice = Invoice.query.get(invoice_id)
             
             if not user or not invoice:
