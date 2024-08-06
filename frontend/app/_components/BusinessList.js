@@ -18,14 +18,14 @@ function BusinessList({ title }) {
 
         async function fetchServices() {
             try {
-                const response = await fetch('http://localhost:5000/api/services/all');
+                const response = await fetch('http://localhost:8080/api/services/all');
                 if (!response.ok) {
                     throw new Error('Failed to fetch services');
                 }
                 const servicesData = await response.json();
                 const servicesWithDetails = await Promise.all(servicesData.map(async (service) => {
                     // Fetch service details
-                    const detailsResponse = await fetch(`http://localhost:5000/api/services/${service.service_id}`, {
+                    const detailsResponse = await fetch(`http://localhost:8080/api/services/${service.service_id}`, {
                         headers: {
                             'Authorization': `Bearer ${storedToken}`,
                         },

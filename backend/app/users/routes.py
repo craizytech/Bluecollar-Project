@@ -49,7 +49,7 @@ def get_user_profile(user_id):
     return jsonify({"error": "User not found"}), 404
 
 #Route to delete user profile
-@users_bp.route('/profile/<user_id>', methods=['DELETE'])
+@users_bp.route('/profile/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
     user = User.query.get(user_id)
     if user:
