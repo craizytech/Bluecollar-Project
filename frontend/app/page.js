@@ -1,20 +1,14 @@
-"use client";
-import LoginForm from '@/app/_components/forms/LoginForm';
-import React, { useState } from 'react';
+import Hero from "./_components/Hero";
+import CategoryList from "./_components/CategoryList";
+import BusinessList from "./_components/BusinessList";
 
-function Login() {
-  const [token, setToken] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('access_token') || '';
-    }
-    return '';
-  });
-
+export default function Home() {
   return (
     <div>
-      <LoginForm setToken={setToken} />
+       <Hero/>
+       <CategoryList/>
+       <BusinessList title={'Popular Business'}/>
     </div>
   );
 }
 
-export default Login;

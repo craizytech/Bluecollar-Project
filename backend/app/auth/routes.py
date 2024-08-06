@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt
 from app.extensions import db
 from app.models import User, Role
 from werkzeug.security import generate_password_hash, check_password_hash
