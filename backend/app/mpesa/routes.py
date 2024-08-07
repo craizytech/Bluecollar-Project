@@ -124,7 +124,6 @@ def pay():
             transaction = Transaction(
                 payer_name=user.user_name,
                 payer_phone_number=phone_number,
-                payee_name=invoice.user.user_name,  # Assuming invoice.user is the service provider
                 amount_paid=amount,
                 status=status,
                 invoice_id=invoice_id
