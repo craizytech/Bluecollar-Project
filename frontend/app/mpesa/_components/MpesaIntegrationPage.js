@@ -100,7 +100,7 @@ const MpesaIntegrationPage = () => {
         console.log('Payment initiated successfully:', result);
         // Handle response based on `ResultCode`
         if (result.ResultCode === "0") {
-          setTransactionStatus('pending'); // Start polling for status or wait for callback
+          setTransactionStatus('paid');
         } else if (result.ResultCode === "1032") {
           setTransactionStatus('cancelled');
         } else {
@@ -139,7 +139,7 @@ const MpesaIntegrationPage = () => {
           preview={true}
         />
       )}
-      <div className="mt-16">
+      <div className="mt-16 ml-12">
         <label className="block mb-2">Phone Number (format: 254...)</label>
         <input
           type="text"

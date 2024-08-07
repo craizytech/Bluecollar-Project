@@ -5,6 +5,7 @@ import Hero from '../_components/Hero';
 import CategoryList from '../_components/CategoryList';
 import useGeolocation from '../hooks/useGeolocation';
 import SessionCheck from '../_components/common/SessionCheck';
+import ComplaintButton from '../_components/ComplaintButton';
 
 function Home() {
   const { location, error } = useGeolocation();
@@ -24,6 +25,7 @@ function Home() {
       <Hero />
       <CategoryList />
       <BusinessList title={"Popular Business"} />
+      <ComplaintButton />
     </div>
   );
 }
