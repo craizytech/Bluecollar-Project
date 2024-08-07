@@ -9,6 +9,7 @@ function ServiceProvider() {
   const [categories, setCategories] = useState([]);
   const [services, setServices] = useState([]);
   const context = useContext(CategoryContext);
+  const [error, setError] = useState('');
 
   if (!context) {
     console.error('CategoryContext is not available');
@@ -74,7 +75,40 @@ function ServiceProvider() {
 
   const handleApply = async (e) => {
     e.preventDefault();
-    setMessage('Your application has been submitted. Please wait for approval by the admin.');
+    if (!selectedService || !categoryId) {
+      setError('Please select both a category and a service.');
+      return;
+    }
+
+    setError('');
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('No token found');
+      }
+
+      const response = await axios.post(
+        'http://localhost:5000/api/services/apply_service',
+        {
+          email: email,
+          service_category_id: categoryId,
+          service_id: selectedService
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.status === 201) {
+        setMessage('Your application has been submitted successfully.Wait for approval by admin');
+      }
+    } catch (error) {
+      console.error('Error applying for service:', error);
+      setError('Failed to submit your application. Please try again.');
+    }
   };
 
   return (

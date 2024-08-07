@@ -89,6 +89,7 @@ class Chat(db.Model):
     sent_from = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
     sent_to = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
     message = db.Column(db.String(512), nullable=False)
+    type = db.Column(db.String(50), nullable=True)
     status = db.Column(db.String(20), nullable=False)
 
 class Invoice(db.Model):

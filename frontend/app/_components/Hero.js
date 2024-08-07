@@ -11,13 +11,15 @@ function Hero() {
     const [searchResults, setSearchResults] = useState([]);
     const [errorMsg, setErrorMsg] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-    const [location, setLocation] = useState(county);
+    const [location, setLocation] = useState('');
     const [filteredCounties, setFilteredCounties] = useState([]);
     const [showDropdown, setShowDropdown] = useState(false);
 
     useEffect(() => {
-        setLocation(county);
-    }, [county]);
+        if (county && !error) {
+            setLocation(county);
+        }
+    }, [county, error]);
 
     const handleSearch = async () => {
         if (!searchTerm || !location) {
@@ -110,27 +112,23 @@ function Hero() {
             </div>
             {errorMsg && <p className="text-red-500 mt-2">{errorMsg}</p>}
             {searchResults.length > 0 && (
-                <div className="mt-5 w-full max-w-2xl">
-                    <h3 className="font-bold text-xl mb-4">Search Results:</h3>
+                <div className="mt-5 w-full max-w-xl">
+                    <h3 className="font-bold text-lg mb-4">Search Results:</h3>
                     <ul className="space-y-4">
                         {searchResults.map(service => (
                             <Link 
                                 key={service.service_id} 
                                 href={`/Booking?serviceId=${service.service_id}`}
-                                className="block border border-gray-300 rounded-lg shadow-md p-4 hover:bg-gray-50 transition"
+                                className="block border border-gray-300 rounded-lg shadow-md p-2 hover:bg-gray-50 transition"
                             >
-                                <div className="font-semibold text-lg">{service.service_name}</div>
+                                <div className="font-semibold text-sm">{service.service_name}</div>
                                 <p className="text-gray-600">{service.service_description}</p>
-                                <p className="text-gray-800 font-medium">Provider: {service.provider_name}</p>
                                 <p className="text-gray-500">Location: {service.provider_location}</p>
                             </Link>
                         ))}
                     </ul>
                 </div>
             )}
-            {/* {searchResults.length === 0 && !errorMsg && (
-                <p className="text-gray-500 mt-2">No results to display. Try adjusting your search term or location.</p>
-            )} */}
         </div>
     );
 }

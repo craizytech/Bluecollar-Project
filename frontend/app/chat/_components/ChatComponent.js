@@ -91,6 +91,9 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
 
     if (invoiceId) {
       fetchInvoice(invoiceId);
+    } else {
+      setError('Invoice ID is missing.');
+      console.error('Invoice ID is missing');
     }
 
   }, [propBookingId, userId, receiverId, invoiceId, bookingIdFromUrl]);
@@ -141,11 +144,11 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
     }
   };
 
-  const handleSendMessage = async (content, file = null) => {
+  const handleSendMessage = async (content, type = 'text') => {
     const messageContent = content.trim();
 
-    if (!messageContent && !file) {
-      console.error('Message content is empty and no file is provided');
+    if (!messageContent) {
+      console.error('Message content is empty');
       return;
     }
 
@@ -156,22 +159,18 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
 
     setSending(true);
 
-    const formData = new FormData();
-    formData.append('receiver_id', receiverId);
-    formData.append('message', messageContent);
-    if (file) {
-      formData.append('file', file);
-    }
-
     try {
-      console.log('Sending message with file:', { receiver_id: receiverId, message: messageContent, file });
-
       const response = await fetch('http://localhost:5000/api/chats/send', {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
         },
-        body: formData,
+        body: JSON.stringify({
+          receiver_id: receiverId,
+          message: messageContent,
+          type, // Adding the type field
+        }),
       });
 
       if (!response.ok) {
@@ -185,7 +184,6 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
       console.log('Message sent successfully:', newChat);
       setChats((prevChats) => [...prevChats, newChat]);
       setMessage(''); // Clear message input if it's used
-      if (file) setInvoice(null); // Clear invoice if it's sent as a file
     } catch (error) {
       console.error('An error occurred while sending the message:', error);
       setError('An error occurred while sending the message.');
@@ -194,6 +192,7 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
     }
   };
 
+
   const handleSendInvoice = async () => {
     if (!invoice) {
       console.error('No invoice to send');
@@ -201,12 +200,19 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
     }
 
     try {
-      // Convert invoice to a JSON file
-      const invoiceBlob = new Blob([JSON.stringify(invoice)], { type: 'application/json' });
-      const invoiceFile = new File([invoiceBlob], `invoice_${invoice.invoice_id}.json`, { type: 'application/json' });
-
-      console.log('Sending invoice file:', invoiceFile);
-      await handleSendMessage('', invoiceFile);
+      // Sending the invoice as a normal text message with a special type
+      const invoiceMessage = JSON.stringify({
+        date_of_creation: new Date().toISOString(),
+        userProfile: {
+          user_name: userProfile.user_name,
+          user_email: userProfile.user_email,
+          user_phone_number: userProfile.user_phone_number,
+          user_address: userProfile.user_address,
+        },
+        service_cost: invoice.service_cost,
+        invoice_id: invoice.invoice_id,
+      });
+      await handleSendMessage(invoiceMessage, 'invoice');
       console.log('Invoice sent successfully');
     } catch (error) {
       console.error('Failed to send invoice:', error);
@@ -229,21 +235,123 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
   const renderChats = () => {
     let lastDate = null;
 
+    const handleAccept = async (invoiceId) => {
+      if (!invoiceId) {
+        console.error('Invoice ID is missing');
+        return;
+      }
+    
+      try {
+        // Update the status of the invoice to 'accepted'
+        const response = await fetch(`http://localhost:5000/api/invoices/accept/${invoiceId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        });
+    
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Accept invoice error:', errorData.error);
+          setError(errorData.error || 'An error occurred while accepting the invoice.');
+          return;
+        }
+    
+        const data = await response.json();
+        console.log('Invoice accepted successfully:', data);
+    
+        // Optionally, fetch user profile and redirect to M-Pesa
+        const profileResponse = await fetch(`http://localhost:5000/api/users/profile/${userId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        });
+    
+        if (!profileResponse.ok) {
+          const profileErrorData = await profileResponse.json();
+          console.error('Failed to fetch user profile:', profileErrorData.error);
+          setError(profileErrorData.error || 'An error occurred while fetching user profile.');
+          return;
+        }
+    
+        const profileData = await profileResponse.json();
+        // Redirect to M-Pesa with invoice ID and phone number
+        router.push(`/mpesa?invoiceId=${invoiceId}&phoneNumber=${profileData.user_phone_number}`);
+      } catch (error) {
+        console.error('Failed to accept invoice:', error);
+        setError('Failed to accept invoice');
+      }
+    };
+    
+
+    const handleDecline = async (invoiceId) => {
+
+    }
+
     return chats.map((chat) => {
       const chatDate = new Date(chat.date_of_creation);
-
+  
       if (isNaN(chatDate.getTime())) {
         console.error('Invalid date value:', chat.date_of_creation);
         return null; // Skip rendering if the date is invalid
       }
-
+  
       const isNewDate = !lastDate || !isSameDay(chatDate, lastDate);
       lastDate = chatDate;
       const formattedDate = format(chatDate, 'MMMM d, yyyy');
-
+  
       const isUserMessage = chat.sent_from && chat.sent_from.toString() === userId.toString();
       const messageAlignment = isUserMessage ? 'self-end text-right bg-green-200' : 'self-start text-left bg-blue-100';
-
+  
+      let messageContent;
+      try {
+        // Parse the message content if it's expected to be JSON
+        if (chat.type === 'invoice') {
+          const parsedMessage = JSON.parse(chat.message);
+          messageContent = (
+            <InvoiceDisplay
+              userProfile={parsedMessage.userProfile}
+              serviceCost={parsedMessage.service_cost || ''}
+              existingInvoice={[parsedMessage]}
+              isEditable={isUserMessage}
+              preview={true} 
+              onAccept={() => handleAccept(parsedMessage.invoice_id)}
+              onDecline={() => handleDecline(parsedMessage.invoice_id)}
+            />
+          );
+          if (!isUserMessage) {
+            // Add Accept and Decline buttons if the current user is the receiver
+            messageContent = (
+              <div>
+                {messageContent}
+                <div className="flex justify-end space-x-4 mt-6">
+                  <button
+                    onClick={() => handleAccept(parsedMessage.invoice_id)}
+                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                  >
+                    Accept
+                  </button>
+                  <button
+                    onClick={() => handleDecline(parsedMessage.invoice_id)}
+                    className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                  >
+                    Decline
+                  </button>
+                </div>
+              </div>
+            );
+          }
+        } else {
+          messageContent = <p className="m-0">{chat.message}</p>;
+        }
+      } catch (error) {
+        // Fallback to plain text if JSON parsing fails
+        console.error('Error parsing message:', error);
+        messageContent = <p className="m-0">{chat.message}</p>;
+      }
+  
       return (
         <React.Fragment key={chat.chat_id}>
           {isNewDate && (
@@ -253,9 +361,9 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
           )}
           <div
             className={`flex flex-col mb-4 p-4 rounded-lg ${messageAlignment}`}
-            style={{ maxWidth: '75%', wordWrap: 'break-word' }} // Adjust the width based on content
+            style={{ maxWidth: '75%', wordWrap: 'break-word' }}
           >
-            <p className="m-0">{chat.message}</p>
+            {messageContent}
             <div className="text-sm text-gray-500 mt-1">
               {isUserMessage && chat.status === 'sent' && <span>Sent</span>}
             </div>
@@ -265,6 +373,8 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
       );
     });
   };
+  
+  
 
   return (
     <div className="flex flex-col max-h-500 overflow-y-auto border border-gray-300 bg-gray-100">

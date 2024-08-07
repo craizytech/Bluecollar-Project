@@ -124,3 +124,32 @@ def get_invoice(invoice_id):
         for invoice in invoices
     ]
     return jsonify(invoice_list), 200
+
+# Route to accept an invoice
+@invoices_bp.route('/accept/<int:invoice_id>', methods=['PATCH'])
+@jwt_required()
+def accept_invoice(invoice_id):
+    invoice = Invoice.query.get_or_404(invoice_id)
+    invoice.status = 'accepted'
+
+    try:
+        db.session.commit()
+        return jsonify({"message": "Invoice accepted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+# Route to decline an invoice
+@invoices_bp.route('/decline/<int:invoice_id>', methods=['PATCH'])
+@jwt_required()
+def decline_invoice(invoice_id):
+    invoice = Invoice.query.get_or_404(invoice_id)
+    invoice.status = 'declined'
+
+    try:
+        db.session.commit()
+        return jsonify({"message": "Invoice declined successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+

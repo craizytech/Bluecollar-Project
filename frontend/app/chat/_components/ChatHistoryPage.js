@@ -89,26 +89,26 @@ function ChatHistoryPage() {
     fetchChatHistory();
   }, [selectedPartner]);
 
-  const fetchInvoice = async (invoiceId) => {
-    try {
-      const response = await fetch(`http://localhost:5000/api/invoices/${invoiceId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-        },
-      });
+  // const fetchInvoice = async (invoiceId) => {
+  //   try {
+  //     const response = await fetch(`http://localhost:5000/api/invoices/${invoiceId}`, {
+  //       headers: {
+  //         'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+  //       },
+  //     });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Fetch error:', errorData.error);
-        return null;
-      }
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       console.error('Fetch error:', errorData.error);
+  //       return null;
+  //     }
 
-      return await response.json();
-    } catch (error) {
-      console.error('An error occurred while fetching invoice:', error);
-      return null;
-    }
-  };
+  //     return await response.json();
+  //   } catch (error) {
+  //     console.error('An error occurred while fetching invoice:', error);
+  //     return null;
+  //   }
+  // };
 
   const handlePartnerClick = (userId) => {
     setSelectedPartner(userId);
@@ -139,7 +139,7 @@ function ChatHistoryPage() {
         {selectedPartner ? (
           <div>
             <ChatComponent userId={localStorage.getItem('user_id')} receiverId={selectedPartner} />
-            <div className="mt-8">
+            {/* <div className="mt-8">
               {chatHistory.map(chat => (
                 <div key={chat.chat_id}>
                   {chat.invoice && (
@@ -155,7 +155,7 @@ function ChatHistoryPage() {
                   )}
                 </div>
               ))}
-            </div>
+            </div> */}
           </div>
         ) : (
           <p>Select a user to start chatting.</p>

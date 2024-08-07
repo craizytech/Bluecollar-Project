@@ -63,11 +63,11 @@ function Header() {
   return (
     <div className="p-5 shadow-sm flex justify-between items-center">
       <div className="flex items-center gap-8">
-        <Image src='/logo.svg' alt='logo' width={180} height={100} />
+        <Image src='/logo.png' alt='logo' width={100} height={100} />
         <div className="md:flex items-center gap-6 hidden">
           <Link href="/Home" className="hover:scale-105 hover:text-primary hover:cursor-pointer">Home</Link>
-          <h2 className="hover:scale-105 hover:text-primary hover:cursor-pointer">About Us</h2>
-          <h2 className="hover:scale-105 hover:text-primary hover:cursor-pointer">Services</h2>
+          <Link href='/aboutUs' className="hover:scale-105 hover:text-primary hover:cursor-pointer">About Us</Link>
+          {/* <h2 className="hover:scale-105 hover:text-primary hover:cursor-pointer">Services</h2> */}
         </div>
       </div>
       <div className="flex items-center gap-4 relative">
@@ -110,7 +110,7 @@ function Header() {
             {isServiceProvider() && (
               <Link href="/invoice">
                 <button className="bg-primary text-white rounded-lg py-2 px-4 hover:bg-primary-dark">
-                  Create Invoice
+                  Invoice
                 </button>
               </Link>
             )}
