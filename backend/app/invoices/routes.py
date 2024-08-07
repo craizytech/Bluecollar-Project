@@ -85,16 +85,42 @@ def delete_invoice(invoice_id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-# Route to retrieve a specific invoice by ID
+# Route to retrieve a specific invoice by user ID
+@invoices_bp.route('/user/<int:user_id>', methods=['GET'])
+@jwt_required()
+def get_invoice_by_user_id(user_id):
+    invoices = Invoice.query.filter_by(user_id=user_id).all()
+    if not invoices:
+        return jsonify({"error": "No invoices found for the given user ID"}), 404
+
+    invoice_list = [
+        {
+            "invoice_id": invoice.invoice_id,
+            "user_id": invoice.user_id,
+            "service_cost": invoice.service_cost,
+            "status": invoice.status,
+            "date_of_creation": invoice.date_of_creation,
+        }
+        for invoice in invoices
+    ]
+    return jsonify(invoice_list), 200
+
+# Route to retrieve a specific invoice by invoice ID
 @invoices_bp.route('/<int:invoice_id>', methods=['GET'])
 @jwt_required()
 def get_invoice(invoice_id):
-    invoice = Invoice.query.get_or_404(invoice_id)
-    invoice_data = {
-        "invoice_id": invoice.invoice_id,
-        "user_id": invoice.user_id,
-        "service_cost": invoice.service_cost,
-        "status": invoice.status,
-        "date_of_creation": invoice.date_of_creation
-    }
-    return jsonify(invoice_data), 200
+    invoices = Invoice.query.filter_by(invoice_id=invoice_id).all()
+    if not invoices:
+        return jsonify({"error": "No invoices found for the given user ID"}), 404
+
+    invoice_list = [
+        {
+            "invoice_id": invoice.invoice_id,
+            "user_id": invoice.user_id,
+            "service_cost": invoice.service_cost,
+            "status": invoice.status,
+            "date_of_creation": invoice.date_of_creation,
+        }
+        for invoice in invoices
+    ]
+    return jsonify(invoice_list), 200

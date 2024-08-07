@@ -59,7 +59,7 @@ def chat_history(receiver_id):
         'sent_to': chat.sent_to,
         'message': chat.message,
         'date_of_creation': chat.date_of_creation,
-        'status': chat.status
+        'status': chat.status,
     } for chat in chats]
 
     return jsonify(chat_history), 200

@@ -2,12 +2,14 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ChatComponent from './ChatComponent';
+import InvoiceDisplay from '../../invoice/_components/invoiceDisplay'; // Adjust the import path as needed
 
 function ChatHistoryPage() {
   const [partners, setPartners] = useState([]);
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [chatHistory, setChatHistory] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -42,6 +44,72 @@ function ChatHistoryPage() {
     fetchChatPartners();
   }, []);
 
+  useEffect(() => {
+    if (!selectedPartner) return;
+
+    const fetchChatHistory = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`http://localhost:5000/api/chats/history/${selectedPartner}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Fetch error:', errorData.error);
+          setError(errorData.error || 'An error occurred while fetching chat history.');
+          return;
+        }
+
+        const data = await response.json();
+        setChatHistory(data);
+
+        // Fetch invoices for chats with an invoice_id
+        const invoiceFetches = data
+          .filter(chat => chat.invoice_id)
+          .map(chat => fetchInvoice(chat.invoice_id));
+
+        const invoices = await Promise.all(invoiceFetches);
+        const chatHistoryWithInvoices = data.map(chat => ({
+          ...chat,
+          invoice: invoices.find(invoice => invoice && invoice.invoice_id === chat.invoice_id),
+        }));
+
+        setChatHistory(chatHistoryWithInvoices);
+      } catch (error) {
+        console.error('An error occurred while fetching chat history:', error);
+        setError('An error occurred while fetching chat history.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchChatHistory();
+  }, [selectedPartner]);
+
+  const fetchInvoice = async (invoiceId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/invoices/${invoiceId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Fetch error:', errorData.error);
+        return null;
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('An error occurred while fetching invoice:', error);
+      return null;
+    }
+  };
+
   const handlePartnerClick = (userId) => {
     setSelectedPartner(userId);
   };
@@ -69,7 +137,26 @@ function ChatHistoryPage() {
       </div>
       <div className="w-3/4 p-4">
         {selectedPartner ? (
-          <ChatComponent userId={localStorage.getItem('user_id')} receiverId={selectedPartner} />
+          <div>
+            <ChatComponent userId={localStorage.getItem('user_id')} receiverId={selectedPartner} />
+            <div className="mt-8">
+              {chatHistory.map(chat => (
+                <div key={chat.chat_id}>
+                  {chat.invoice && (
+                    <div className="mt-4">
+                      <InvoiceDisplay
+                        userProfile={null} // Adjust or fetch user profile if necessary
+                        serviceCost={chat.invoice.service_cost || ''} // Extract the service cost from invoice
+                        existingInvoice={[chat.invoice]} // Pass the invoice array
+                        isEditable={false} // Default value; adjust as needed
+                        preview={true} // Default value; adjust as needed
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         ) : (
           <p>Select a user to start chatting.</p>
         )}
