@@ -138,3 +138,16 @@ class ServiceProviderApplication(db.Model):
     # Relationships
     service_category = db.relationship('ServiceCategory', backref=db.backref('applications', lazy=True))
     service = db.relationship('Service', backref=db.backref('applications', lazy=True))
+
+class Transaction(db.Model):
+    __tablename__ = 'transactions'
+    transaction_id = db.Column(db.Integer, primary_key=True)
+    payer_name = db.Column(db.String(128), nullable=False)
+    payer_phone_number = db.Column(db.String(20), nullable=False)
+    amount_paid = db.Column(db.Float, nullable=False)
+    status = db.Column(db.String(20), nullable=False)
+    invoice_id = db.Column(db.Integer, db.ForeignKey('invoices.invoice_id'), nullable=False)
+    date_of_transaction = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    invoice = db.relationship('Invoice', backref=db.backref('transactions', lazy=True))
