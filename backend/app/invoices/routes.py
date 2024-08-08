@@ -52,6 +52,7 @@ def create_invoice():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+
 # Route to update an existing invoice
 @invoices_bp.route('/<int:invoice_id>', methods=['PUT'])
 @jwt_required()

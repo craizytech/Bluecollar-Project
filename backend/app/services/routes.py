@@ -227,3 +227,41 @@ def apply_service():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
+
+@services_bp.route('/applications', methods=['GET'])
+def get_applications():
+    applications = ServiceProviderApplication.query.all()
+    applications_data = []
+    
+    for application in applications:
+        applications_data.append({
+            'application_id': application.application_id,
+            'email': application.email,
+            'service_category': application.service_category.category_name,
+            'service': application.service.service_name,
+            'status': application.status,
+            'date_of_application': application.date_of_application
+        })
+
+    return jsonify(applications_data), 200
+
+
+
+@services_bp.route('/applications/<int:application_id>/approve', methods=['POST'])
+def approve_application(application_id):
+    application = ServiceProviderApplication.query.get_or_404(application_id)
+
+    if application.status == 'approved':
+        return jsonify({"error": "Application is already approved"}), 400
+
+    application.status = 'approved'
+
+    try:
+        db.session.commit()
+        return jsonify({"message": "Application approved successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
