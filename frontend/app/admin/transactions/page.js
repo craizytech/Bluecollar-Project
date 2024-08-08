@@ -1,5 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
 import {
   Copy,
   CreditCard,
@@ -58,22 +60,65 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 
-
 export function TransactionsPage() {
   const [transactions, setTransactions] = useState([]);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [filteredTransactions, setFilteredTransactions] = useState([]);
+  const [filters, setFilters] = useState({ paid: true, failed: false, cancelled: false });
+  const [activeTab, setActiveTab] = useState("week");
 
   useEffect(() => {
     async function fetchTransactions() {
       const response = await fetch("http://localhost:5000/api/transactions/all");
       const data = await response.json();
       setTransactions(data);
+      filterTransactions(data, filters);
     }
     fetchTransactions();
   }, []);
 
   const handleRowClick = (transaction) => {
     setSelectedTransaction(transaction);
+  };
+
+  const filterTransactions = (data, filters) => {
+    const filtered = data.filter(transaction => 
+      (filters.paid && transaction.status === "paid") ||
+      (filters.failed && transaction.status === "failed") ||
+      (filters.cancelled && transaction.status === "cancelled")
+    );
+    setFilteredTransactions(filtered);
+  };
+
+  const handleFilterChange = (filter) => {
+    const updatedFilters = { ...filters, [filter]: !filters[filter] };
+    setFilters(updatedFilters);
+    filterTransactions(transactions, updatedFilters);
+  };
+
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    const tableColumn = ["Customer", "Status", "Date", "Amount"];
+    const tableRows = [];
+
+    filteredTransactions.forEach(transaction => {
+      const transactionData = [
+        transaction.payer_name,
+        transaction.status,
+        new Date(transaction.date_of_transaction).toLocaleDateString(),
+        `$${transaction.amount_paid.toFixed(2)}`,
+      ];
+      tableRows.push(transactionData);
+    });
+
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 20,
+    });
+
+    doc.text("Transactions Report", 14, 15);
+    doc.save(`transactions_${activeTab}.pdf`);
   };
 
   return (
@@ -94,7 +139,7 @@ export function TransactionsPage() {
         </nav>
         <div className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8 lg:grid-cols-3 xl:grid-cols-3">
           <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
-            <Tabs defaultValue="week">
+            <Tabs defaultValue="week" onValueChange={setActiveTab}>
               <div className="flex items-center">
                 <TabsList>
                   <TabsTrigger value="week">Week</TabsTrigger>
@@ -116,14 +161,23 @@ export function TransactionsPage() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Filter by</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuCheckboxItem checked>
-                        Fulfilled
+                      <DropdownMenuCheckboxItem 
+                        checked={filters.paid}
+                        onCheckedChange={() => handleFilterChange('paid')}
+                      >
+                        Paid
                       </DropdownMenuCheckboxItem>
-                      <DropdownMenuCheckboxItem>
-                        Declined
+                      <DropdownMenuCheckboxItem 
+                        checked={filters.failed}
+                        onCheckedChange={() => handleFilterChange('failed')}
+                      >
+                        Failed
                       </DropdownMenuCheckboxItem>
-                      <DropdownMenuCheckboxItem>
-                        Refunded
+                      <DropdownMenuCheckboxItem 
+                        checked={filters.cancelled}
+                        onCheckedChange={() => handleFilterChange('cancelled')}
+                      >
+                        Cancelled
                       </DropdownMenuCheckboxItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -131,6 +185,7 @@ export function TransactionsPage() {
                     size="sm"
                     variant="outline"
                     className="h-7 gap-1 text-sm"
+                    onClick={exportToPDF}
                   >
                     <File className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only">Export</span>
@@ -160,7 +215,7 @@ export function TransactionsPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {transactions.map((transaction) => (
+                        {filteredTransactions.map((transaction) => (
                           <TableRow
                             key={transaction.transaction_id}
                             onClick={() => handleRowClick(transaction)}
@@ -224,67 +279,33 @@ export function TransactionsPage() {
                         <Button
                           size="icon"
                           variant="outline"
-                          className="h-8 w-8"
+                          className="h-6 w-6"
                         >
-                          <MoreVertical className="h-3.5 w-3.5" />
+                          <MoreVertical className="h-4 w-4" />
                           <span className="sr-only">More</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Export</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>Trash</DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          <span>View Details</span>
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid gap-2 p-1">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Customer
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="h-4 w-4 text-muted-foreground" />
-                        {selectedTransaction.payer_name}
-                      </div>
+                  <div>
+                    <div className="text-sm font-medium text-muted-foreground">
+                      Amount Paid
                     </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Phone Number
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="h-4 w-4 text-muted-foreground" />
-                        {selectedTransaction.payer_phone_number}
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Amount Paid
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="h-4 w-4 text-muted-foreground" />
-                        ${selectedTransaction.amount_paid.toFixed(2)}
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Status
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="h-4 w-4 text-muted-foreground" />
-                        {selectedTransaction.status}
-                      </div>
+                    <div className="text-xl font-bold text-foreground">
+                      ${selectedTransaction.amount_paid.toFixed(2)}
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="flex justify-between px-7 py-6">
-                  <div className="grid gap-1">
-                    <Progress value={selectedTransaction.progress} />
-                    <p className="text-sm text-muted-foreground">
-                      Transaction ID: {selectedTransaction.transaction_id}
-                    </p>
-                  </div>
+                <CardFooter>
+                  <Button size="sm">Download Receipt</Button>
                 </CardFooter>
               </Card>
             </div>
