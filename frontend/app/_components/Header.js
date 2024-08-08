@@ -2,7 +2,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import React, { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 function Header() {
   const [userEmail, setUserEmail] = useState(null);
@@ -11,6 +11,11 @@ function Header() {
   const [newMessage, setNewMessage] = useState(false);
   const router = useRouter();
   const dropdownRef = useRef(null);
+  const pathname = usePathname();
+
+  const isActive = (href) => {
+    return pathname === href ? 'text-blue-500' : 'text-black';
+  };
 
   useEffect(() => {
     const email = typeof window !== 'undefined' ? localStorage.getItem('user_email') : null;
@@ -65,9 +70,9 @@ function Header() {
       <div className="flex items-center gap-8">
         <Image src='/logo.png' alt='logo' width={100} height={100} />
         <div className="md:flex items-center gap-6 hidden">
-          <Link href="/Home" className="hover:scale-105 hover:text-primary hover:cursor-pointer">Home</Link>
-          <Link href='/aboutUs' className="hover:scale-105 hover:text-primary hover:cursor-pointer">About Us</Link>
-          {/* <h2 className="hover:scale-105 hover:text-primary hover:cursor-pointer">Services</h2> */}
+          <Link href="/Home" className={`hover:scale-105 hover:text-primary hover:cursor-pointer ${isActive('/Home')}`}>Home</Link>
+          <Link href='/aboutUs' className={`hover:scale-105 hover:text-primary hover:cursor-pointer ${isActive('/aboutUs')}`}>About Us</Link>
+          <Link href="/services" className={`hover:scale-105 hover:text-blue-500 hover:cursor-pointer ${isActive('/services')}`}>Services</Link>
         </div>
       </div>
       <div className="flex items-center gap-4 relative">

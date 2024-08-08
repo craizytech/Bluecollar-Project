@@ -66,6 +66,7 @@ class ServiceCategory(db.Model):
     __tablename__ = 'service_categories'
     category_id = db.Column(db.Integer, primary_key=True)
     category_name = db.Column(db.String(64), nullable=False)
+    date_of_creation = db.Column(db.DateTime, default=datetime.utcnow)
     
     # One-to-Many relationship with Services
     services = db.relationship('Service', backref='category', lazy=True)

@@ -1,23 +1,16 @@
-import React from 'react';
-import Image from "next/image"
-import Link from "next/link"
+"use client";
+import React, { useEffect, useState } from 'react';
+import Image from "next/image";
+import Link from "next/link";
 import {
-    File,
-    Home,
-    LineChart,
     ListFilter,
     MoreHorizontal,
-    Package,
-    Package2,
-    PanelLeft,
     PlusCircle,
-    Search,
-    Settings,
-    ShoppingCart,
-    Users2,
-} from "lucide-react"
+    CheckCircle,
+    AlertTriangle,
+} from "lucide-react";
 
-import { Badge } from "@/components/ui/badge"
+import { Badge } from "@/components/ui/badge";
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -25,8 +18,8 @@ import {
     BreadcrumbList,
     BreadcrumbPage,
     BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Button } from "@/components/ui/button"
+} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
 import {
     Card,
     CardContent,
@@ -34,16 +27,15 @@ import {
     CardFooter,
     CardHeader,
     CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
     DropdownMenu,
-    DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
     Table,
     TableBody,
@@ -51,17 +43,199 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
     Tabs,
     TabsContent,
     TabsList,
     TabsTrigger,
-} from "@/components/ui/tabs"
+} from "@/components/ui/tabs";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 export function CategoriesPage() {
+    const [categories, setCategories] = useState([]);
+    const [newCategoryName, setNewCategoryName] = useState('');
+    const [newCategoryImage, setNewCategoryImage] = useState(null);
+    const [alert, setAlert] = useState(null); // State for managing alerts
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [categoryToEdit, setCategoryToEdit] = useState(null);
+    const [categoryToDelete, setCategoryToDelete] = useState(null);
+
+    useEffect(() => {
+        fetch('http://localhost:5000/api/categories/all')
+            .then(response => response.json())
+            .then(data => setCategories(data))
+            .catch(error => console.error('Error fetching categories:', error));
+    }, []);
+
+    useEffect(() => {
+        if (alert) {
+            const timer = setTimeout(() => {
+                setAlert(null);
+            }, 3000); // Alert disappears after 3 seconds
+            return () => clearTimeout(timer);
+        }
+    }, [alert]);
+
+    const handleAddCategory = async () => {
+        if (!newCategoryName) {
+            setAlert({
+                variant: "destructive",
+                title: "Error",
+                description: "Category name is required.",
+                icon: <AlertTriangle className="h-4 w-4" />,
+            });
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('name', newCategoryName.toLowerCase());
+        formData.append('file', newCategoryImage);
+
+        try {
+            const response = await fetch('http://localhost:5000/api/categories/create', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const newCategory = await response.json();
+                setCategories([...categories, newCategory.category]);
+                setDialogOpen(false);
+                setNewCategoryName('');
+                setNewCategoryImage(null);
+                setAlert({
+                    variant: "success",
+                    title: "Success",
+                    description: "Category created successfully.",
+                    icon: <CheckCircle className="h-4 w-4" />,
+                });
+            } else {
+                setAlert({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Failed to create category.",
+                    icon: <AlertTriangle className="h-4 w-4" />,
+                });
+            }
+        } catch (error) {
+            setAlert({
+                variant: "destructive",
+                title: "Error",
+                description: "Error creating category.",
+                icon: <AlertTriangle className="h-4 w-4" />,
+            });
+        }
+    };
+
+    const handleEditCategory = async () => {
+        if (!categoryToEdit.name) {
+            setAlert({
+                variant: "destructive",
+                title: "Error",
+                description: "Category name is required.",
+                icon: <AlertTriangle className="h-4 w-4" />,
+            });
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('name', categoryToEdit.name.toLowerCase());
+        if (categoryToEdit.image) {
+            formData.append('file', categoryToEdit.image);
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5000/api/categories/update/${categoryToEdit.id}`, {
+                method: 'PUT',
+                body: formData
+            });
+
+            if (response.ok) {
+                const updatedCategory = await response.json();
+                setCategories(categories.map(category => category.id === updatedCategory.id ? updatedCategory : category));
+                setEditDialogOpen(false);
+                setAlert({
+                    variant: "success",
+                    title: "Success",
+                    description: "Category updated successfully.",
+                    icon: <CheckCircle className="h-4 w-4" />,
+                });
+            } else {
+                setAlert({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Failed to update category.",
+                    icon: <AlertTriangle className="h-4 w-4" />,
+                });
+            }
+        } catch (error) {
+            setAlert({
+                variant: "destructive",
+                title: "Error",
+                description: "Error updating category.",
+                icon: <AlertTriangle className="h-4 w-4" />,
+            });
+        }
+    };
+
+    const handleDeleteCategory = async () => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/categories/delete/${categoryToDelete.id}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                setCategories(categories.filter(category => category.id !== categoryToDelete.id));
+                setDeleteDialogOpen(false);
+                setAlert({
+                    variant: "success",
+                    title: "Success",
+                    description: "Category deleted successfully.",
+                    icon: <CheckCircle className="h-4 w-4" />,
+                });
+            } else {
+                setAlert({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Failed to delete category.",
+                    icon: <AlertTriangle className="h-4 w-4" />,
+                });
+            }
+        } catch (error) {
+            setAlert({
+                variant: "destructive",
+                title: "Error",
+                description: "Error deleting category.",
+                icon: <AlertTriangle className="h-4 w-4" />,
+            });
+        }
+    };
+
+    const handleImageUpload = (event, isEdit = false) => {
+        const file = event.target.files[0];
+        if (isEdit) {
+            setCategoryToEdit({ ...categoryToEdit, image: file });
+        } else {
+            setNewCategoryImage(file);
+        }
+    };
+
     return (
         <div className="flex min-h-screen w-full flex-col bg-muted/40">
+            {alert && (
+                <div className="fixed top-20 right-20 flex items-center justify-center z-50 w-auto">
+                    <Alert variant={alert.variant}>
+                        {alert.icon}
+                        <AlertTitle>{alert.title}</AlertTitle>
+                        <AlertDescription>{alert.description}</AlertDescription>
+                    </Alert>
+                </div>
+            )}
             <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
                 <nav className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
                     <Breadcrumb className="hidden md:flex">
@@ -98,24 +272,46 @@ export function CategoriesPage() {
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>Filter by</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuCheckboxItem checked>
-                                            Active
-                                        </DropdownMenuCheckboxItem>
-                                        <DropdownMenuCheckboxItem>Draft</DropdownMenuCheckboxItem>
+                                        <DropdownMenuItem>Active</DropdownMenuItem>
+                                        <DropdownMenuItem>Draft</DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
-                                <Button size="sm" variant="outline" className="h-8 gap-1">
-                                    <File className="h-3.5 w-3.5" />
-                                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                                        Export
-                                    </span>
-                                </Button>
-                                <Button size="sm" className="h-8 gap-1">
-                                    <PlusCircle className="h-3.5 w-3.5" />
-                                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                                        Add Category
-                                    </span>
-                                </Button>
+                                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button size="sm" className="h-8 gap-1">
+                                            <PlusCircle className="h-3.5 w-3.5" />
+                                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                                                Add Category
+                                            </span>
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Add New Category</DialogTitle>
+                                            <DialogDescription>
+                                                Please enter the category name and upload an image.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="space-y-4">
+                                            <Input
+                                                placeholder="Category name"
+                                                value={newCategoryName}
+                                                onChange={(e) => setNewCategoryName(e.target.value)}
+                                            />
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleImageUpload(e)}
+                                            />
+                                        </div>
+                                        <DialogFooter>
+                                            <Button onClick={handleAddCategory}>Add Category</Button>
+                                            <DialogClose asChild>
+                                                <Button variant="outline">Cancel</Button>
+                                            </DialogClose>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
                             </div>
                         </div>
                         <TabsContent value="all">
@@ -136,9 +332,6 @@ export function CategoriesPage() {
                                                 <TableHead>Name</TableHead>
                                                 <TableHead>Status</TableHead>
                                                 <TableHead className="hidden md:table-cell">
-                                                    Price
-                                                </TableHead>
-                                                <TableHead className="hidden md:table-cell">
                                                     Total Employees
                                                 </TableHead>
                                                 <TableHead className="hidden md:table-cell">
@@ -150,276 +343,64 @@ export function CategoriesPage() {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            <TableRow>
-                                                <TableCell className="hidden sm:table-cell">
-                                                    <Image
-                                                        alt="Product image"
-                                                        className="aspect-square rounded-md object-cover"
-                                                        height="64"
-                                                        src="/placeholder.svg"
-                                                        width="64"
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="font-medium">
-                                                    Laser Lemonade Machine
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline">Draft</Badge>
-                                                </TableCell>
-                                                <TableCell className="hidden md:table-cell">
-                                                    $499.99
-                                                </TableCell>
-                                                <TableCell className="hidden md:table-cell">
-                                                    25
-                                                </TableCell>
-                                                <TableCell className="hidden md:table-cell">
-                                                    2023-07-12 10:42 AM
-                                                </TableCell>
-                                                <TableCell>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button
-                                                                aria-haspopup="true"
-                                                                size="icon"
-                                                                variant="ghost"
-                                                            >
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                                <span className="sr-only">Toggle menu</span>
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                                                            <DropdownMenuItem>Delete</DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                            <TableRow>
-                                                <TableCell className="hidden sm:table-cell">
-                                                    <Image
-                                                        alt="Product image"
-                                                        className="aspect-square rounded-md object-cover"
-                                                        height="64"
-                                                        src="/placeholder.svg"
-                                                        width="64"
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="font-medium">
-                                                    Hypernova Headphones
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline">Active</Badge>
-                                                </TableCell>
-                                                <TableCell className="hidden md:table-cell">
-                                                    $129.99
-                                                </TableCell>
-                                                <TableCell className="hidden md:table-cell">
-                                                    100
-                                                </TableCell>
-                                                <TableCell className="hidden md:table-cell">
-                                                    2023-10-18 03:21 PM
-                                                </TableCell>
-                                                <TableCell>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button
-                                                                aria-haspopup="true"
-                                                                size="icon"
-                                                                variant="ghost"
-                                                            >
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                                <span className="sr-only">Toggle menu</span>
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                                                            <DropdownMenuItem>Delete</DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                            <TableRow>
-                                                <TableCell className="hidden sm:table-cell">
-                                                    <Image
-                                                        alt="Product image"
-                                                        className="aspect-square rounded-md object-cover"
-                                                        height="64"
-                                                        src="/placeholder.svg"
-                                                        width="64"
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="font-medium">
-                                                    AeroGlow Desk Lamp
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline">Active</Badge>
-                                                </TableCell>
-                                                <TableCell className="hidden md:table-cell">
-                                                    $39.99
-                                                </TableCell>
-                                                <TableCell className="hidden md:table-cell">
-                                                    50
-                                                </TableCell>
-                                                <TableCell className="hidden md:table-cell">
-                                                    2023-11-29 08:15 AM
-                                                </TableCell>
-                                                <TableCell>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button
-                                                                aria-haspopup="true"
-                                                                size="icon"
-                                                                variant="ghost"
-                                                            >
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                                <span className="sr-only">Toggle menu</span>
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                                                            <DropdownMenuItem>Delete</DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                            <TableRow>
-                                                <TableCell className="hidden sm:table-cell">
-                                                    <Image
-                                                        alt="Product image"
-                                                        className="aspect-square rounded-md object-cover"
-                                                        height="64"
-                                                        src="/placeholder.svg"
-                                                        width="64"
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="font-medium">
-                                                    TechTonic Energy Drink
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant="secondary">Draft</Badge>
-                                                </TableCell>
-                                                <TableCell className="hidden md:table-cell">
-                                                    $2.99
-                                                </TableCell>
-                                                <TableCell className="hidden md:table-cell">
-                                                    0
-                                                </TableCell>
-                                                <TableCell className="hidden md:table-cell">
-                                                    2023-12-25 11:59 PM
-                                                </TableCell>
-                                                <TableCell>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button
-                                                                aria-haspopup="true"
-                                                                size="icon"
-                                                                variant="ghost"
-                                                            >
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                                <span className="sr-only">Toggle menu</span>
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                                                            <DropdownMenuItem>Delete</DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                            <TableRow>
-                                                <TableCell className="hidden sm:table-cell">
-                                                    <Image
-                                                        alt="Product image"
-                                                        className="aspect-square rounded-md object-cover"
-                                                        height="64"
-                                                        src="/placeholder.svg"
-                                                        width="64"
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="font-medium">
-                                                    Gamer Gear Pro Controller
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline">Active</Badge>
-                                                </TableCell>
-                                                <TableCell className="hidden md:table-cell">
-                                                    $59.99
-                                                </TableCell>
-                                                <TableCell className="hidden md:table-cell">
-                                                    75
-                                                </TableCell>
-                                                <TableCell className="hidden md:table-cell">
-                                                    2024-01-01 12:00 AM
-                                                </TableCell>
-                                                <TableCell>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button
-                                                                aria-haspopup="true"
-                                                                size="icon"
-                                                                variant="ghost"
-                                                            >
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                                <span className="sr-only">Toggle menu</span>
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                                                            <DropdownMenuItem>Delete</DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                            <TableRow>
-                                                <TableCell className="hidden sm:table-cell">
-                                                    <Image
-                                                        alt="Product image"
-                                                        className="aspect-square rounded-md object-cover"
-                                                        height="64"
-                                                        src="/placeholder.svg"
-                                                        width="64"
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="font-medium">
-                                                    Luminous VR Headset
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline">Active</Badge>
-                                                </TableCell>
-                                                <TableCell className="hidden md:table-cell">
-                                                    $199.99
-                                                </TableCell>
-                                                <TableCell className="hidden md:table-cell">
-                                                    30
-                                                </TableCell>
-                                                <TableCell className="hidden md:table-cell">
-                                                    2024-02-14 02:14 PM
-                                                </TableCell>
-                                                <TableCell>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button
-                                                                aria-haspopup="true"
-                                                                size="icon"
-                                                                variant="ghost"
-                                                            >
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                                <span className="sr-only">Toggle menu</span>
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                                                            <DropdownMenuItem>Delete</DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
+                                            {categories.map((category) => (
+                                                <TableRow key={category.id}>
+                                                    <TableCell className="hidden sm:table-cell">
+                                                        <Image
+                                                            alt="Product image"
+                                                            className="aspect-square rounded-md object-cover"
+                                                            height="64"
+                                                            src={`/${category.name.toLowerCase()}.png`}
+                                                            width="64"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="font-medium">
+                                                        {category.name}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Badge variant="outline">Draft</Badge>
+                                                    </TableCell>
+                                                    <TableCell className="hidden md:table-cell">
+                                                        25
+                                                    </TableCell>
+                                                    <TableCell className="hidden md:table-cell">
+                                                        {category.creation_date}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button
+                                                                    aria-haspopup="true"
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                >
+                                                                    <MoreHorizontal className="h-4 w-4" />
+                                                                    <span className="sr-only">Toggle menu</span>
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                                <DropdownMenuItem
+                                                                    onSelect={() => {
+                                                                        setCategoryToEdit(category);
+                                                                        setEditDialogOpen(true);
+                                                                    }}
+                                                                >
+                                                                    Edit
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onSelect={() => {
+                                                                        setCategoryToDelete(category);
+                                                                        setDeleteDialogOpen(true);
+                                                                    }}
+                                                                >
+                                                                    Delete
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
                                         </TableBody>
                                     </Table>
                                 </CardContent>
@@ -434,8 +415,54 @@ export function CategoriesPage() {
                     </Tabs>
                 </div>
             </div>
+            <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Category</DialogTitle>
+                        <DialogDescription>
+                            Please update the category name and image.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <Input
+                            placeholder="Category name"
+                            value={categoryToEdit?.name || ''}
+                            onChange={(e) =>
+                                setCategoryToEdit({ ...categoryToEdit, name: e.target.value })
+                            }
+                        />
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageUpload(e, true)}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={handleEditCategory}>Update Category</Button>
+                        <DialogClose asChild>
+                            <Button variant="outline">Cancel</Button>
+                        </DialogClose>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirm Delete</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete this category?
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button onClick={handleDeleteCategory} variant="destructive">Delete</Button>
+                        <DialogClose asChild>
+                            <Button variant="outline">Cancel</Button>
+                        </DialogClose>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
-    )
+    );
 }
 
 export default CategoriesPage;

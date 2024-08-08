@@ -1,9 +1,9 @@
-import { Outfit } from "next/font/google";
+import { Roboto } from "next/font/google";
 import "./globals.css";
 import Header from "./_components/Header";
 import { CategoryProvider } from "./context/CategoryContext";
 
-const inter = Outfit({ subsets: ["latin"] });
+const inter = Roboto({ subsets: ["latin"], weight: ['400', '700'] });
 
 export const metadata = {
   title: "BlueCollar",
