@@ -9,7 +9,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { BadgeInfo, CheckCircle, ChevronDown, MoreHorizontal } from "lucide-react";
+import { AlertTriangle, BadgeInfo, CheckCircle, ChevronDown, MoreHorizontal, Shield, User, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -54,8 +54,24 @@ export function UsersPage() {
   useEffect(() => {
     fetch("http://localhost:5000/api/users/all")
       .then((response) => response.json())
-      .then((data) => setData(data))
-      .catch((error) => console.error("Error fetching users:", error));
+      .then((data) =>
+        setData(data),
+        setAlert({
+          variant: "success",
+          title: "Success",
+          description: "Users fetched successfully.",
+          icon: <CheckCircle className="h-4 w-4" />,
+        })
+      )
+      .catch((error) =>
+        console.error("Error fetching users:", error,
+          setAlert({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to fetch users.",
+            icon: <AlertTriangle className="h-4 w-4" />,
+          })
+        ));
   }, []);
 
   useEffect(() => {
@@ -67,14 +83,94 @@ export function UsersPage() {
     }
   }, [alert]);
 
-  const handleViewUser = (userId) => {
-    console.log("pressed");
-    setAlert({
-      variant: "default",
-      title: "Information",
-      description: `Viewing user with ID: ${userId}`,
-      icon: <BadgeInfo className="h-4 w-4" />,
-    });
+  const handleMakeAdmin = async (userId) => {
+    try {
+      console.log("pressed");
+      const response = await fetch(`http://localhost:5000/api/users/${userId}/make-admin`, {
+        role_id: 1,
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (response.ok) {
+        // Update the role_id in the local state for the specific user
+        setData((prevData) =>
+          prevData.map((user) =>
+            user.user_id === userId ? { ...user, role_id: 1 } : user
+          )
+        );
+  
+        setAlert({
+          variant: "default",
+          title: "Information",
+          description: `Promoted user with ID: ${userId} to Admin`,
+          icon: <BadgeInfo className="h-4 w-4" />,
+        });
+      } else {
+        setAlert({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to promote to admin.",
+          icon: <AlertTriangle className="h-4 w-4" />,
+        });
+        console.error("Failed to promote to admin:", response.statusText);
+      }
+    } catch (error) {
+      setAlert({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to promote to admin.",
+        icon: <AlertTriangle className="h-4 w-4" />,
+      });
+      console.error("Failed to promote to admin:", error);
+    }
+  };
+  
+  const handleMakeNormalUser = async (userId) => {
+    try {
+      console.log("pressed");
+      const response = await fetch(`http://localhost:5000/api/users/${userId}/make-general-user`, {
+        role_id: 1,
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (response.ok) {
+        // Update the role_id in the local state for the specific user
+        setData((prevData) =>
+          prevData.map((user) =>
+            user.user_id === userId ? { ...user, role_id: 3 } : user
+          )
+        );
+  
+        setAlert({
+          variant: "default",
+          title: "Information",
+          description: `Demoted user with ID: ${userId} to General User`,
+          icon: <BadgeInfo className="h-4 w-4" />,
+        });
+      } else {
+        setAlert({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to demote to general user.",
+          icon: <AlertTriangle className="h-4 w-4" />,
+        });
+        console.error("Failed to demote to general user:", response.statusText);
+      }
+    } catch (error) {
+      setAlert({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to demote to general user.",
+        icon: <AlertTriangle className="h-4 w-4" />,
+      });
+      console.error("Failed to demote to general user:", error);
+    }
   };
 
   const handleDeleteUser = async (userId) => {
@@ -133,6 +229,31 @@ export function UsersPage() {
       {
         accessorKey: "role_id",
         header: "Role ID",
+        cell: ({ row }) => {
+          const roleId = row.original.role_id;
+          let roleInfo = { icon: null, label: "", color: "" };
+
+          switch (roleId) {
+            case 1:
+              roleInfo = { icon: <Shield className="h-4 w-4 text-red-500" />, label: "Admin", color: "text-red-500" };
+              break;
+            case 2:
+              roleInfo = { icon: <Users className="h-4 w-4 text-blue-500" />, label: "Specialized User", color: "text-blue-500" };
+              break;
+            case 3:
+              roleInfo = { icon: <User className="h-4 w-4 text-green-500" />, label: "General User", color: "text-green-500" };
+              break;
+            default:
+              roleInfo = { icon: null, label: "Unknown", color: "text-gray-500" };
+          }
+
+          return (
+            <div className={`flex items-center space-x-2 ${roleInfo.color}`}>
+              {roleInfo.icon}
+              <span>{roleInfo.label}</span>
+            </div>
+          );
+        },
       },
       {
         header: "Actions",
@@ -146,8 +267,11 @@ export function UsersPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem className="cursor-pointer" onClick={() => handleViewUser(row.original.user_id)}>
-                  View
+                <DropdownMenuItem className="cursor-pointer" onClick={() => handleMakeAdmin(row.original.user_id)}>
+                  Promote to admin
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => handleMakeNormalUser(row.original.user_id)}>
+                  Demote to general user
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer" onClick={() => setDeleteUserId(row.original.user_id)}>
                   Delete
@@ -183,7 +307,7 @@ export function UsersPage() {
   return (
     <div className="w-full relative">
       {alert && (
-        <div className="fixed top-20 right-20 flex items-center justify-center z-50 w-auto">
+        <div className="fixed bottom-20 right-20 flex items-center justify-center z-50 w-auto">
           <Alert variant={alert.variant}>
             {alert.icon}
             <AlertTitle>{alert.title}</AlertTitle>

@@ -1,7 +1,7 @@
 import os
 from flask import Blueprint, jsonify, request, current_app, abort
 from werkzeug.utils import secure_filename
-from app.models import ServiceCategory, db
+from app.models import ServiceCategory, User, db
 from datetime import datetime
 
 categories_bp = Blueprint('categories', __name__)
@@ -91,3 +91,26 @@ def delete_category(category_id):
     db.session.commit()
 
     return jsonify({'message': 'Category deleted successfully'}), 200
+
+@categories_bp.route('/user_count', methods=['GET'])
+def get_category_user_counts():
+    # Query to get the count of users for each category
+    category_user_counts = db.session.query(
+        ServiceCategory.category_id,
+        ServiceCategory.category_name,
+        db.func.count(User.user_id).label('user_count')
+    ).outerjoin(User, User.role_id == ServiceCategory.category_id) \
+    .group_by(ServiceCategory.category_id) \
+    .all()
+
+    # Convert the result to a list of dictionaries
+    result = [
+        {
+            'id': category_id,
+            'name': category_name,
+            'user_count': user_count
+        }
+        for category_id, category_name, user_count in category_user_counts
+    ]
+
+    return jsonify(result)

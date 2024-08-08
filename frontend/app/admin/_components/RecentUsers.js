@@ -1,101 +1,117 @@
-import React from 'react'
+"use client";
+import React, { useState, useEffect } from 'react'
 import {
-    Avatar,
-    AvatarFallback,
-    AvatarImage,
-} from "@/components/ui/avatar"
+    flexRender,
+    getCoreRowModel,
+    getFilteredRowModel,
+    getPaginationRowModel,
+    getSortedRowModel,
+    useReactTable,
+} from "@tanstack/react-table";
 import {
-    Card,
-    CardContent,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 
 function RecentUsers() {
-  return (
-    <Card x-chunk="dashboard-01-chunk-5">
-    <CardHeader>
-        <CardTitle>Recent Users</CardTitle>
-    </CardHeader>
-    <CardContent className="grid gap-8">
-        <div className="flex items-center gap-4">
-            <Avatar className="hidden h-9 w-9 sm:flex">
-                <AvatarImage src="/avatars/01.png" alt="Avatar" />
-                <AvatarFallback>OM</AvatarFallback>
-            </Avatar>
-            <div className="grid gap-1">
-                <p className="text-sm font-medium leading-none">
-                    Olivia Martin
-                </p>
-                <p className="text-sm text-muted-foreground">
-                    olivia.martin@email.com
-                </p>
+    const [sorting, setSorting] = useState([]);
+    const [columnFilters, setColumnFilters] = useState([]);
+    const [columnVisibility, setColumnVisibility] = useState({});
+    const [rowSelection, setRowSelection] = useState({});
+    const [data, setData] = useState([]);
+    useEffect(() => {
+        fetch("http://localhost:5000/api/users/all")
+            .then((response) => response.json())
+            .then((data) =>
+                setData(data),
+            )
+            .catch((error) =>
+                console.error("Error fetching users:", error
+                ));
+    }, []);
+
+    const columns = React.useMemo(
+        () => [
+            {
+                accessorKey: "user_id",
+                header: "ID",
+            },
+            {
+                accessorKey: "user_name",
+                header: "Name",
+            },
+            {
+                accessorKey: "user_email",
+                header: "Email",
+            }
+        ]);
+
+    const table = useReactTable({
+        data,
+        columns,
+        onSortingChange: setSorting,
+        onColumnFiltersChange: setColumnFilters,
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        onColumnVisibilityChange: setColumnVisibility,
+        onRowSelectionChange: setRowSelection,
+        state: {
+            sorting,
+            columnFilters,
+            columnVisibility,
+            rowSelection,
+        },
+    });
+    return (
+        <div className="w-full relative">
+            <div className="rounded-md border">
+                <CardHeader>
+                    <CardTitle>Recent Users</CardTitle>
+                </CardHeader>
+                <Table>
+                    <TableHeader>
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <TableRow key={headerGroup.id}>
+                                {headerGroup.headers.map((header) => (
+                                    <TableHead key={header.id}>
+                                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                                    </TableHead>
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableHeader>
+                    <TableBody>
+                        {table.getRowModel().rows?.length ? (
+                            table.getRowModel().rows.map((row) => (
+                                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                                    {row.getVisibleCells().map((cell) => (
+                                        <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                                    ))}
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={columns.length} className="h-24 text-center">
+                                    No results.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
             </div>
-            <div className="ml-auto font-medium">+$1,999.00</div>
+
         </div>
-        <div className="flex items-center gap-4">
-            <Avatar className="hidden h-9 w-9 sm:flex">
-                <AvatarImage src="/avatars/02.png" alt="Avatar" />
-                <AvatarFallback>JL</AvatarFallback>
-            </Avatar>
-            <div className="grid gap-1">
-                <p className="text-sm font-medium leading-none">
-                    Jackson Lee
-                </p>
-                <p className="text-sm text-muted-foreground">
-                    jackson.lee@email.com
-                </p>
-            </div>
-            <div className="ml-auto font-medium">+$39.00</div>
-        </div>
-        <div className="flex items-center gap-4">
-            <Avatar className="hidden h-9 w-9 sm:flex">
-                <AvatarImage src="/avatars/03.png" alt="Avatar" />
-                <AvatarFallback>IN</AvatarFallback>
-            </Avatar>
-            <div className="grid gap-1">
-                <p className="text-sm font-medium leading-none">
-                    Isabella Nguyen
-                </p>
-                <p className="text-sm text-muted-foreground">
-                    isabella.nguyen@email.com
-                </p>
-            </div>
-            <div className="ml-auto font-medium">+$299.00</div>
-        </div>
-        <div className="flex items-center gap-4">
-            <Avatar className="hidden h-9 w-9 sm:flex">
-                <AvatarImage src="/avatars/04.png" alt="Avatar" />
-                <AvatarFallback>WK</AvatarFallback>
-            </Avatar>
-            <div className="grid gap-1">
-                <p className="text-sm font-medium leading-none">
-                    William Kim
-                </p>
-                <p className="text-sm text-muted-foreground">
-                    will@email.com
-                </p>
-            </div>
-            <div className="ml-auto font-medium">+$99.00</div>
-        </div>
-        <div className="flex items-center gap-4">
-            <Avatar className="hidden h-9 w-9 sm:flex">
-                <AvatarImage src="/avatars/05.png" alt="Avatar" />
-                <AvatarFallback>SD</AvatarFallback>
-            </Avatar>
-            <div className="grid gap-1">
-                <p className="text-sm font-medium leading-none">
-                    Sofia Davis
-                </p>
-                <p className="text-sm text-muted-foreground">
-                    sofia.davis@email.com
-                </p>
-            </div>
-            <div className="ml-auto font-medium">+$39.00</div>
-        </div>
-    </CardContent>
-</Card>
-  )
+    )
 }
 
 export default RecentUsers

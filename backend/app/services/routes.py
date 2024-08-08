@@ -263,5 +263,58 @@ def approve_application(application_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+    
+    
+@services_bp.route('/applications/<int:application_id>/update-role', methods=['POST'])
+def update_user_role(application_id):
+        # Get the application
+    application = ServiceProviderApplication.query.get(application_id)
+    if not application:
+        return jsonify({"error": "Application not found"}), 404
+
+    # Get the user by email
+    user = User.query.filter_by(user_email=application.email).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # Update the user's role_id to 2
+    user.role_id = 2
+    db.session.commit()
+
+    return jsonify({"message": "User role updated successfully"}), 200
 
 
+@services_bp.route('/applications/<int:application_id>/decline', methods=['POST'])
+def decline_application(application_id):
+    application = ServiceProviderApplication.query.get_or_404(application_id)
+
+    if application.status == 'declined':
+        return jsonify({"error": "Application is already declined"}), 400
+
+    application.status = 'declined'
+
+    try:
+        db.session.commit()
+        return jsonify({"message": "Application declined successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@services_bp.route('/applications/<int:application_id>/downgrade-role', methods=['POST'])
+def downgrade_user_role(application_id):
+        # Get the application
+    application = ServiceProviderApplication.query.get(application_id)
+    if not application:
+        return jsonify({"error": "Application not found"}), 404
+
+    # Get the user by email
+    user = User.query.filter_by(user_email=application.email).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # Update the user's role_id to 3
+    user.role_id = 3
+    db.session.commit()
+
+    return jsonify({"message": "User role updated successfully"}), 200

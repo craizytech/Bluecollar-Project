@@ -106,3 +106,29 @@ def get_users():
     ]
     
     return jsonify(users_data), 200
+
+#Route to make admin
+@users_bp.route('/<int:user_id>/make-admin', methods=['POST'])
+def assign_admin_role(user_id):
+    # Get user by id
+    user = User.query.filter_by(user_id=user_id).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    user.role_id = 1
+    db.session.commit()
+    
+    return jsonify({"message": "User role updated successfully"}), 200
+
+#Route to make general user
+@users_bp.route('/<int:user_id>/make-general-user', methods=['POST'])
+def assign_general_user_role(user_id):
+    # Get user by id
+    user = User.query.filter_by(user_id=user_id).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    user.role_id = 3
+    db.session.commit()
+    
+    return jsonify({"message": "User role updated successfully"}), 200
