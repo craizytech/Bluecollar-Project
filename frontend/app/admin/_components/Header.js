@@ -47,6 +47,9 @@ function Header() {
         <NavLink href="/admin/transactions" className={`transition-colors hover:text-foreground ${isActive('/admin/transactions')}`}>
           Transactions
         </NavLink>
+        <NavLink href="/admin/applications" className={`transition-colors hover:text-foreground ${isActive('/admin/applications')}`}>
+          Applications
+        </NavLink>
       </nav>
       <Sheet>
         <SheetTrigger asChild>
