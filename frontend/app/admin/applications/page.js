@@ -367,6 +367,7 @@ export function ApplicationsPage() {
                                                             }`}
                                                     >
                                                         {application.status}
+                                                        
                                                     </Badge>
                                                 </TableCell>
 
