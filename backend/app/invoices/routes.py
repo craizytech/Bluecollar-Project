@@ -47,10 +47,11 @@ def create_invoice():
     try:
         db.session.add(invoice)
         db.session.commit()
-        return jsonify({"message": "Invoice created successfully", "invoice_id": invoice.id}), 201
+        return jsonify({"message": "Invoice created successfully", "invoice_id": invoice.invoice_id}), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
 
 # Route to update an existing invoice
 @invoices_bp.route('/<int:invoice_id>', methods=['PUT'])
