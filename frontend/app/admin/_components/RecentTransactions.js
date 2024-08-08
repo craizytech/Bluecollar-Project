@@ -1,4 +1,5 @@
-import React from 'react'
+"use client";
+import React, { useEffect, useState } from 'react'
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -20,147 +21,80 @@ import {
 } from "@/components/ui/table"
 
 function RecentTransactions() {
-  return (
-    <Card
-    className="xl:col-span-2" x-chunk="dashboard-01-chunk-4"
->
-    <CardHeader className="flex flex-row items-center">
-        <div className="grid gap-2">
-            <CardTitle>Transactions</CardTitle>
-            <CardDescription>
-                Recent transactions from your store.
-            </CardDescription>
-        </div>
-        <Button asChild size="sm" className="ml-auto gap-1">
-            <Link href="/admin/transactions">
-                View All
-                <ArrowUpRight className="h-4 w-4" />
-            </Link>
-        </Button>
-    </CardHeader>
-    <CardContent>
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Customer</TableHead>
-                    <TableHead className="hidden xl:table-column">
-                        Type
-                    </TableHead>
-                    <TableHead className="hidden xl:table-column">
-                        Status
-                    </TableHead>
-                    <TableHead className="hidden xl:table-column">
-                        Date
-                    </TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                <TableRow>
-                    <TableCell>
-                        <div className="font-medium">Liam Johnson</div>
-                        <div className="hidden text-sm text-muted-foreground md:inline">
-                            liam@example.com
-                        </div>
-                    </TableCell>
-                    <TableCell className="hidden xl:table-column">
-                        Sale
-                    </TableCell>
-                    <TableCell className="hidden xl:table-column">
-                        <Badge className="text-xs" variant="outline">
-                            Approved
-                        </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell lg:hidden xl:table-column">
-                        2023-06-23
-                    </TableCell>
-                    <TableCell className="text-right">$250.00</TableCell>
-                </TableRow>
-                <TableRow>
-                    <TableCell>
-                        <div className="font-medium">Olivia Smith</div>
-                        <div className="hidden text-sm text-muted-foreground md:inline">
-                            olivia@example.com
-                        </div>
-                    </TableCell>
-                    <TableCell className="hidden xl:table-column">
-                        Refund
-                    </TableCell>
-                    <TableCell className="hidden xl:table-column">
-                        <Badge className="text-xs" variant="outline">
-                            Declined
-                        </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell lg:hidden xl:table-column">
-                        2023-06-24
-                    </TableCell>
-                    <TableCell className="text-right">$150.00</TableCell>
-                </TableRow>
-                <TableRow>
-                    <TableCell>
-                        <div className="font-medium">Noah Williams</div>
-                        <div className="hidden text-sm text-muted-foreground md:inline">
-                            noah@example.com
-                        </div>
-                    </TableCell>
-                    <TableCell className="hidden xl:table-column">
-                        Subscription
-                    </TableCell>
-                    <TableCell className="hidden xl:table-column">
-                        <Badge className="text-xs" variant="outline">
-                            Approved
-                        </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell lg:hidden xl:table-column">
-                        2023-06-25
-                    </TableCell>
-                    <TableCell className="text-right">$350.00</TableCell>
-                </TableRow>
-                <TableRow>
-                    <TableCell>
-                        <div className="font-medium">Emma Brown</div>
-                        <div className="hidden text-sm text-muted-foreground md:inline">
-                            emma@example.com
-                        </div>
-                    </TableCell>
-                    <TableCell className="hidden xl:table-column">
-                        Sale
-                    </TableCell>
-                    <TableCell className="hidden xl:table-column">
-                        <Badge className="text-xs" variant="outline">
-                            Approved
-                        </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell lg:hidden xl:table-column">
-                        2023-06-26
-                    </TableCell>
-                    <TableCell className="text-right">$450.00</TableCell>
-                </TableRow>
-                <TableRow>
-                    <TableCell>
-                        <div className="font-medium">Liam Johnson</div>
-                        <div className="hidden text-sm text-muted-foreground md:inline">
-                            liam@example.com
-                        </div>
-                    </TableCell>
-                    <TableCell className="hidden xl:table-column">
-                        Sale
-                    </TableCell>
-                    <TableCell className="hidden xl:table-column">
-                        <Badge className="text-xs" variant="outline">
-                            Approved
-                        </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell lg:hidden xl:table-column">
-                        2023-06-27
-                    </TableCell>
-                    <TableCell className="text-right">$550.00</TableCell>
-                </TableRow>
-            </TableBody>
-        </Table>
-    </CardContent>
-</Card>
-  )
+    const [transactions, setTransactions] = useState([]);
+
+    useEffect(() => {
+        async function fetchTransactions() {
+          const response = await fetch("http://localhost:5000/api/transactions/all");
+          const data = await response.json();
+          setTransactions(data);
+        }
+        fetchTransactions();
+      }, []);
+    return (
+        <Card
+            className="xl:col-span-2" x-chunk="dashboard-01-chunk-4"
+        >
+            <CardHeader className="flex flex-row items-center">
+                <div className="grid gap-2">
+                    <CardTitle>Transactions</CardTitle>
+                    <CardDescription>
+                        Recent transactions from your store.
+                    </CardDescription>
+                </div>
+                <Button asChild size="sm" className="ml-auto gap-1">
+                    <Link href="/admin/transactions">
+                        View All
+                        <ArrowUpRight className="h-4 w-4" />
+                    </Link>
+                </Button>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Customer</TableHead>
+                            <TableHead className="hidden sm:table-cell">
+                                Status
+                            </TableHead>
+                            <TableHead className="hidden md:table-cell">
+                                Date
+                            </TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {transactions.map((transaction) => (
+                            <TableRow
+                                key={transaction.transaction_id}
+                                onClick={() => handleRowClick(transaction)}
+                                className="cursor-pointer"
+                            >
+                                <TableCell>
+                                    <div className="font-medium">
+                                        {transaction.payer_name}
+                                    </div>
+                                </TableCell>
+                                <TableCell className="hidden sm:table-cell">
+                                    <Badge className="text-xs" variant="secondary">
+                                        {transaction.status}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="hidden md:table-cell">
+                                    {new Date(
+                                        transaction.date_of_transaction
+                                    ).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    ${transaction.amount_paid.toFixed(2)}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+    )
 }
 
 export default RecentTransactions
