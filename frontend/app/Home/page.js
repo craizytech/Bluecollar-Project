@@ -21,7 +21,6 @@ function Home() {
 
   return (
     <div>
-    <SessionCheck />
       <Hero />
       <CategoryList />
       <BusinessList title={"Popular Business"} />
