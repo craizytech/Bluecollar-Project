@@ -377,7 +377,7 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
                           {booking.status === 'accepted' && (
                             <div className='flex items-center gap-2 text-green-700'>
                               <div>Accepted booking. Chat with your client.</div>
-                              <Link href={`/chat/${booking.client_id}?receiverId=${booking.client_id}`}
+                              <Link href={`/chat/${booking.client_id}?receiverId=${booking.client_id}&bookingId=${booking.booking_id}`}
                                  className='text-blue-500'>
                                   <MessageSquare className='inline' />
                               </Link>

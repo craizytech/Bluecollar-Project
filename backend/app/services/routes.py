@@ -158,6 +158,50 @@ def view_service_details(service_id):
         return jsonify(service_details), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+  
+    
+# Route to search services by location and term
+@services_bp.route('/search', methods=['GET'])
+def search_services():
+    term = request.args.get('term')
+    location = request.args.get('location')
+    
+    if not term or not location:
+        return jsonify({"error": "Search term and location are required"}), 400
+    
+    # Normalize location input
+    normalized_location = location.replace(',', '').strip().lower()
+
+    try:
+        # Log the search parameters for debugging
+        print(f"Searching for term: {term} and location: {normalized_location}")
+
+        # Join the User model to access provider_location
+        services = db.session.query(Service, User.user_location).join(User, Service.provider_id == User.user_id).filter(
+            Service.service_name.ilike(f'%{term}%'),
+            User.user_location.ilike(f'%{normalized_location}%')
+        ).all()
+        
+        # Log the number of results
+        print(f"Found {len(services)} services")
+        
+        service_list = [
+            {
+                "service_id": service.service_id,
+                "service_name": service.service_name,
+                "service_description": service.service_description,
+                "category_id": service.category_id,
+                "provider_id": service.provider_id,
+                "provider_location": user_location  # Use the joined attribute
+            }
+            for service, user_location in services
+        ]
+        
+        return jsonify({"services": service_list}), 200
+    
+    except Exception as e:
+        return jsonify({"error": f"Error during search: {str(e)}"}), 500
+
 
 @services_bp.route('/apply_service', methods=['POST'])
 @jwt_required()

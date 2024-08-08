@@ -15,6 +15,8 @@ def send_message():
     sender_id = get_jwt_identity()
     receiver_id = data.get('receiver_id')
     message = data.get('message')
+    message_type = data.get('type', 'text')  # Get the type or default to 'text'
+
 
     if not receiver_id or not message:
         return jsonify({'error': 'Missing receiver_id or message'}), 400
@@ -26,6 +28,7 @@ def send_message():
         sent_from=sender_id,
         sent_to=receiver_id,
         message=message,
+        type=message_type,
         date_of_creation=datetime.utcnow(),
         status='sent'
     )
@@ -58,8 +61,9 @@ def chat_history(receiver_id):
         'sent_from': chat.sent_from,
         'sent_to': chat.sent_to,
         'message': chat.message,
+        'type': chat.type, 
         'date_of_creation': chat.date_of_creation,
-        'status': chat.status
+        'status': chat.status,
     } for chat in chats]
 
     return jsonify(chat_history), 200

@@ -11,9 +11,6 @@ function Page() {
     setShowServiceProvider(true);
   };
 
-  const handleResetPassword = () => {
-    router.push('/reset-password'); // Update this to the correct reset password route
-  };
 
   return (
     <div className="max-w-lg mx-auto mt-10 p-5 bg-white shadow-md rounded-md">
@@ -24,12 +21,6 @@ function Page() {
           className="bg-blue-500 text-white py-2 px-3 rounded-md hover:bg-blue-600 transition duration-300 text-sm"
         >
           Apply to be a Service Provider
-        </button>
-        <button
-          onClick={handleResetPassword}
-          className="bg-red-500 text-white py-2 px-3 rounded-md hover:bg-red-600 transition duration-300 text-sm"
-        >
-          Reset Password
         </button>
       </div>
       {showServiceProvider && <ServiceProvider />}
