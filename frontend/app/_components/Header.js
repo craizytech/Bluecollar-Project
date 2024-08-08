@@ -61,6 +61,10 @@ function Header() {
     }
   };
 
+  const isAdmin = () => {
+    return userRole === '1';
+  }
+
   const isServiceProvider = () => {
     return userRole === '2';
   };
@@ -112,6 +116,14 @@ function Header() {
                 </div>
               )}
             </div>
+            {isAdmin() && (
+              <Link href="/admin/dashboard">
+                <button className="bg-primary text-white rounded-lg py-2 px-4 hover:bg-primary-dark">
+                  Dashboard
+                </button>
+              </Link>
+            )}
+
             {isServiceProvider() && (
               <Link href="/invoice">
                 <button className="bg-primary text-white rounded-lg py-2 px-4 hover:bg-primary-dark">

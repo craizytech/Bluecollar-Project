@@ -47,7 +47,7 @@ def create_invoice():
     try:
         db.session.add(invoice)
         db.session.commit()
-        return jsonify({"message": "Invoice created successfully"}), 201
+        return jsonify({"message": "Invoice created successfully", "invoice_id": invoice.invoice_id}), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -85,25 +85,25 @@ def delete_invoice(invoice_id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-# Route to retrieve a specific invoice by user ID
-@invoices_bp.route('/user/<int:user_id>', methods=['GET'])
-@jwt_required()
-def get_invoice_by_user_id(user_id):
-    invoices = Invoice.query.filter_by(user_id=user_id).all()
-    if not invoices:
-        return jsonify({"error": "No invoices found for the given user ID"}), 404
+# # Route to retrieve a specific invoice by user ID
+# @invoices_bp.route('/user/<int:user_id>', methods=['GET'])
+# @jwt_required()
+# def get_invoice_by_user_id(user_id):
+#     invoices = Invoice.query.filter_by(user_id=user_id).all()
+#     if not invoices:
+#         return jsonify({"error": "No invoices found for the given user ID"}), 404
 
-    invoice_list = [
-        {
-            "invoice_id": invoice.invoice_id,
-            "user_id": invoice.user_id,
-            "service_cost": invoice.service_cost,
-            "status": invoice.status,
-            "date_of_creation": invoice.date_of_creation,
-        }
-        for invoice in invoices
-    ]
-    return jsonify(invoice_list), 200
+#     invoice_list = [
+#         {
+#             "invoice_id": invoice.invoice_id,
+#             "user_id": invoice.user_id,
+#             "service_cost": invoice.service_cost,
+#             "status": invoice.status,
+#             "date_of_creation": invoice.date_of_creation,
+#         }
+#         for invoice in invoices
+#     ]
+#     return jsonify(invoice_list), 200
 
 # Route to retrieve a specific invoice by invoice ID
 @invoices_bp.route('/<int:invoice_id>', methods=['GET'])

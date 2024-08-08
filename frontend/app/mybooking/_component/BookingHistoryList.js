@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { Calendar } from "@/components/ui/calendar";
 import { Day } from 'react-day-picker';
 import moment from 'moment';
+import styles from './styles/BookingHistoryList.module.css'
 
 function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
   const [updatedBookings, setUpdatedBookings] = useState(bookingHistory);
@@ -19,8 +20,27 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
   const router = useRouter();
 
   useEffect(() => {
-    setUpdatedBookings(bookingHistory);
+    const sortedBookings = [...bookingHistory].sort((a, b) => new Date(a.booking_date) - new Date(b.booking_date));
+    setUpdatedBookings(sortedBookings);
   }, [bookingHistory]);
+
+  // Display reminders for bookings coming up in the next few days
+  useEffect(() => {
+    const today = moment();
+    const reminderDays = 3; // Days before the booking to send a reminder
+
+    const updatedBookingsWithReminder = updatedBookings.map(booking => {
+      const bookingDate = moment(booking.booking_date);
+      const daysUntilBooking = bookingDate.diff(today, 'days');
+
+      return {
+        ...booking,
+        showReminder: daysUntilBooking <= reminderDays && daysUntilBooking > 0,
+      };
+    });
+
+    setUpdatedBookings(updatedBookingsWithReminder);
+  }, [updatedBookings]);
 
 
   const handleUpdateStatus = async (bookingId, newStatus) => {
@@ -296,6 +316,14 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
                           <h2 className='flex gap-2 text-primary'>
                             <User /> {booking.provider_name}
                           </h2>
+                          {booking.showReminder && (
+                            <div className={styles.reminderMessage}>
+                              <div className={styles.jumpingClock}>
+                                <Clock />
+                              </div>
+                              Reminder: Your service is coming up on {moment(booking.booking_date).format('MMMM D, YYYY')}!
+                            </div>
+                          )}
                           {booking.status === 'declined' && (
                             <div className='text-red-500'>
                               Booking has been declined.
@@ -343,6 +371,14 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
                           <h2 className='flex gap-2 text-primary'>
                             <User /> {booking.client_name}
                           </h2>
+                          {booking.showReminder && (
+                            <div className={styles.reminderMessage}>
+                              <div className={styles.jumpingClock}>
+                                <Clock />
+                              </div>
+                              Reminder: Your service is coming up on {moment(booking.booking_date).format('MMMM D, YYYY')}!
+                            </div>
+                          )}
                           <div className='flex gap-2'>
                             {booking.status === 'pending' && (
                               <>

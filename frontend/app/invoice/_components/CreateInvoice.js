@@ -10,6 +10,7 @@ function CreateInvoice({ bookingId, receiverId }) {
   const [status, setStatus] = useState('pending'); // Default status
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const[invoiceId, setInvoiceId] = useState('')
   const [existingInvoice, setExistingInvoice] = useState(null);
   const [invoiceCreated, setInvoiceCreated] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
@@ -21,18 +22,16 @@ function CreateInvoice({ bookingId, receiverId }) {
     setUserId(storedUserId || '');
 
     if (userId) {
-      fetchInvoice();
       fetchUserProfile();
     }
   }, [userId]);
   
 
-  const fetchInvoice = async () => {
-    console.log('Fetching invoice for user:', userId);
+  const fetchInvoice = async (invoiceId) => {
     try {
       const token = localStorage.getItem('access_token');
 
-      const response = await axios.get(`http://localhost:5000/api/invoices/user/${userId}`, {
+      const response = await axios.get(`http://localhost:5000/api/invoices/${invoiceId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -74,7 +73,7 @@ function CreateInvoice({ bookingId, receiverId }) {
     e.preventDefault();
   
     if (!userId || !bookingId || !serviceCost) {
-      setError('Navigate to To Do Services to create an invoice for each client');
+      setError('Navigate to To Do Services to create an invoice for each booking');
       console.error('User ID, booking ID, or service cost is missing');
       return;
     }
@@ -87,51 +86,35 @@ function CreateInvoice({ bookingId, receiverId }) {
   
     try {
       const token = localStorage.getItem('access_token');
-      let response;
   
-      if (existingInvoice && existingInvoice.invoice_id) {
-        // Update existing invoice
-        response = await axios.put(`http://localhost:5000/api/invoices/${existingInvoice.invoice_id}`, data, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+      // Create new invoice
+      const response = await axios.post('http://localhost:5000/api/invoices/create', data, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
   
-        console.log('Update response data:', response.data);
+      console.log('Create response data:', response.data);
   
-        if (response.data && response.data.message) {
-          setSuccess(response.data.message);
-          // Re-fetch invoice data to ensure the state is updated
-          await fetchInvoice();
-        } else {
-          console.error('Update response data is invalid:', response.data);
-          setError('Error updating invoice: Invalid response');
-        }
+      // Check if response contains invoice_id
+      if (response.data && response.data.invoice_id) {
+        // Set the newly created invoice
+        setInvoiceId(response.data.invoice_id);
+        setExistingInvoice(response.data);
+        setSuccess('Invoice created successfully');
+  
+        // Fetch the newly created invoice
+        await fetchInvoice(response.data.invoice_id);
+      } else if (response.data && response.data.message) {
+        // Handle the case where only a success message is returned
+        setSuccess(response.data.message);
+        console.warn('Invoice ID not returned. Cannot fetch invoice.');
+  
+        // Optionally, fetch invoice by other means if necessary
       } else {
-        // Create new invoice
-        response = await axios.post('http://localhost:5000/api/invoices/create', data, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-  
-        console.log('Create response data:', response.data);
-  
-        if (response.data && response.data.invoice_id) {
-          // Set the newly created invoice
-          setExistingInvoice(response.data);
-          setSuccess('Invoice created successfully');
-        } else if (response.data && response.data.message) {
-          // Handle the case where only a success message is returned
-          setSuccess(response.data.message);
-          // Optionally fetch the invoice again if it’s not available in response
-          await fetchInvoice();
-        } else {
-          console.error('Create response data is invalid:', response.data);
-          setError('Error creating invoice: Invalid response');
-        }
+        console.error('Create response data is invalid:', response.data);
+        setError('Error creating invoice: Invalid response');
       }
   
       // Clear form and reset status
@@ -139,10 +122,12 @@ function CreateInvoice({ bookingId, receiverId }) {
       setStatus('pending');
       setInvoiceCreated(true);
     } catch (err) {
-      console.error('Error creating/updating invoice:', err);
-      setError('Error creating/updating invoice');
+      console.error('Error creating invoice:', err);
+      setError('Error creating invoice');
     }
   };
+  
+  
   
   
   

@@ -6,6 +6,7 @@ import { format, isSameDay } from 'date-fns';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useRouter, useSearchParams } from 'next/navigation';
 import InvoiceDisplay from '../../invoice/_components/invoiceDisplay';
+import { toast } from 'sonner';
 
 function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
   const [chats, setChats] = useState([]);
@@ -19,6 +20,7 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
   const [attachmentModalOpen, setAttachmentModalOpen] = useState(false);
   const [invoice, setInvoice] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
+  const [invoiceStatus, setInvoiceStatus] = useState('pending');
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -131,12 +133,15 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
       const invoiceData = await response.json();
       console.log('Fetched invoice data:', invoiceData);
 
-      setInvoice(invoiceData[0] || null);
+      if (invoiceData && invoiceData[0]) {
+        setInvoice(invoiceData[0]);
+        setInvoiceStatus(invoiceData[0].status); 
 
       // Fetch user profile if userId is available in the invoice
       if (invoiceData[0]?.user_id) {
         fetchUserProfile(invoiceData[0].user_id);
       }
+    }
     } catch (error) {
       console.error('Failed to fetch invoice:', error);
     }
@@ -240,8 +245,28 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
       }
     
       try {
-        // Update the status of the invoice to 'accepted'
-        const response = await fetch(`http://localhost:5000/api/invoices/accept/${invoiceId}`, {
+        // Fetch the latest invoice data to check the current status
+        const response = await fetch(`http://localhost:5000/api/invoices/${invoiceId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        });
+    
+        if (!response.ok) {
+          throw new Error('Failed to fetch the invoice.');
+        }
+    
+        const invoiceData = await response.json();
+        const currentStatus = invoiceData[0].status;
+    
+        if (currentStatus !== 'pending') {
+          toast(`This invoice has already been ${currentStatus}.`);
+          return;
+        }
+    
+        // Proceed to accept the invoice
+        const acceptResponse = await fetch(`http://localhost:5000/api/invoices/accept/${invoiceId}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -249,41 +274,25 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
           },
         });
     
-        if (!response.ok) {
-          const errorData = await response.json();
+        if (!acceptResponse.ok) {
+          const errorData = await acceptResponse.json();
           console.error('Accept invoice error:', errorData.error);
           setError(errorData.error || 'An error occurred while accepting the invoice.');
           return;
         }
     
-        const data = await response.json();
+        const data = await acceptResponse.json();
         console.log('Invoice accepted successfully:', data);
     
-        // Optionally, fetch user profile and redirect to M-Pesa
-        const profileResponse = await fetch(`http://localhost:5000/api/users/profile/${userId}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-          },
-        });
-    
-        if (!profileResponse.ok) {
-          const profileErrorData = await profileResponse.json();
-          console.error('Failed to fetch user profile:', profileErrorData.error);
-          setError(profileErrorData.error || 'An error occurred while fetching user profile.');
-          return;
-        }
-    
-        const profileData = await profileResponse.json();
+        setInvoiceStatus('accepted');
         // Redirect to M-Pesa with invoice ID and phone number
-        router.push(`/mpesa?invoiceId=${invoiceId}&phoneNumber=${profileData.user_phone_number}`);
+        router.push(`/mpesa?invoiceId=${invoiceId}&phoneNumber=${invoiceData[0].user_phone_number}`);
       } catch (error) {
         console.error('Failed to accept invoice:', error);
         setError('Failed to accept invoice');
       }
     };
     
-
     const handleDecline = async (invoiceId) => {
       if (!invoiceId) {
         console.error('Invoice ID is missing');
@@ -291,7 +300,28 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
       }
     
       try {
-        const response = await fetch(`http://localhost:5000/api/invoices/decline/${invoiceId}`, {
+        // Fetch the latest invoice data to check the current status
+        const response = await fetch(`http://localhost:5000/api/invoices/${invoiceId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        });
+    
+        if (!response.ok) {
+          throw new Error('Failed to fetch the invoice.');
+        }
+    
+        const invoiceData = await response.json();
+        const currentStatus = invoiceData[0].status;
+    
+        if (currentStatus !== 'pending') {
+          toast(`This invoice has already been ${currentStatus}.`);
+          return;
+        }
+    
+        // Proceed to decline the invoice
+        const declineResponse = await fetch(`http://localhost:5000/api/invoices/decline/${invoiceId}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -299,28 +329,24 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
           },
         });
     
-        if (!response.ok) {
-          const errorData = await response.json();
+        if (!declineResponse.ok) {
+          const errorData = await declineResponse.json();
           console.error('Decline invoice error:', errorData.error);
           setError(errorData.error || 'An error occurred while declining the invoice.');
           return;
         }
     
-        const data = await response.json();
+        const data = await declineResponse.json();
         console.log('Invoice declined successfully:', data);
     
-        // Optionally, update state or provide feedback to the user
-        setSuccess('Invoice declined successfully.');
-    
-        // Redirect or refresh the page if needed
-        // For example:
-        // router.push('/some-page');
-    
+        setInvoiceStatus('declined');
+        toast('Invoice declined successfully.');
       } catch (error) {
         console.error('Failed to decline invoice:', error);
         setError('Failed to decline invoice.');
       }
     };
+    
     
 
     return chats.map((chat) => {
@@ -340,7 +366,6 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
   
       let messageContent;
       try {
-        // Parse the message content if it's expected to be JSON
         if (chat.type === 'invoice') {
           const parsedMessage = JSON.parse(chat.message);
           messageContent = (
@@ -350,12 +375,11 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
               existingInvoice={[parsedMessage]}
               isEditable={isUserMessage}
               preview={true} 
-              onAccept={() => handleAccept(parsedMessage.invoice_id)}
-              onDecline={() => handleDecline(parsedMessage.invoice_id)}
+              onAccept={invoiceStatus === 'pending' ? () => handleAccept(parsedMessage.invoice_id) : null}
+              onDecline={invoiceStatus === 'pending' ? () => handleDecline(parsedMessage.invoice_id) : null}
             />
           );
           if (!isUserMessage) {
-            // Add Accept and Decline buttons if the current user is the receiver
             messageContent = (
               <div>
                 {messageContent}

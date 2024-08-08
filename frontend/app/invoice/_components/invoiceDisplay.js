@@ -16,10 +16,13 @@ function InvoiceDisplay({
   preview = false,
 }) {
 
-  const invoice = existingInvoice?.[0] || {}; // Assuming existingInvoice is an array
+  const invoice = existingInvoice || {};
   const extractedServiceCost = serviceCost || invoice.service_cost || '';
 
-  const formattedDate = format(new Date(), 'dd/MM/yyyy');
+  const formattedDate = existingInvoice?.date
+  ? format(new Date(existingInvoice.date), 'dd/MM/yyyy')
+  : format(new Date(), 'dd/MM/yyyy');
+
 
   return (
     <div className="max-w-2xl mx-auto bg-gray-100 p-8 rounded-lg shadow-lg">
