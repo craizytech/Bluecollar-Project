@@ -1,11 +1,7 @@
 "use client";
-import React, { useContext, useState } from 'react'
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from "next/link";
-import AuthContext from './AuthContext';
-// import { useFormState } from "react-dom";
-// import { loginUserAction } from "@/data/actions/auth-actions";
-
 import {
   CardTitle,
   CardDescription,
@@ -24,39 +20,40 @@ const LoginForm = ({ setToken }) => {
   const [user_password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-    const { setTokenAndProfile } = useContext(AuthContext);
-    const router = useRouter();
+  const router = useRouter();
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const response = await fetch('http://localhost:5000/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ user_email, user_password }),
-            });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_email, user_password }),
+      });
 
-            const data = await response.json();
-            if (response.ok) {
-                // updateToken(data.access_token);
-                // setToken(data.access_token);
-                // if (typeof window !== 'undefined') {
-                //     localStorage.setItem('access_token', data.access_token);
-                // }
-                
-                // fetchUserProfile(data.access_token);
-                setTokenAndProfile(data.access_token);
-                router.push('/');
-            } else {
-                setError(data.error);
-            }
-        } catch (error) {
-            console.error('Login failed:', error);
-            setError('Failed to login');
+      const data = await response.json();
+      if (response.ok) {
+        if (setToken){
+          setToken(data.access_token);
         }
-      };
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('access_token', data.access_token);
+          localStorage.setItem('user_email', user_email);
+          localStorage.setItem('user_role', data.user_role);
+          localStorage.setItem('user_id', data.user_id);
+        }
+        router.push('/Home');
+      } else {
+        setError(data.error || 'Invalid username or password');
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+      setError('Failed to login');
+    }
+  };
+
   return (
     <div className="w-full max-w-md">
       <form onSubmit={handleSubmit}>

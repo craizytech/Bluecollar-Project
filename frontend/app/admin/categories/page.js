@@ -97,7 +97,7 @@ export function CategoriesPage() {
         formData.append('file', newCategoryImage);
 
         try {
-            const response = await fetch('http://localhost:8080/api/categories/create', {
+            const response = await fetch('http://localhost:5000/api/categories/create', {
                 method: 'POST',
                 body: formData
             });
@@ -150,7 +150,7 @@ export function CategoriesPage() {
         }
 
         try {
-            const response = await fetch(`http://localhost:8080/api/categories/update/${categoryToEdit.id}`, {
+            const response = await fetch(`http://localhost:5000/api/categories/update/${categoryToEdit.id}`, {
                 method: 'PUT',
                 body: formData
             });
@@ -185,7 +185,7 @@ export function CategoriesPage() {
 
     const handleDeleteCategory = async () => {
         try {
-            const response = await fetch(`http://localhost:8080/api/categories/delete/${categoryToDelete.id}`, {
+            const response = await fetch(`http://localhost:5000/api/categories/delete/${categoryToDelete.id}`, {
                 method: 'DELETE'
             });
 

@@ -12,13 +12,13 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@categories_bp.route('/api/categories/all', methods=['GET'])
+@categories_bp.route('/all', methods=['GET'])
 def get_categories():
     categories = ServiceCategory.query.all()
     categories_list = [{'id': category.category_id, 'name': category.category_name, 'creation_date': category.date_of_creation} for category in categories]
     return jsonify(categories_list)
 
-@categories_bp.route('/api/categories/create', methods=['POST'])
+@categories_bp.route('/create', methods=['POST'])
 def create_category():
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
@@ -44,7 +44,7 @@ def create_category():
     
     return jsonify({'error': 'File type not allowed'}), 400
 
-@categories_bp.route('/api/categories/update/<int:category_id>', methods=['PUT'])
+@categories_bp.route('/update/<int:category_id>', methods=['PUT'])
 def update_category(category_id):
     category = ServiceCategory.query.get(category_id)
     if not category:
@@ -76,7 +76,7 @@ def update_category(category_id):
 
     return jsonify({'id': category.category_id, 'name': category.category_name}), 200
 
-@categories_bp.route('/api/categories/delete/<int:category_id>', methods=['DELETE'])
+@categories_bp.route('/delete/<int:category_id>', methods=['DELETE'])
 def delete_category(category_id):
     category = ServiceCategory.query.get(category_id)
     if not category:
