@@ -8,8 +8,10 @@ import {
     LayoutGrid,
     Mail,
     ListTodo,
+    AlertTriangle,
     CheckCircle,
-    AlertCircle,
+    XCircle,
+    Clock,
     MoreVertical,
     MoreHorizontal,
 } from "lucide-react";
@@ -39,6 +41,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -47,6 +50,15 @@ export function ApplicationsPage() {
     const [applications, setApplications] = useState([]);
     const [selectedApplication, setSelectedApplication] = useState(null);
     const [alert, setAlert] = useState(null);
+
+    useEffect(() => {
+        if (alert) {
+            const timer = setTimeout(() => {
+                setAlert(null);
+            }, 3000); // Alert disappears after 3 seconds
+            return () => clearTimeout(timer);
+        }
+    }, [alert]);
 
     useEffect(() => {
         async function fetchApplications() {
@@ -78,33 +90,72 @@ export function ApplicationsPage() {
         setSelectedApplication(application);
     };
 
-    const handleApprove = (applicationId) => {
-        axios.post(`http://localhost:5000/api/services/applications/${applicationId}/approve`)
-            .then(response => {
-                setAlert({
-                    variant: "success",
-                    title: "Success",
-                    description: "Applications approved successfully.",
-                    icon: <CheckCircle className="h-4 w-4" />,
-                });
-                setApplications(prevApplications => prevApplications.map(app =>
-                    app.application_id === applicationId ? { ...app, status: 'approved' } : app
-                ));
-                console.log(response);
-            })
-            .catch(error => {
-                setAlert({
-                    variant: "destructive",
-                    title: "Error",
-                    description: "Failed to approve application.",
-                    icon: <AlertTriangle className="h-4 w-4" />,
-                });
-                console.error("Failed to approve application");
+    const handleApprove = async (applicationId) => {
+        try {
+            const response = await axios.post(`http://localhost:5000/api/services/applications/${applicationId}/approve`)
+
+            setApplications(prevApplications => prevApplications.map(app =>
+                app.application_id === applicationId ? { ...app, status: 'approved' } : app
+            ));
+
+            const userResponse = await axios.post(`http://localhost:5000/api/services/applications/${applicationId}/update-role`, { role_id: 2 });
+            console.log(userResponse.data);
+            setAlert({
+                variant: "success",
+                title: "Success",
+                description: "Application approved successfully.",
+                icon: <CheckCircle className="h-4 w-4" />,
             });
+        } catch (error) {
+            setAlert({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to approve application/Updating User Role failed.",
+                icon: <AlertTriangle className="h-4 w-4" />,
+            });
+            console.error("Failed to approve application:", error);
+        }
     };
+
+
+    const handleDecline = async (applicationId) => {
+        try {
+            const response = await axios.post(`http://localhost:5000/api/services/applications/${applicationId}/decline`)
+
+            setApplications(prevApplications => prevApplications.map(app =>
+                app.application_id === applicationId ? { ...app, status: 'declined' } : app
+            ));
+            console.log(response);
+            const userResponse = await axios.post(`http://localhost:5000/api/services/applications/${applicationId}/downgrade-role`, { role_id: 3 });
+            console.log(userResponse.data);
+            setAlert({
+                variant: "success",
+                title: "Success",
+                description: "Application declined successfully.",
+                icon: <CheckCircle className="h-4 w-4" />,
+            });
+        } catch (error) {
+            setAlert({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to decline application.",
+                icon: <AlertTriangle className="h-4 w-4" />,
+            });
+            console.error("Failed to decline application:", error);
+        }
+    }
 
     return (
         <div className="flex min-h-screen w-full flex-col bg-muted/40">
+            {alert && (
+                <div className="fixed bottom-20 right-20 flex items-center justify-center z-50 w-auto">
+                    <Alert variant={alert.variant}>
+                        {alert.icon}
+                        <AlertTitle>{alert.title}</AlertTitle>
+                        <AlertDescription>{alert.description}</AlertDescription>
+                    </Alert>
+                </div>
+            )}
             <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
                 <nav className="sticky top-0 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
                     <Breadcrumb className="hidden md:flex">
@@ -204,12 +255,14 @@ export function ApplicationsPage() {
                                                         </TableCell>
                                                         <TableCell className="hidden sm:table-cell">
                                                             <Badge
-                                                                className="text-xs"
-                                                                variant={
-                                                                    application.status === "approved"
-                                                                        ? "success"
-                                                                        : "warning"
-                                                                }
+                                                                className={`text-xs ${application.status === "approved"
+                                                                        ? "bg-green-500 text-white"
+                                                                        : application.status === "pending"
+                                                                            ? "bg-yellow-500 text-white"
+                                                                            : application.status === "declined"
+                                                                                ? "bg-red-500 text-white"
+                                                                                : ""
+                                                                    }`}
                                                             >
                                                                 {application.status}
                                                             </Badge>
@@ -237,6 +290,11 @@ export function ApplicationsPage() {
                                                                         onClick={() => handleApprove(application.application_id)}
                                                                     >
                                                                         Approve
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => handleDecline(application.application_id)}
+                                                                    >
+                                                                        Disapprove
                                                                     </DropdownMenuItem>
                                                                 </DropdownMenuContent>
                                                             </DropdownMenu>
@@ -330,13 +388,18 @@ export function ApplicationsPage() {
                                             </span>
                                             <div className="flex items-center gap-2">
                                                 {selectedApplication.status === 'pending' ? (
-                                                    <AlertCircle className="h-4 w-4 text-red-500" />
-                                                ) : (
-                                                    <CheckCircle className="h-4 w-4 text-green-500" />
-                                                )}
-                                                <span className={selectedApplication.status === 'pending' ? 'text-red-500' : 'text-green-500'}>
-                                                    {selectedApplication.status}
-                                                </span>
+                                                    <div className="flex items-center text-yellow-500">
+                                                        <Clock className="h-4 w-4 mr-2" /> Pending
+                                                    </div>
+                                                ) : selectedApplication.status === 'approved' ? (
+                                                    <div className="flex items-center text-green-500">
+                                                        <CheckCircle className="h-4 w-4 mr-2" /> Approved
+                                                    </div>
+                                                ) : selectedApplication.status === 'declined' ? (
+                                                    <div className="flex items-center text-red-500">
+                                                        <XCircle className="h-4 w-4 mr-2" /> Declined
+                                                    </div>
+                                                ) : null}
                                             </div>
                                         </div>
                                         <div className="flex flex-col gap-1">
