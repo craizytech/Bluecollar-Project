@@ -126,44 +126,53 @@ const MpesaIntegrationPage = () => {
       <h1 className="text-xl font-bold mb-4">M-Pesa Payment Integration</h1>
       {error && <p className="text-red-500">{error}</p>}
       {transactionStatus === 'pending' && <p className="text-blue-500">Processing your payment, please wait...</p>}
-      {transactionStatus === 'paid' && <p className="text-green-500">Payment successful!</p>}
-      {transactionStatus === 'cancelled' && <p className="text-yellow-500">Payment was cancelled by the user.</p>}
-      {transactionStatus === 'failed' && <p className="text-red-500">Payment failed. Please try again.</p>}
-      {invoice && (
-        <InvoiceDisplay
-          userProfile={userProfile}
-          serviceCost={invoice.service_cost}
-          error={error}
-          success=""
-          isEditable={false} // For display purposes only
-          preview={true}
-        />
-      )}
-      <div className="mt-16 ml-12">
-        <label className="block mb-2">Phone Number (format: 254...)</label>
-        <input
-          type="text"
-          value={phoneNumber}
-          onChange={handlePhoneNumberChange}
-          className="border border-gray-300 p-2 rounded mb-2 w-full"
-          placeholder="Enter phone number"
-        />
-        <label className="block mb-2">Amount</label>
-        <input
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          className="border border-gray-300 p-2 rounded mb-2 w-full"
-          placeholder="Enter amount"
-        />
-        <button
-          onClick={handlePayment}
-          disabled={loading}
-          className={`mt-4 p-2 px-4 rounded-lg ${loading ? 'bg-gray-300' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
-        >
-          {loading ? 'Processing...' : 'Pay via M-Pesa'}
-        </button>
+      {transactionStatus === 'paid' && <p className="text-green-500 text-2xl">Payment successful!</p>}
+      {transactionStatus === 'cancelled' && <p className="text-yellow-500 text-2xl">Payment was cancelled by the user.</p>}
+      {transactionStatus === 'failed' && <p className="text-red-500 text-2xl">Payment failed. Please try again.</p>}
+      <div className="relative">
+        {invoice && (
+          <InvoiceDisplay
+            userProfile={userProfile}
+            serviceCost={invoice.service_cost}
+            error={error}
+            success=""
+            isEditable={false} // For display purposes only
+            preview={true}
+          />
+        )}
+        {transactionStatus === 'paid' && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <span className="text-green-500 text-[5rem] font-bold transform rotate-[-45deg]">PAID</span>
+          </div>
+        )}
       </div>
+      {transactionStatus !== 'paid' && (
+        <div className="mt-16 ml-12">
+          <label className="block mb-2">Phone Number (format: 254...)</label>
+          <input
+            type="text"
+            value={phoneNumber}
+            onChange={handlePhoneNumberChange}
+            className="border border-gray-300 p-2 rounded mb-2 w-full"
+            placeholder="Enter phone number"
+          />
+          <label className="block mb-2">Amount</label>
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="border border-gray-300 p-2 rounded mb-2 w-full"
+            placeholder="Enter amount"
+          />
+          <button
+            onClick={handlePayment}
+            disabled={loading}
+            className={`mt-4 p-2 px-4 rounded-lg ${loading ? 'bg-gray-300' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
+          >
+            {loading ? 'Processing...' : 'Pay via M-Pesa'}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

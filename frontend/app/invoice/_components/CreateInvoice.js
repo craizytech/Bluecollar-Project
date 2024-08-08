@@ -74,6 +74,7 @@ function CreateInvoice({ bookingId, receiverId }) {
     e.preventDefault();
   
     if (!userId || !bookingId || !serviceCost) {
+      setError('Navigate to To Do Services to create an invoice for each client');
       console.error('User ID, booking ID, or service cost is missing');
       return;
     }
@@ -101,9 +102,10 @@ function CreateInvoice({ bookingId, receiverId }) {
   
         if (response.data && response.data.message) {
           setSuccess(response.data.message);
-          // Re-fetch invoice data to update the state
+          // Re-fetch invoice data to ensure the state is updated
           await fetchInvoice();
         } else {
+          console.error('Update response data is invalid:', response.data);
           setError('Error updating invoice: Invalid response');
         }
       } else {
@@ -118,9 +120,16 @@ function CreateInvoice({ bookingId, receiverId }) {
         console.log('Create response data:', response.data);
   
         if (response.data && response.data.invoice_id) {
+          // Set the newly created invoice
           setExistingInvoice(response.data);
           setSuccess('Invoice created successfully');
+        } else if (response.data && response.data.message) {
+          // Handle the case where only a success message is returned
+          setSuccess(response.data.message);
+          // Optionally fetch the invoice again if it’s not available in response
+          await fetchInvoice();
         } else {
+          console.error('Create response data is invalid:', response.data);
           setError('Error creating invoice: Invalid response');
         }
       }
@@ -137,11 +146,6 @@ function CreateInvoice({ bookingId, receiverId }) {
   
   
   
-  
-  
-  
-  
-
   const handleDelete = async () => {
     console.log('Deleting invoice with ID:', existingInvoice?.invoice_id);
     try {

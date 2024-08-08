@@ -10,6 +10,7 @@ import InvoiceDisplay from '../../invoice/_components/invoiceDisplay';
 function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [success, setSuccess] = useState('');
   const [error, setError] = useState(null);
   const [receiverName, setReceiverName] = useState('');
   const [receiverProfilePicture, setReceiverProfilePicture] = useState('');
@@ -91,9 +92,6 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
 
     if (invoiceId) {
       fetchInvoice(invoiceId);
-    } else {
-      setError('Invoice ID is missing.');
-      console.error('Invoice ID is missing');
     }
 
   }, [propBookingId, userId, receiverId, invoiceId, bookingIdFromUrl]);
@@ -287,8 +285,43 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
     
 
     const handleDecline = async (invoiceId) => {
-
-    }
+      if (!invoiceId) {
+        console.error('Invoice ID is missing');
+        return;
+      }
+    
+      try {
+        const response = await fetch(`http://localhost:5000/api/invoices/decline/${invoiceId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        });
+    
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Decline invoice error:', errorData.error);
+          setError(errorData.error || 'An error occurred while declining the invoice.');
+          return;
+        }
+    
+        const data = await response.json();
+        console.log('Invoice declined successfully:', data);
+    
+        // Optionally, update state or provide feedback to the user
+        setSuccess('Invoice declined successfully.');
+    
+        // Redirect or refresh the page if needed
+        // For example:
+        // router.push('/some-page');
+    
+      } catch (error) {
+        console.error('Failed to decline invoice:', error);
+        setError('Failed to decline invoice.');
+      }
+    };
+    
 
     return chats.map((chat) => {
       const chatDate = new Date(chat.date_of_creation);
@@ -380,6 +413,7 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
     <div className="flex flex-col max-h-500 overflow-y-auto border border-gray-300 bg-gray-100">
       {loading && <p>Loading chat history...</p>}
       {error && <p className="text-red-500 font-bold">{error}</p>}
+      {success && <p className="text-green-500 font-bold">{success}</p>}
       <div className="flex items-center p-4 bg-teal-600 text-white border-b border-gray-300">
         <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
           <img src={receiverProfilePicture} alt={`${receiverName}'s profile`} />
