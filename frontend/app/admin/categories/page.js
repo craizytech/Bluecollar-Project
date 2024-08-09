@@ -8,6 +8,8 @@ import {
     PlusCircle,
     CheckCircle,
     AlertTriangle,
+    Trash,
+    Edit,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -50,21 +52,38 @@ import {
     TabsList,
     TabsTrigger,
 } from "@/components/ui/tabs";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 export function CategoriesPage() {
     const [categories, setCategories] = useState([]);
+    const [services, setServices] = useState([]);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [newCategoryImage, setNewCategoryImage] = useState(null);
-    const [alert, setAlert] = useState(null); // State for managing alerts
+    const [newServiceName, setNewServiceName] = useState('');
+    const [newServiceDescription, setNewServiceDescription] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('');
+    const [alert, setAlert] = useState(null);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [categoryToEdit, setCategoryToEdit] = useState(null);
     const [categoryToDelete, setCategoryToDelete] = useState(null);
+    const [serviceToEdit, setServiceToEdit] = useState(null);
+    const [serviceToDelete, setServiceToDelete] = useState(null);
     const [categoryUserCounts, setCategoryUserCounts] = useState([]);
+    const [activeTab, setActiveTab] = useState('categories');
+
 
 
     useEffect(() => {
@@ -82,36 +101,40 @@ export function CategoriesPage() {
             )
             .catch((error) =>
                 console.error('Error fetching categories:', error,
-                setAlert({
-                    variant: "destructive",
-                    title: "Error",
-                    description: "Error fetching categories.",
-                    icon: <AlertTriangle className="h-4 w-4" />,
-                })
-            ));
+                    setAlert({
+                        variant: "destructive",
+                        title: "Error",
+                        description: "Error fetching categories.",
+                        icon: <AlertTriangle className="h-4 w-4" />,
+                    })
+                ));
+        fetch('http://localhost:5000/api/services/all')
+            .then(response => response.json())
+            .then(data => setServices(data))
+            .catch(error => console.error('Error fetching services:', error));
     }, []);
 
     useEffect(() => {
         fetch('http://localhost:5000/api/categories/user_count')
             .then(response => response.json())
-            .then(data => 
+            .then(data =>
                 setCategoryUserCounts(data),
                 setAlert({
                     variant: "success",
                     title: "Success",
                     description: "User counts fetched successfully.",
                     icon: <CheckCircle className="h-4 w-4" />,
-                  })
+                })
             )
             .catch((error) =>
                 console.error('Error fetching user counts:', error,
-                setAlert({
-                    variant: "destructive",
-                    title: "Error",
-                    description: "Error fetching user counts.",
-                    icon: <AlertTriangle className="h-4 w-4" />,
-                })
-            ));
+                    setAlert({
+                        variant: "destructive",
+                        title: "Error",
+                        description: "Error fetching user counts.",
+                        icon: <AlertTriangle className="h-4 w-4" />,
+                    })
+                ));
     }, []);
 
 
@@ -174,6 +197,106 @@ export function CategoriesPage() {
             });
         }
     };
+
+    const handleAddService = async () => {
+        if (!newServiceName || !newServiceDescription) {
+            setAlert({
+                variant: "destructive",
+                title: "Error",
+                description: "Service name and description are required.",
+                icon: <AlertTriangle className="h-4 w-4" />,
+            });
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('name', newServiceName.toLowerCase());
+        formData.append('description', newServiceDescription);
+
+        try {
+            const response = await fetch('http://localhost:5000/api/services/create', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const newService = await response.json();
+                setServices([...services, newService.service]);
+                setDialogOpen(false);
+                setNewServiceName('');
+                setNewServiceDescription('');
+                setAlert({
+                    variant: "success",
+                    title: "Success",
+                    description: "Service created successfully.",
+                    icon: <CheckCircle className="h-4 w-4" />,
+                });
+            } else {
+                setAlert({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Failed to create service.",
+                    icon: <AlertTriangle className="h-4 w-4" />,
+                });
+            }
+        } catch (error) {
+            setAlert({
+                variant: "destructive",
+                title: "Error",
+                description: "Error creating service.",
+                icon: <AlertTriangle className="h-4 w-4" />,
+            });
+        }
+    };
+
+    const handleEditService = async () => {
+        if (!serviceToEdit.name || !serviceToEdit.description) {
+            setAlert({
+                variant: "destructive",
+                title: "Error",
+                description: "Service name and description are required.",
+                icon: <AlertTriangle className="h-4 w-4" />,
+            });
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5000/api/services/update/${serviceToEdit.id}`, {
+                method: 'PUT',
+                body: JSON.stringify(serviceToEdit),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                const updatedService = await response.json();
+                setServices(services.map(service => service.id === updatedService.id ? updatedService : service));
+                setEditDialogOpen(false);
+                setAlert({
+                    variant: "success",
+                    title: "Success",
+                    description: "Service updated successfully.",
+                    icon: <CheckCircle className="h-4 w-4" />,
+                });
+            } else {
+                setAlert({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Failed to update service.",
+                    icon: <AlertTriangle className="h-4 w-4" />,
+                });
+            }
+        } catch (error) {
+            setAlert({
+                variant: "destructive",
+                title: "Error",
+                description: "Error updating service.",
+                icon: <AlertTriangle className="h-4 w-4" />,
+            });
+        }
+    };
+
 
     const handleEditCategory = async () => {
         if (!categoryToEdit.name) {
@@ -259,6 +382,40 @@ export function CategoriesPage() {
         }
     };
 
+    const handleDeleteService = async () => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/services/delete/${serviceToDelete.id}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                setServices(services.filter(service => service.id !== serviceToDelete.id));
+                setDeleteDialogOpen(false);
+                setAlert({
+                    variant: "success",
+                    title: "Success",
+                    description: "Service deleted successfully.",
+                    icon: <CheckCircle className="h-4 w-4" />,
+                });
+            } else {
+                setAlert({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Failed to delete service.",
+                    icon: <AlertTriangle className="h-4 w-4" />,
+                });
+            }
+        } catch (error) {
+            setAlert({
+                variant: "destructive",
+                title: "Error",
+                description: "Error deleting service.",
+                icon: <AlertTriangle className="h-4 w-4" />,
+            });
+        }
+    };
+
+
     const handleImageUpload = (event, isEdit = false) => {
         const file = event.target.files[0];
         if (isEdit) {
@@ -279,68 +436,25 @@ export function CategoriesPage() {
                     </Alert>
                 </div>
             )}
-            <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
-                <nav className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-                    <Breadcrumb className="hidden md:flex">
-                        <BreadcrumbList>
-                            <BreadcrumbItem>
-                                <BreadcrumbLink asChild>
-                                    <Link href="#">Categories</Link>
-                                </BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator />
-                            <BreadcrumbItem>
-                                <BreadcrumbPage>All Categories</BreadcrumbPage>
-                            </BreadcrumbItem>
-                        </BreadcrumbList>
-                    </Breadcrumb>
-                </nav>
-                <div className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-                    <Tabs defaultValue="all">
-                        <div className="flex items-center">
-                            <TabsList>
-                                <TabsTrigger value="all">Categories</TabsTrigger>
-                            </TabsList>
-                            <div className="ml-auto flex items-center gap-2">
-                                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                                    <DialogTrigger asChild>
-                                        <Button size="sm" className="h-8 gap-1">
-                                            <PlusCircle className="h-3.5 w-3.5" />
-                                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                                                Add Category
-                                            </span>
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent>
-                                        <DialogHeader>
-                                            <DialogTitle>Add New Category</DialogTitle>
-                                            <DialogDescription>
-                                                Please enter the category name and upload an image.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <div className="space-y-4">
-                                            <Input
-                                                placeholder="Category name"
-                                                value={newCategoryName}
-                                                onChange={(e) => setNewCategoryName(e.target.value)}
-                                            />
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={(e) => handleImageUpload(e)}
-                                            />
-                                        </div>
-                                        <DialogFooter>
-                                            <Button onClick={handleAddCategory}>Add Category</Button>
-                                            <DialogClose asChild>
-                                                <Button variant="outline">Cancel</Button>
-                                            </DialogClose>
-                                        </DialogFooter>
-                                    </DialogContent>
-                                </Dialog>
-                            </div>
-                        </div>
-                        <TabsContent value="all">
+            <div className="flex items-center justify-between py-6">
+                <div className="space-y-1">
+                    <h2 className="text-2xl font-bold tracking-tight">Categories</h2>
+                    <p className="text-sm text-muted-foreground">Create, edit, and delete categories and services.</p>
+                </div>
+                <Button onClick={() => setDialogOpen(true)}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add {activeTab === 'categories' ? 'Category' : 'Service'}
+                </Button>
+            </div>
+            <div className="container flex flex-col gap-8">
+                <div className="hidden flex-col md:flex">
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                        <TabsList>
+                            <TabsTrigger value="categories">Categories</TabsTrigger>
+                            <TabsTrigger value="services">Services</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="categories">
                             <Card x-chunk="dashboard-06-chunk-0">
                                 <CardHeader>
                                     <CardTitle>Categories</CardTitle>
@@ -410,6 +524,7 @@ export function CategoriesPage() {
                                                                             setEditDialogOpen(true);
                                                                         }}
                                                                     >
+                                                                        <Edit className="mr-2 h-4 w-4" />
                                                                         Edit
                                                                     </DropdownMenuItem>
                                                                     <DropdownMenuItem
@@ -418,6 +533,7 @@ export function CategoriesPage() {
                                                                             setDeleteDialogOpen(true);
                                                                         }}
                                                                     >
+                                                                        <Trash className="mr-2 h-4 w-4" />
                                                                         Delete
                                                                     </DropdownMenuItem>
                                                                 </DropdownMenuContent>
@@ -432,52 +548,178 @@ export function CategoriesPage() {
                                 </CardContent>
                             </Card>
                         </TabsContent>
+                        <TabsContent value="services">
+                            {/* Services table */}
+                            <Card>
+                                <CardHeader className="flex items-center justify-between">
+                                    <CardTitle>Services</CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-0">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Name</TableHead>
+                                                <TableHead>Description</TableHead>
+                                                <TableHead className="text-right">Actions</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {services.map(service => (
+                                                <TableRow key={service.service_id}>
+                                                    <TableCell>{service.service_name}</TableCell>
+                                                    <TableCell>{service.service_description}</TableCell>
+                                                    <TableCell className="text-right">
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                                    <span className="sr-only">Open menu</span>
+                                                                    <MoreHorizontal className="h-4 w-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                                <DropdownMenuItem onClick={() => {
+                                                                    setServiceToEdit(service);
+                                                                    setEditDialogOpen(true);
+                                                                }}>
+                                                                    <Edit className="mr-2 h-4 w-4" />
+                                                                    Edit
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuSeparator />
+                                                                <DropdownMenuItem onClick={() => {
+                                                                    setServiceToDelete(service);
+                                                                    setDeleteDialogOpen(true);
+                                                                }}>
+                                                                    <Trash className="mr-2 h-4 w-4" />
+                                                                    Delete
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
                     </Tabs>
                 </div>
             </div>
-            <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+            {/* Add Category/Service Dialog */}
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Edit Category</DialogTitle>
-                        <DialogDescription>
-                            Please update the category name and image.
-                        </DialogDescription>
+                        <DialogTitle>
+                            Add {activeTab === 'categories' ? 'Category' : 'Service'}
+                        </DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4">
-                        <Input
-                            placeholder="Category name"
-                            value={categoryToEdit?.name || ''}
-                            onChange={(e) =>
-                                setCategoryToEdit({ ...categoryToEdit, name: e.target.value })
-                            }
-                        />
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleImageUpload(e, true)}
-                        />
-                    </div>
+                    <DialogDescription>
+                        {activeTab === 'categories' ? (
+                            <div className="space-y-4">
+                                <Input
+                                    placeholder="Category name"
+                                    value={newCategoryName}
+                                    onChange={(e) => setNewCategoryName(e.target.value)}
+                                />
+                                <Input
+                                    type="file"
+                                    onChange={(e) => setNewCategoryImage(e.target.files[0])}
+                                />
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <Input
+                                    placeholder="Service name"
+                                    value={newServiceName}
+                                    onChange={(e) => setNewServiceName(e.target.value)}
+                                />
+                                <Input
+                                    placeholder="Service description"
+                                    value={newServiceDescription}
+                                    onChange={(e) => setNewServiceDescription(e.target.value)}
+                                />
+                                <Select onValueChange={setSelectedCategory}>
+                                    <SelectTrigger className="w-[180px]">
+                                        <SelectValue placeholder="Select a category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {categories.map((category) => (
+                                            <SelectItem key={category.id} value={category.id}>
+                                                {category.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+                    </DialogDescription>
                     <DialogFooter>
-                        <Button onClick={handleEditCategory}>Update Category</Button>
-                        <DialogClose asChild>
-                            <Button variant="outline">Cancel</Button>
-                        </DialogClose>
+                        <Button onClick={activeTab === 'categories' ? handleAddCategory : handleAddService}>
+                            Add {activeTab === 'categories' ? 'Category' : 'Service'}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Edit Category/Service Dialog */}
+            <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>
+                            Edit {activeTab === 'categories' ? 'Category' : 'Service'}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <DialogDescription>
+                        {activeTab === 'categories' && categoryToEdit ? (
+                            <div className="space-y-4">
+                                <Input
+                                    placeholder="Category name"
+                                    value={categoryToEdit.name}
+                                    onChange={(e) => setCategoryToEdit({ ...categoryToEdit, name: e.target.value })}
+                                />
+                                <Input
+                                    type="file"
+                                    onChange={(e) => setCategoryToEdit({ ...categoryToEdit, imageUrl: URL.createObjectURL(e.target.files[0]) })}
+                                />
+                            </div>
+                        ) : serviceToEdit && (
+                            <div className="space-y-4">
+                                <Input
+                                    placeholder="Service name"
+                                    value={serviceToEdit.name}
+                                    onChange={(e) => setServiceToEdit({ ...serviceToEdit, name: e.target.value })}
+                                />
+                                <Input
+                                    placeholder="Service description"
+                                    value={serviceToEdit.description}
+                                    onChange={(e) => setServiceToEdit({ ...serviceToEdit, description: e.target.value })}
+                                />
+                            </div>
+                        )}
+                    </DialogDescription>
+                    <DialogFooter>
+                        <Button onClick={activeTab === 'categories' ? handleEditCategory : handleEditService}>
+                            Save Changes
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
             <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Confirm Delete</DialogTitle>
-                        <DialogDescription>
-                            Are you sure you want to delete this category?
-                        </DialogDescription>
+                        <DialogTitle>Are you sure?</DialogTitle>
                     </DialogHeader>
+                    <DialogDescription>
+                        Do you really want to delete this {activeTab === 'categories' ? 'category' : 'service'}? This action cannot be undone.
+                    </DialogDescription>
                     <DialogFooter>
-                        <Button onClick={handleDeleteCategory} variant="destructive">Delete</Button>
-                        <DialogClose asChild>
-                            <Button variant="outline">Cancel</Button>
-                        </DialogClose>
+                        <Button variant="destructive" onClick={activeTab === 'categories' ? handleDeleteCategory : handleDeleteService}>
+                            Delete
+                        </Button>
+                        <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
