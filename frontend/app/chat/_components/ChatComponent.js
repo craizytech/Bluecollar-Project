@@ -286,7 +286,7 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
     
         setInvoiceStatus('accepted');
         // Redirect to M-Pesa with invoice ID and phone number
-        router.push(`/mpesa?invoiceId=${invoiceId}&phoneNumber=${invoiceData[0].user_phone_number}`);
+        router.push(`/mpesa?invoiceId=${invoiceId}`);
       } catch (error) {
         console.error('Failed to accept invoice:', error);
         setError('Failed to accept invoice');
