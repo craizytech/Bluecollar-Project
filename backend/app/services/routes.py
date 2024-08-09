@@ -318,3 +318,8 @@ def downgrade_user_role(application_id):
     db.session.commit()
 
     return jsonify({"message": "User role updated successfully"}), 200
+
+@services_bp.route('/count/services', methods=['GET'])
+def count_services():
+    count = Service.query.count()
+    return jsonify({"count": count}), 200
