@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models import User, Permissions
+from app.models import User, Permissions, Booking, Chat
 from app.extensions import db
 from app.utils.decorators import permission_required
 from app.users import users_bp
@@ -51,12 +51,24 @@ def get_user_profile(user_id):
 #Route to delete user profile
 @users_bp.route('/profile/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
+    # Update bookings to set client_id to a default value or NULL
+    bookings = Booking.query.filter_by(client_id=user_id).all()
+    for booking in bookings:
+        booking.client_id = ''  # or some default value
+    db.session.commit()
+    # Update chats to set sent_to to a default value or NULL
+    chats = Chat.query.filter_by(sent_to=user_id).all()
+    for chat in chats:
+        chat.sent_to = ''  # or some default value
+    db.session.commit()
+
+    # Now delete the user
     user = User.query.get(user_id)
-    if user:
-        db.session.delete(user)
-        db.session.commit()
-        return jsonify({"message": "User deleted successfully"}), 200
-    return jsonify({"error": "User not found"}), 404
+    db.session.delete(user)
+    db.session.commit()
+    return '', 204
+
+
 
 # Route to update user profile
 @users_bp.route('/profile', methods=['PUT'])
@@ -132,3 +144,16 @@ def assign_general_user_role(user_id):
     db.session.commit()
     
     return jsonify({"message": "User role updated successfully"}), 200
+
+# Route to get the count of users with role id 3 (Customers)
+@users_bp.route('/count/customers', methods=['GET'])
+def count_customers():
+    count = User.query.filter_by(role_id=3).count()
+    return jsonify({"count": count}), 200
+
+# Route to get the count of users with role id 2 (Employees)
+@users_bp.route('/count/employees', methods=['GET'])
+def count_employees():
+    count = User.query.filter_by(role_id=2).count()
+    return jsonify({"count": count}), 200
+

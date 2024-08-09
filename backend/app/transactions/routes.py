@@ -1,5 +1,6 @@
 from flask import jsonify;
 from app.models import Transaction
+from app.extensions import db
 from app.transactions import transactions_bp
 
 @transactions_bp.route('/all', methods=['GET'])
@@ -16,3 +17,8 @@ def get_transactions():
         } for t in transactions
     ]
     return jsonify(transactions_data)
+
+@transactions_bp.route('/total-revenue', methods=['GET'])
+def get_total_revenue():
+    total_revenue = db.session.query(db.func.sum(Transaction.amount_paid)).scalar() or 0
+    return jsonify({'total_revenue': total_revenue})
