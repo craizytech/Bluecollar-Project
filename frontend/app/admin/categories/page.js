@@ -64,13 +64,56 @@ export function CategoriesPage() {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [categoryToEdit, setCategoryToEdit] = useState(null);
     const [categoryToDelete, setCategoryToDelete] = useState(null);
+    const [categoryUserCounts, setCategoryUserCounts] = useState([]);
+
 
     useEffect(() => {
         fetch('http://localhost:5000/api/categories/all')
             .then(response => response.json())
-            .then(data => setCategories(data))
-            .catch(error => console.error('Error fetching categories:', error));
+            .then(data =>
+                setCategories(data),
+                setNewCategoryImage(null),
+                setAlert({
+                    variant: "success",
+                    title: "Success",
+                    description: "Categories fetched successfully.",
+                    icon: <CheckCircle className="h-4 w-4" />,
+                })
+            )
+            .catch((error) =>
+                console.error('Error fetching categories:', error,
+                setAlert({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Error fetching categories.",
+                    icon: <AlertTriangle className="h-4 w-4" />,
+                })
+            ));
     }, []);
+
+    useEffect(() => {
+        fetch('http://localhost:5000/api/categories/user_count')
+            .then(response => response.json())
+            .then(data => 
+                setCategoryUserCounts(data),
+                setAlert({
+                    variant: "success",
+                    title: "Success",
+                    description: "User counts fetched successfully.",
+                    icon: <CheckCircle className="h-4 w-4" />,
+                  })
+            )
+            .catch((error) =>
+                console.error('Error fetching user counts:', error,
+                setAlert({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Error fetching user counts.",
+                    icon: <AlertTriangle className="h-4 w-4" />,
+                })
+            ));
+    }, []);
+
 
     useEffect(() => {
         if (alert) {
@@ -228,7 +271,7 @@ export function CategoriesPage() {
     return (
         <div className="flex min-h-screen w-full flex-col bg-muted/40">
             {alert && (
-                <div className="fixed top-20 right-20 flex items-center justify-center z-50 w-auto">
+                <div className="fixed bottom-20 right-20 flex items-center justify-center z-50 w-auto">
                     <Alert variant={alert.variant}>
                         {alert.icon}
                         <AlertTitle>{alert.title}</AlertTitle>
@@ -257,25 +300,8 @@ export function CategoriesPage() {
                         <div className="flex items-center">
                             <TabsList>
                                 <TabsTrigger value="all">Categories</TabsTrigger>
-                                <TabsTrigger value="active">Sub Categories</TabsTrigger>
                             </TabsList>
                             <div className="ml-auto flex items-center gap-2">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" size="sm" className="h-8 gap-1">
-                                            <ListFilter className="h-3.5 w-3.5" />
-                                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                                                Filter
-                                            </span>
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuLabel>Filter by</DropdownMenuLabel>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem>Active</DropdownMenuItem>
-                                        <DropdownMenuItem>Draft</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
                                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                                     <DialogTrigger asChild>
                                         <Button size="sm" className="h-8 gap-1">
@@ -330,7 +356,6 @@ export function CategoriesPage() {
                                                     <span className="sr-only">Image</span>
                                                 </TableHead>
                                                 <TableHead>Name</TableHead>
-                                                <TableHead>Status</TableHead>
                                                 <TableHead className="hidden md:table-cell">
                                                     Total Employees
                                                 </TableHead>
@@ -343,73 +368,68 @@ export function CategoriesPage() {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {categories.map((category) => (
-                                                <TableRow key={category.id}>
-                                                    <TableCell className="hidden sm:table-cell">
-                                                        <Image
-                                                            alt="Product image"
-                                                            className="aspect-square rounded-md object-cover"
-                                                            height="64"
-                                                            src={`/${category.name.toLowerCase()}.png`}
-                                                            width="64"
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell className="font-medium">
-                                                        {category.name}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="outline">Draft</Badge>
-                                                    </TableCell>
-                                                    <TableCell className="hidden md:table-cell">
-                                                        25
-                                                    </TableCell>
-                                                    <TableCell className="hidden md:table-cell">
-                                                        {category.creation_date}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild>
-                                                                <Button
-                                                                    aria-haspopup="true"
-                                                                    size="icon"
-                                                                    variant="ghost"
-                                                                >
-                                                                    <MoreHorizontal className="h-4 w-4" />
-                                                                    <span className="sr-only">Toggle menu</span>
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end">
-                                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                                <DropdownMenuItem
-                                                                    onSelect={() => {
-                                                                        setCategoryToEdit(category);
-                                                                        setEditDialogOpen(true);
-                                                                    }}
-                                                                >
-                                                                    Edit
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuItem
-                                                                    onSelect={() => {
-                                                                        setCategoryToDelete(category);
-                                                                        setDeleteDialogOpen(true);
-                                                                    }}
-                                                                >
-                                                                    Delete
-                                                                </DropdownMenuItem>
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
+                                            {categories.map((category) => {
+                                                const userCount = categoryUserCounts.find(count => count.id === category.id)?.user_count || 0;
+                                                return (
+                                                    <TableRow key={category.id}>
+                                                        <TableCell className="hidden sm:table-cell">
+                                                            <Image
+                                                                alt="Product image"
+                                                                className="aspect-square rounded-md object-cover"
+                                                                height="64"
+                                                                src={`/${category.name.toLowerCase()}.png`}
+                                                                width="64"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="font-medium">
+                                                            {category.name}
+                                                        </TableCell>
+                                                        <TableCell className="hidden md:table-cell">
+                                                            {userCount}
+                                                        </TableCell>
+                                                        <TableCell className="hidden md:table-cell">
+                                                            {category.creation_date}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button
+                                                                        aria-haspopup="true"
+                                                                        size="icon"
+                                                                        variant="ghost"
+                                                                    >
+                                                                        <MoreHorizontal className="h-4 w-4" />
+                                                                        <span className="sr-only">Toggle menu</span>
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end">
+                                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                                    <DropdownMenuItem
+                                                                        onSelect={() => {
+                                                                            setCategoryToEdit(category);
+                                                                            setEditDialogOpen(true);
+                                                                        }}
+                                                                    >
+                                                                        Edit
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem
+                                                                        onSelect={() => {
+                                                                            setCategoryToDelete(category);
+                                                                            setDeleteDialogOpen(true);
+                                                                        }}
+                                                                    >
+                                                                        Delete
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
                                         </TableBody>
+
                                     </Table>
                                 </CardContent>
-                                <CardFooter>
-                                    <div className="text-xs text-muted-foreground">
-                                        Showing <strong>1-10</strong> of <strong>32</strong>{" "}
-                                        products
-                                    </div>
-                                </CardFooter>
                             </Card>
                         </TabsContent>
                     </Tabs>
