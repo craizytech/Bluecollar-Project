@@ -1,4 +1,4 @@
-import { Calendar as CalendarIcon, MapPin, User, Check, X, Clock, MessageSquare } from 'lucide-react';
+import { Calendar as CalendarIcon, MapPin, User, Check, X, Clock, MessageSquare, NotebookIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -312,6 +312,9 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
                           <h2 className='flex gap-2 text-primary'>
                             <User /> {booking.provider_name}
                           </h2>
+                          <p className='flex gap-2 text-primary'>
+                          <NotebookIcon />{booking.description}
+                          </p>
                           {booking.showReminder && (
                             <div className={styles.reminderMessage}>
                               <div className={styles.jumpingClock}>
@@ -334,6 +337,17 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
                               </Link>
                             </div>
                           )}
+                          {(booking.status !== 'declined' && booking.status !== 'accepted') && (
+                            <>
+                              <h2 className='flex gap-2 text-gray-500'>
+                                <MapPin className='text-primary' /> {booking.location}
+                              </h2>
+                              <h2 className='flex gap-2 text-gray-500'>
+                                <CalendarIcon className='text-primary' /> Service on: {moment(booking.booking_date).format('MMMM D, YYYY')}
+                              </h2>
+
+                            </>
+                          )}
                           {booking.status === 'pending' && (
                             <div className='flex gap-2'>
                               <button
@@ -350,23 +364,15 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
                               </button>
                             </div>
                           )}
-                          {(booking.status !== 'declined' && booking.status !== 'accepted') && (
-                            <>
-                              <h2 className='flex gap-2 text-gray-500'>
-                                <MapPin className='text-primary' /> {booking.location}
-                              </h2>
-                              <h2 className='flex gap-2 text-gray-500'>
-                                <CalendarIcon className='text-primary' /> Service on: {moment(booking.booking_date).format('MMMM D, YYYY')}
-                              </h2>
-
-                            </>
-                          )}
                         </>
                       ) : (
                         <>
                           <h2 className='flex gap-2 text-primary'>
                             <User /> {booking.client_name}
                           </h2>
+                          <p className='flex gap-2 text-primary'>
+                           <NotebookIcon />{booking.description}
+                          </p>
                           {booking.showReminder && (
                             <div className={styles.reminderMessage}>
                               <div className={styles.jumpingClock}>
@@ -375,6 +381,32 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
                               Reminder: Your service is coming up on {moment(booking.booking_date).format('MMMM D, YYYY')}!
                             </div>
                           )}
+                          
+                          {booking.status === 'declined' && (
+                            <div className='text-red-500'>
+                              Booking declined.
+                            </div>
+                          )}
+                          {booking.status === 'accepted' && (
+                            <div className='flex items-center gap-2 text-green-700'>
+                              <div>Accepted booking. Chat with your client.</div>
+                              <Link href={`/chat/${booking.client_id}?receiverId=${booking.client_id}&bookingId=${booking.booking_id}`}
+                                 className='text-blue-500'>
+                                  <MessageSquare className='inline' />
+                              </Link>
+                            </div>
+                          )}
+                          {(booking.status !== 'declined' && booking.status !== 'accepted') && (
+                            <>
+                              <h2 className='flex gap-2 text-gray-500'>
+                                <MapPin className='text-primary' /> {booking.location}
+                              </h2>
+                              <h2 className='flex gap-2 text-gray-500'>
+                                <CalendarIcon className='text-primary' /> Service on: {moment(booking.booking_date).format('MMMM D, YYYY')}
+                              </h2>
+                            </>
+                          )}
+
                           <div className='flex gap-2'>
                             {booking.status === 'pending' && (
                               <>
@@ -401,30 +433,6 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
                               </button>
                             )}
                           </div>
-                          {booking.status === 'declined' && (
-                            <div className='text-red-500'>
-                              Booking declined.
-                            </div>
-                          )}
-                          {booking.status === 'accepted' && (
-                            <div className='flex items-center gap-2 text-green-700'>
-                              <div>Accepted booking. Chat with your client.</div>
-                              <Link href={`/chat/${booking.client_id}?receiverId=${booking.client_id}&bookingId=${booking.booking_id}`}
-                                 className='text-blue-500'>
-                                  <MessageSquare className='inline' />
-                              </Link>
-                            </div>
-                          )}
-                          {(booking.status !== 'declined' && booking.status !== 'accepted') && (
-                            <>
-                              <h2 className='flex gap-2 text-gray-500'>
-                                <MapPin className='text-primary' /> {booking.location}
-                              </h2>
-                              <h2 className='flex gap-2 text-gray-500'>
-                                <CalendarIcon className='text-primary' /> Service on: {moment(booking.booking_date).format('MMMM D, YYYY')}
-                              </h2>
-                            </>
-                          )}
                         </>
                       )}
                     </div>

@@ -6,25 +6,25 @@ import { toast } from 'sonner';
 import moment from 'moment';
 import counties from "@/app/data/counties";
 
-async function fetchBookedDates(providerId) {
-    try {
-        const response = await fetch(`http://localhost:5000/api/bookings/booked-dates?providerId=${providerId}`, {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-            }
-        });
-        if (response.ok) {
-            const data = await response.json();
-            return data.bookedDates.map(date => moment(date).startOf('day').toDate());
-        } else {
-            console.error('Failed to fetch booked dates, status:', response.status);
-            return [];
-        }
-    } catch (error) {
-        console.error('Error fetching booked dates:', error);
-        return [];
-    }
-}
+// async function fetchBookedDates(providerId) {
+//     try {
+//         const response = await fetch(`http://localhost:5000/api/bookings/booked-dates?providerId=${providerId}`, {
+//             headers: {
+//                 'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+//             }
+//         });
+//         if (response.ok) {
+//             const data = await response.json();
+//             return data.bookedDates.map(date => moment(date).startOf('day').toDate());
+//         } else {
+//             console.error('Failed to fetch booked dates, status:', response.status);
+//             return [];
+//         }
+//     } catch (error) {
+//         console.error('Error fetching booked dates:', error);
+//         return [];
+//     }
+// }
 
 async function fetchProviderId(serviceId) {
     try {
@@ -83,8 +83,8 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
                 const id = await fetchProviderId(serviceId);
                 if (id) {
                     setProviderId(id);
-                    const booked = await fetchBookedDates(id);
-                    setBookedDates(booked);
+                    // const booked = await fetchBookedDates(id);
+                    // setBookedDates(booked);
                 }
             }
             const loc = await fetchUserLocation();
@@ -129,7 +129,7 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
         const isoDate = moment(date).startOf('day').toISOString();
 
         if (bookedDates.some(d => moment(d).startOf('day').toISOString() === isoDate)) {
-            toast.error('Selected date is already booked. Please choose a different date.', {
+            toast('Selected date is already booked. Please choose a different date.', {
                 style: { 
                     backgroundColor: '#f8d7da',
                     color: '#721c24'
@@ -163,9 +163,9 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
 
             if (response.ok) {
                 toast('Service booked successfully!');
-                if (onBookingSuccess) {
-                    onBookingSuccess();
-                }
+                // if (onBookingSuccess) {
+                //     onBookingSuccess();
+                // }
             } else {
                 const errorData = await response.json();
                 toast(`Error: ${errorData.error}`);
@@ -179,7 +179,7 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
     const modifiers = {
         disabled: {
             before: today, 
-            dates: bookedDates
+            // dates: bookedDates
         }
     };
 
@@ -196,14 +196,18 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
                             Select a date, enter your location, and provide a description of the service you are seeking.
                         </p>
                         <div>
-                            <div className="calendar-wrapper">
+                            <div className="flex flex-col gap-5 items-baseline">
                                 <Calendar
                                     mode="single"
                                     selected={date}
                                     onSelect={setDate}
                                     className="rounded-md border"
-                                    modifiers={modifiers}
+                                    // modifiers={modifiers}
                                 />
+                            </div>
+                            {/* Time Slot Picker */}
+                            <div>
+
                             </div>
                             <div className="relative mt-4">
                                 <input
