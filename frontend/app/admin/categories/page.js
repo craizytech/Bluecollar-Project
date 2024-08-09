@@ -119,12 +119,12 @@ export function CategoriesPage() {
             .then(response => response.json())
             .then(data =>
                 setCategoryUserCounts(data),
-                setAlert({
-                    variant: "success",
-                    title: "Success",
-                    description: "User counts fetched successfully.",
-                    icon: <CheckCircle className="h-4 w-4" />,
-                })
+                // setAlert({
+                //     variant: "success",
+                //     title: "Success",
+                //     description: "User counts fetched successfully.",
+                //     icon: <CheckCircle className="h-4 w-4" />,
+                // })
             )
             .catch((error) =>
                 console.error('Error fetching user counts:', error,
@@ -142,7 +142,7 @@ export function CategoriesPage() {
         if (alert) {
             const timer = setTimeout(() => {
                 setAlert(null);
-            }, 3000); // Alert disappears after 3 seconds
+            }, 15000); // Alert disappears after 3 seconds
             return () => clearTimeout(timer);
         }
     }, [alert]);
@@ -199,32 +199,34 @@ export function CategoriesPage() {
     };
 
     const handleAddService = async () => {
-        if (!newServiceName || !newServiceDescription) {
+        if (!newServiceName || !newServiceDescription || !selectedCategory) {
             setAlert({
                 variant: "destructive",
                 title: "Error",
-                description: "Service name and description are required.",
+                description: "Service name, description, and category are required.",
                 icon: <AlertTriangle className="h-4 w-4" />,
             });
             return;
         }
-
+    
         const formData = new FormData();
         formData.append('name', newServiceName.toLowerCase());
         formData.append('description', newServiceDescription);
-
+        formData.append('category_id', selectedCategory);
+    
         try {
             const response = await fetch('http://localhost:5000/api/services/create', {
                 method: 'POST',
                 body: formData
             });
-
+    
             if (response.ok) {
                 const newService = await response.json();
                 setServices([...services, newService.service]);
                 setDialogOpen(false);
                 setNewServiceName('');
                 setNewServiceDescription('');
+                setSelectedCategory(null);
                 setAlert({
                     variant: "success",
                     title: "Success",
@@ -232,10 +234,11 @@ export function CategoriesPage() {
                     icon: <CheckCircle className="h-4 w-4" />,
                 });
             } else {
+                const errorData = await response.json();
                 setAlert({
                     variant: "destructive",
                     title: "Error",
-                    description: "Failed to create service.",
+                    description: errorData.error || "Failed to create service.",
                     icon: <AlertTriangle className="h-4 w-4" />,
                 });
             }
@@ -248,6 +251,8 @@ export function CategoriesPage() {
             });
         }
     };
+    
+    
 
     const handleEditService = async () => {
         if (!serviceToEdit.name || !serviceToEdit.description) {
@@ -261,7 +266,7 @@ export function CategoriesPage() {
         }
 
         try {
-            const response = await fetch(`http://localhost:5000/api/services/update/${serviceToEdit.id}`, {
+            const response = await fetch(`http://localhost:5000/api/services/update/${serviceToEdit.service_id}`, {
                 method: 'PUT',
                 body: JSON.stringify(serviceToEdit),
                 headers: {
@@ -271,7 +276,7 @@ export function CategoriesPage() {
 
             if (response.ok) {
                 const updatedService = await response.json();
-                setServices(services.map(service => service.id === updatedService.id ? updatedService : service));
+                setServices(services.map(service => service.service_id === updatedService.service_id ? updatedService : service));
                 setEditDialogOpen(false);
                 setAlert({
                     variant: "success",
@@ -384,12 +389,12 @@ export function CategoriesPage() {
 
     const handleDeleteService = async () => {
         try {
-            const response = await fetch(`http://localhost:5000/api/services/delete/${serviceToDelete.id}`, {
+            const response = await fetch(`http://localhost:5000/api/services/delete/${serviceToDelete.service_id}`, {
                 method: 'DELETE',
             });
 
             if (response.ok) {
-                setServices(services.filter(service => service.id !== serviceToDelete.id));
+                setServices(services.filter(service => service.service_id !== serviceToDelete.service_id));
                 setDeleteDialogOpen(false);
                 setAlert({
                     variant: "success",
@@ -578,13 +583,13 @@ export function CategoriesPage() {
                                                             </DropdownMenuTrigger>
                                                             <DropdownMenuContent align="end">
                                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                                <DropdownMenuItem onClick={() => {
+                                                                {/* <DropdownMenuItem onClick={() => {
                                                                     setServiceToEdit(service);
                                                                     setEditDialogOpen(true);
                                                                 }}>
                                                                     <Edit className="mr-2 h-4 w-4" />
                                                                     Edit
-                                                                </DropdownMenuItem>
+                                                                </DropdownMenuItem> */}
                                                                 <DropdownMenuSeparator />
                                                                 <DropdownMenuItem onClick={() => {
                                                                     setServiceToDelete(service);
@@ -687,12 +692,12 @@ export function CategoriesPage() {
                             <div className="space-y-4">
                                 <Input
                                     placeholder="Service name"
-                                    value={serviceToEdit.name}
+                                    value={serviceToEdit.service_name}
                                     onChange={(e) => setServiceToEdit({ ...serviceToEdit, name: e.target.value })}
                                 />
                                 <Input
                                     placeholder="Service description"
-                                    value={serviceToEdit.description}
+                                    value={serviceToEdit.service_description}
                                     onChange={(e) => setServiceToEdit({ ...serviceToEdit, description: e.target.value })}
                                 />
                             </div>
