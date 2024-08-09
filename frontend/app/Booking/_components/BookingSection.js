@@ -163,9 +163,9 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
 
             if (response.ok) {
                 toast('Service booked successfully!');
-                // if (onBookingSuccess) {
-                //     onBookingSuccess();
-                // }
+                if (onBookingSuccess) {
+                    onBookingSuccess();
+                }
             } else {
                 const errorData = await response.json();
                 toast(`Error: ${errorData.error}`);
