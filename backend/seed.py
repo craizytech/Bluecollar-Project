@@ -42,7 +42,7 @@ with app.app_context():
         user_email="testadmin@example.com",
         role_id=admin_role.role_id,
         user_password=generate_password_hash("password"),
-        user_location="Nairobi",
+        user_location="Nairobi, Kenya",
         user_profile_picture="admin_profile_pic.png"
     )
 
@@ -55,12 +55,12 @@ with app.app_context():
             user_email=f"testuser{i}@example.com",
             role_id=general_role.role_id,
             user_password=generate_password_hash("password"),
-            user_location="Nairobi",
+            user_location="Nairobi, Kenya",
             user_profile_picture=f"user{i}_profile_pic.png"
         ))
 
     service_providers = []
-    counties = ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret', 'Thika', 'Machakos', 'Nyeri', 'Meru', 'Kakamega']
+    counties = ['Nairobi, Kenya', 'Mombasa, Kenya', 'Kisumu, Kenya', 'Nakuru, Kenya', 'Eldoret, Kenya', 'Thika, Kenya', 'Machakos, Kenya', 'Nyeri, Kenya', 'Meru, Kenya', 'Kakamega, Kenya']
     
     service_provider_data = [
         {"name": "Plumber", "category": "Plumbing", "services": ["Pipe Repairs", "Leak Detection", "Water Heater Installation", "Drain Cleaning", "Toilet Installation", "Faucet Replacement", "Shower Installation", "Bathroom Renovation", "Sewer Line Repair", "Water Softener Installation"]},
@@ -75,7 +75,7 @@ with app.app_context():
             user = User(
                 user_name=f"{provider['name']} {i}",
                 user_phone_number=f"072345678{i}",
-                user_address=f"{county}, Kenya",
+                user_address=f"{county}",
                 user_email=f"{provider['name'].lower()}{i}@example.com",
                 role_id=specialized_role.role_id,
                 user_password=generate_password_hash("password"),
