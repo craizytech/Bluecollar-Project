@@ -77,7 +77,7 @@ class Service(db.Model):
     service_name = db.Column(db.String(64), nullable=False)
     service_description = db.Column(db.String(256), nullable=True)
     category_id = db.Column(db.Integer, db.ForeignKey('service_categories.category_id'), nullable=False)
-    provider_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+    provider_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=True)
     
     # One-to-Many relationships
     bookings = db.relationship('Booking', backref='service', lazy=True)

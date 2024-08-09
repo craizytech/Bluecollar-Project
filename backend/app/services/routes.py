@@ -14,35 +14,48 @@ def validate_fields(data, required_fields):
 
 # Route to create a new service
 @services_bp.route('/create', methods=['POST'])
-@jwt_required()
-@permission_required(Permissions.ACCEPT_BOOKING_REQUESTS)
 def create_service():
-    data = request.get_json()
-    required_fields = ['service_name', 'category_id', 'provider_id', 'service_description']
-    is_valid, error_message = validate_fields(data, required_fields)
-    
-    if not is_valid:
-        return jsonify({"error": error_message}), 400
+    # Check for required fields
+    if 'name' not in request.form or 'description' not in request.form or 'category_id' not in request.form:
+        return jsonify({'error': 'Missing required fields'}), 400
 
-    service = Service(
-        service_name=data['service_name'],
-        service_description=data['service_description'],
-        category_id=data['category_id'],
-        provider_id=data['provider_id']
+    # Get the form data
+    service_name = request.form.get('name').lower()
+    service_description = request.form.get('description')
+    category_id = request.form.get('category_id')
+    provider_id = ''
+
+    # Validate category
+    category = ServiceCategory.query.filter_by(category_id=category_id).first()
+    if not category:
+        return jsonify({'error': 'Invalid category ID'}), 400
+
+    # Create the new service
+    new_service = Service(
+        service_name=service_name,
+        service_description=service_description,
+        category_id=category_id,
+        provider_id=provider_id
     )
 
     try:
-        db.session.add(service)
+        db.session.add(new_service)
         db.session.commit()
-        return jsonify({"message": "Service created successfully"}), 201
+        return jsonify({
+            'message': 'Service created successfully',
+            'service': {
+                'name': new_service.service_name,
+                'description': new_service.service_description,
+                'category_id': new_service.category_id,
+                'provider_id': new_service.provider_id,
+            }
+        }), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        return jsonify({'error': str(e)}), 500
 
 # Route to update a service
-@services_bp.route('/<int:service_id>', methods=['PUT'])
-@jwt_required()
-@permission_required(Permissions.ACCEPT_BOOKING_REQUESTS)
+@services_bp.route('/update/<int:service_id>', methods=['PUT'])
 def update_service(service_id):
     service = Service.query.get(service_id)
     if not service:
@@ -52,7 +65,7 @@ def update_service(service_id):
     service.service_name = data.get('service_name', service.service_name)
     service.service_description = data.get('service_description', service.service_description)
     service.category_id = data.get('category_id', service.category_id)
-    service.provider_id = data.get('provider_id', service.provider_id)
+    service.provider_id = ''
 
     try:
         db.session.commit()
@@ -62,9 +75,7 @@ def update_service(service_id):
         return jsonify({"error": str(e)}), 500
 
 # Route to delete a service
-@services_bp.route('/<int:service_id>', methods=['DELETE'])
-@jwt_required()
-@permission_required(Permissions.ACCEPT_BOOKING_REQUESTS)
+@services_bp.route('/delete/<int:service_id>', methods=['DELETE'])
 def delete_service(service_id):
     service = Service.query.get(service_id)
     if not service:
