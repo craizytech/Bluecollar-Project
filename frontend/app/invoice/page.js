@@ -18,6 +18,7 @@ function page() {
     setReceiverId(receiverIdFromUrl);
   }, []);
 
+
   return (
     <div>
         <CreateInvoice bookingId={bookingId}  receiverId={receiverId}/>

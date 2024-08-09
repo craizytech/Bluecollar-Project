@@ -1,5 +1,5 @@
 import React from 'react'
-import BusinessList from '../_components/BusinessList'
+import BusinessList from '../search/[category]/BusinessList'
 
 function ServicesPage() {
   return (
