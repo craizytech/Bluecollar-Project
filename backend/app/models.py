@@ -113,6 +113,8 @@ class Booking(db.Model):
     provider_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
     booking_date = db.Column(db.Date, nullable=False)
     status = db.Column(db.String(20), nullable=False)
+    # start time
+    # end time 
     location = db.Column(db.String(256), nullable=False)
     description = db.Column(db.Text)
     
