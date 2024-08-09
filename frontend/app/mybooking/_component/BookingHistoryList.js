@@ -21,26 +21,22 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
 
   useEffect(() => {
     const sortedBookings = [...bookingHistory].sort((a, b) => new Date(a.booking_date) - new Date(b.booking_date));
-    setUpdatedBookings(sortedBookings);
-  }, [bookingHistory]);
-
-  // Display reminders for bookings coming up in the next few days
-  useEffect(() => {
     const today = moment();
-    const reminderDays = 3; // Days before the booking to send a reminder
-
-    const updatedBookingsWithReminder = updatedBookings.map(booking => {
+    const reminderDays = 3;
+  
+    const updatedBookingsWithReminder = sortedBookings.map(booking => {
       const bookingDate = moment(booking.booking_date);
       const daysUntilBooking = bookingDate.diff(today, 'days');
-
+  
       return {
         ...booking,
         showReminder: daysUntilBooking <= reminderDays && daysUntilBooking > 0,
       };
     });
-
+  
     setUpdatedBookings(updatedBookingsWithReminder);
-  }, [updatedBookings]);
+  }, [bookingHistory]);
+  
 
 
   const handleUpdateStatus = async (bookingId, newStatus) => {

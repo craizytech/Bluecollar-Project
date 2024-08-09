@@ -452,10 +452,10 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
           <div className="invoice-preview p-4 mt-4 bg-white shadow-md rounded-lg border border-gray-300">
             <InvoiceDisplay
               userProfile={userProfile}
-              serviceCost={invoice.service_cost || ''} // Extract the service cost from invoice
+              serviceCost={invoice.service_cost || ''}
               existingInvoice={invoice ? [invoice] : []}
-              isEditable={false} // Default value; adjust as needed
-              preview={true} // Default value; adjust as needed
+              isEditable={false} 
+              preview={true}
             />
             <button
               onClick={handleSendInvoice}

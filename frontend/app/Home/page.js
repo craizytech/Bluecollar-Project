@@ -12,10 +12,7 @@ function Home() {
 
   useEffect(() => {
     if (location.latitude && location.longitude) {
-      // Perform actions with the location data
       console.log('User location:', location);
-      // Example: fetch data based on location
-      // fetchDataBasedOnLocation(location.latitude, location.longitude);
     }
   }, [location]);
 

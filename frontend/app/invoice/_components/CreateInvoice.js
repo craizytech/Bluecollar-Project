@@ -1,10 +1,11 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import InvoiceDisplay from './invoiceDisplay';
+// import { useSearchParams } from 'react-router-dom';
 
-function CreateInvoice({ bookingId, receiverId }) {
+function CreateInvoice({ bookingId: propBookingId, receiverId: propReceiverId }) {
   const [userId, setUserId] = useState('');
   const [serviceCost, setServiceCost] = useState('');
   const [status, setStatus] = useState('pending'); // Default status
@@ -15,6 +16,11 @@ function CreateInvoice({ bookingId, receiverId }) {
   const [invoiceCreated, setInvoiceCreated] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Use the provided props or fallback to URL parameters
+  const bookingId = propBookingId || searchParams.get('bookingId');
+  const receiverId = propReceiverId || searchParams.get('receiverId');
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('user_id');
@@ -128,9 +134,6 @@ function CreateInvoice({ bookingId, receiverId }) {
   };
   
   
-  
-  
-  
   const handleDelete = async () => {
     console.log('Deleting invoice with ID:', existingInvoice?.invoice_id);
     try {
@@ -171,21 +174,30 @@ function CreateInvoice({ bookingId, receiverId }) {
     router.push(`/chat?receiverId=${receiverId}&invoiceId=${existingInvoice.invoice_id}&bookingId=${bookingId}`);
   };
 
-  return (
-    <InvoiceDisplay
-      userProfile={userProfile}
-      serviceCost={serviceCost}
-      existingInvoice={existingInvoice}
-      handleSubmit={handleSubmit}
-      handleDelete={handleDelete}
-      handleSendInvoice={handleSendInvoice}
-      setServiceCost={setServiceCost}
-      error={error}
-      success={success}
-      isEditable={true}
-      preview={false}
-    />
+  
 
+  return (
+    <div>
+       {!bookingId && !receiverId && (
+        <div className="message-container bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
+          <p>Please navigate to To Do Services to create an invoice for each booking.</p>
+        </div>
+      )}
+
+      <InvoiceDisplay
+        userProfile={userProfile}
+        serviceCost={serviceCost}
+        existingInvoice={existingInvoice}
+        handleSubmit={handleSubmit}
+        handleDelete={handleDelete}
+        handleSendInvoice={handleSendInvoice}
+        setServiceCost={setServiceCost}
+        error={error}
+        success={success}
+        isEditable={true}
+        preview={false}
+      />
+    </div>
   );
 }
 
