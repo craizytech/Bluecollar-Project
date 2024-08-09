@@ -132,3 +132,16 @@ def assign_general_user_role(user_id):
     db.session.commit()
     
     return jsonify({"message": "User role updated successfully"}), 200
+
+# Route to get the count of users with role id 3 (Customers)
+@users_bp.route('/count/customers', methods=['GET'])
+def count_customers():
+    count = User.query.filter_by(role_id=3).count()
+    return jsonify({"count": count}), 200
+
+# Route to get the count of users with role id 2 (Employees)
+@users_bp.route('/count/employees', methods=['GET'])
+def count_employees():
+    count = User.query.filter_by(role_id=2).count()
+    return jsonify({"count": count}), 200
+
