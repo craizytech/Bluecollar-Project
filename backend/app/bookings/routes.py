@@ -15,6 +15,7 @@ def create_booking():
     provider_id = data.get('provider_id')
     booking_date_str = data.get('booking_date')
     location = data.get('location')
+    service_description = data.get('description')  # Added field
 
     if not service_id or not provider_id or not booking_date_str or not location:
         return jsonify({"error": "Missing required fields"}), 400
@@ -43,6 +44,7 @@ def create_booking():
             provider_id=provider_id,
             booking_date=datetime.fromisoformat(booking_date_str),
             location=location,
+            description=service_description,  # Include description
             status="pending"
         )
 
@@ -98,7 +100,6 @@ def cancel_booking(booking_id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-# Route to view user bookings
 @bookings_bp.route('/my-bookings', methods=['GET'])
 @jwt_required()
 @permission_required(Permissions.VIEW_BOOKINGS)
@@ -120,6 +121,7 @@ def view_user_bookings():
             "booking_date": booking.booking_date,
             "status": booking.status,
             "location": booking.location,
+            "description": booking.description,  # Include description
             "role": "client"
         })
         
@@ -135,6 +137,7 @@ def view_user_bookings():
             "booking_date": booking.booking_date,
             "status": booking.status,
             "location": booking.location,
+            "description": booking.description,  # Include description
             "role": "provider"
         })
 

@@ -9,6 +9,7 @@ import { useCategory } from '@/app/context/CategoryContext';
 
 function SuggestedBusinessList({ serviceId }) {
   const [similarBusinesses, setSimilarBusinesses] = useState([]);
+  const [bookingSuccessful, setBookingSuccessful] = useState(false);
   const [loading, setLoading] = useState(true);
   const { categoryId } = useCategory();
 
@@ -58,17 +59,20 @@ function SuggestedBusinessList({ serviceId }) {
   }, [serviceId, categoryId]);
 
   const handleBookingSuccess = () => {
-    console.log('Booking was successful!');
+    setBookingSuccessful(true);
   };
 
   return (
     <div className='md:pl-10'>
       <BookingSection serviceId={serviceId} onBookingSuccess={handleBookingSuccess}>
-        <Button className="flex gap-2 w-full">
+        <Button
+          className={`flex gap-2 w-full ${bookingSuccessful ? 'bg-green-500' : 'bg-blue-500'}`}
+          disabled={bookingSuccessful} // Disable the button after booking
+          >
           <NotebookPen />
-          Book Appointment
-        </Button>
-      </BookingSection>
+            {bookingSuccessful ? 'Appointment Booked' : 'Book Appointment'}
+            </Button>
+          </BookingSection>
       <div className='hidden md:block'>
         <h2 className='font-bold text-lg mt-3 mb-3'>Similar Businesses</h2>
         {loading ? (
