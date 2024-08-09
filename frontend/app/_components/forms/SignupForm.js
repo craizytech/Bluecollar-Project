@@ -164,128 +164,130 @@ const SignupForm = ({ setToken, defaultLocation }) => {
   };
 
   return (
-      <div className="w-full max-w-md">
-          <form onSubmit={handleSubmit}>
-              <Card>
-                  <CardHeader className="space-y-1">
-                      <CardTitle className="text-3xl font-bold">Sign Up</CardTitle>
-                      <CardDescription>
-                          Enter your details to create a new account
-                      </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                          <Label htmlFor="username">Name</Label>
-                          <Input
-                              id="username"
-                              name="username"
-                              type="text"
-                              placeholder="username"
-                              value={user_name} onChange={(e) => setName(e.target.value)} required
-                          />
-                      </div>
-                      <div className="space-y-2">
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                              id="email"
-                              name="email"
-                              type="email"
-                              placeholder="name@example.com"
-                              value={user_email} onChange={(e) => setEmail(e.target.value)} required
-                          />
-                      </div>
+    <div className="flex items-center justify-center  bg-gray-100">
+    <div className="w-full max-w-md">
+        <form onSubmit={handleSubmit}>
+            <Card>
+                <CardHeader className="space-y-1">
+                    <CardTitle className="text-3xl font-bold">Sign Up</CardTitle>
+                    <CardDescription>
+                        Enter your details to create a new account
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="username">Name</Label>
+                        <Input
+                            id="username"
+                            name="username"
+                            type="text"
+                            placeholder="username"
+                            value={user_name} onChange={(e) => setName(e.target.value)} required
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                            id="email"
+                            name="email"
+                            type="email"
+                            placeholder="name@example.com"
+                            value={user_email} onChange={(e) => setEmail(e.target.value)} required
+                        />
+                    </div>
 
-                      <div className="space-y-2">
-                          <Label htmlFor="phone">Phone Number</Label>
-                          <Input
-                              id="phone"
-                              name="phone"
-                              type="number"
-                              value={user_phone_number} onChange={(e) => setPhoneNumber(e.target.value)} required
-                          />
-                      </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="phone">Phone Number</Label>
+                        <Input
+                            id="phone"
+                            name="phone"
+                            type="number"
+                            value={user_phone_number} onChange={(e) => setPhoneNumber(e.target.value)} required
+                        />
+                    </div>
 
-                      <div className="space-y-2">
-                          <Label htmlFor="address">Address</Label>
-                          <Input
-                              id="address"
-                              name="address"
-                              type="text"
-                              value={user_address} onChange={(e) => setAddress(e.target.value)} required 
-                          />
-                      </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="address">Address</Label>
+                        <Input
+                            id="address"
+                            name="address"
+                            type="text"
+                            value={user_address} onChange={(e) => setAddress(e.target.value)} required 
+                        />
+                    </div>
 
-                      <div className="space-y-2 relative">
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                name="location"
-                type="text"
-                placeholder="Enter location"
-                value={searchLocation}
-                onChange={handleSearchLocation}
-                required
-              />
-              {showDropdown && (
-                <ul className="absolute z-10 bg-white border border-gray-300 mt-1 w-full max-h-60 overflow-y-auto">
-                  {filteredCounties.map((county, index) => (
-                    <li
-                      key={index}
-                      className="p-2 cursor-pointer hover:bg-gray-200"
-                      onClick={() => handleSelectCounty(county)}
-                    >
-                      {county}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {geoError && <p style={{ color: 'red' }}>{geoError}</p>}
+                    <div className="space-y-2 relative">
+                        <Label htmlFor="location">Location</Label>
+                        <Input
+                          id="location"
+                          name="location"
+                          type="text"
+                          placeholder="Enter location"
+                          value={searchLocation}
+                          onChange={handleSearchLocation}
+                          required
+                        />
+                        {showDropdown && (
+                          <ul className="absolute z-10 bg-white border border-gray-300 mt-1 w-full max-h-60 overflow-y-auto">
+                            {filteredCounties.map((county, index) => (
+                              <li
+                                key={index}
+                                className="p-2 cursor-pointer hover:bg-gray-200"
+                                onClick={() => handleSelectCounty(county)}
+                              >
+                                {county}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {geoError && <p style={{ color: 'red' }}>{geoError}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="picture">Profile Picture</Label>
+                        <Input
+                            id="picture"
+                            name="picture"
+                            type="file"
+                            accept="image/*" 
+                            onChange={handleFileChange} required 
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="password">Password</Label>
+                        <Input
+                            id="password"
+                            name="password"
+                            type="password"
+                            placeholder="password"
+                            value={user_password} onChange={(e) => setPassword(e.target.value)} required
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="confirm_password">Confirm Password</Label>
+                        <Input
+                            id="confirm_password"
+                            name="confirm_password"
+                            type="password"
+                            placeholder="confirm password"
+                            value={confirm_password} onChange={(e) => setConfirmPassword(e.target.value)} required
+                        />
+                    </div>
+                </CardContent>
+                <CardFooter className="flex flex-col">
+                    <Button className="w-full" type="submit">Sign Up</Button>
+                </CardFooter>
+            </Card>
+            <div className="mt-4 text-center text-sm">
+                Have an account?
+                <Link className="underline ml-2 " href="/">Sign In</Link>
             </div>
-
-                      <div className="space-y-2">
-                          <Label htmlFor="picture">Profile Picture</Label>
-                          <Input
-                              id="picture"
-                              name="picture"
-                              type="file"
-                              accept="image/*" 
-                              onChange={handleFileChange} required 
-                          />
-                      </div>
-
-                      <div className="space-y-2">
-                          <Label htmlFor="password">Password</Label>
-                          <Input
-                              id="password"
-                              name="password"
-                              type="password"
-                              placeholder="password"
-                              value={user_password} onChange={(e) => setPassword(e.target.value)} required
-                          />
-                      </div>
-                      <div className="space-y-2">
-                          <Label htmlFor="confirm_password">Confirm Password</Label>
-                          <Input
-                              id="confirm_password"
-                              name="confirm_password"
-                              type="password"
-                              placeholder="confirm password"
-                              value={confirm_password} onChange={(e) => setConfirmPassword(e.target.value)} required
-                          />
-                      </div>
-                  </CardContent>
-                  <CardFooter className="flex flex-col">
-                      <Button className="w-full" type="submit">Sign Up</Button>
-                  </CardFooter>
-              </Card>
-              <div className="mt-4 text-center text-sm">
-                  Have an account?
-                  <Link className="underline ml-2 " href="/">Sign In</Link>
-              </div>
-          </form>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-          {success && <p style={{ color: 'green' }}>{success}</p>}
-      </div>
+        </form>
+        {error && <p className="text-red-500 text-center mt-2">{error}</p>}
+        {success && <p className="text-green-500 text-center mt-2">{success}</p>}
+    </div>
+</div>
   );
 };
 
