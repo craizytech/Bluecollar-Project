@@ -3,7 +3,6 @@ import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetClose, SheetTitle, 
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import Day from './Day';
 import moment from 'moment';
 import counties from "@/app/data/counties";
 
@@ -56,7 +55,7 @@ async function fetchUserLocation() {
         });
         if (response.ok) {
             const data = await response.json();
-            return data.user_location || ''; // Default to empty string if no location is found
+            return data.user_location || '';
         } else {
             console.error('Failed to fetch user location, status:', response.status);
             return '';
@@ -75,6 +74,7 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
     const [filteredCounties, setFilteredCounties] = useState([]);
     const [showDropdown, setShowDropdown] = useState(false);
     const [bookedDates, setBookedDates] = useState([]);
+    const [serviceDescription, setServiceDescription] = useState(''); // New state for service description
     const today = new Date(); // Get today's date
 
     useEffect(() => {
@@ -116,6 +116,10 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
         setShowDropdown(false);
     };
 
+    const handleDescriptionChange = (e) => {
+        setServiceDescription(e.target.value);
+    };
+
     const handleSaveBooking = async () => {
         if (!date) {
             toast('Please select a date.');
@@ -144,7 +148,8 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
                 service_id: Number(serviceId),
                 provider_id: providerId,
                 booking_date: isoDate,
-                location: location
+                location: location,
+                description: serviceDescription // Include service description
             };
 
             const response = await fetch('http://localhost:5000/api/bookings/create', {
@@ -188,7 +193,7 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
                     <SheetHeader>
                         <SheetTitle>Book A Service</SheetTitle>
                         <p id="booking-description">
-                            Select a date and enter your location to book a service.
+                            Select a date, enter your location, and provide a description of the service you are seeking.
                         </p>
                         <div>
                             <div className="calendar-wrapper">
@@ -221,6 +226,14 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
                                         ))}
                                     </ul>
                                 )}
+                            </div>
+                            <div className="mt-4">
+                                <textarea
+                                    value={serviceDescription}
+                                    onChange={handleDescriptionChange}
+                                    placeholder="Describe the service you are seeking"
+                                    className="rounded-md border p-2 w-full h-32"
+                                />
                             </div>
                         </div>
                     </SheetHeader>

@@ -114,6 +114,7 @@ class Booking(db.Model):
     booking_date = db.Column(db.Date, nullable=False)
     status = db.Column(db.String(20), nullable=False)
     location = db.Column(db.String(256), nullable=False)
+    description = db.Column(db.Text)
     
     # One-to-One relationship with Invoice
     invoice = db.relationship('Invoice', back_populates='booking', uselist=False)
