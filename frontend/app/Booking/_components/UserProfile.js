@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Clock, Mail, MapPin, Phone, Share, User } from 'lucide-react';
-import { useCategory } from '@/app/context/CategoryContext'; // Adjust the path as necessary
+import { useCategory } from '@/app/context/CategoryContext';
+import Spinner from '@/app/_components/spinner/Spinner';
 
 function UserProfile({ setServiceId }) {
     const searchParams = useSearchParams();
@@ -20,6 +21,7 @@ function UserProfile({ setServiceId }) {
 
         async function fetchData() {
             try {
+                setLoading(true)
                 const token = localStorage.getItem('access_token');
                 if (!token) {
                     console.error('No token found in localStorage');
@@ -87,13 +89,14 @@ function UserProfile({ setServiceId }) {
         fetchData();
     }, [serviceId, setServiceId, setCategoryId]);
 
-    if (loading) {
-        return <div>Loading...</div>;
-    }
-
     return (
         <div className='md:flex gap-4 items-center'>
-            {providerDetails.provider_profile_picture ? (
+            {loading ? (
+                <div className="flex justify-center items-center">
+                        <Spinner />
+                </div>
+            ) : (
+                providerDetails.provider_profile_picture ? (
                 <img
                     src={providerDetails.provider_profile_picture}
                     alt={providerDetails.provider_name || 'User profile picture'}
@@ -103,6 +106,7 @@ function UserProfile({ setServiceId }) {
                 />
             ) : (
                 <div className='rounded-full h-[150px] w-[150px] bg-gray-200'></div>
+            )
             )}
 
             <div className='flex justify-between items-center w-full'>
@@ -134,6 +138,7 @@ function UserProfile({ setServiceId }) {
                     <h2 className='flex gap-2 text-gray-500'><Clock />Available 8:00 AM to 7:00 PM</h2>
                 </div>
             </div>
+            
         </div>
     );
 }

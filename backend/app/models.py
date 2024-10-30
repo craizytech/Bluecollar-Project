@@ -78,6 +78,7 @@ class Service(db.Model):
     service_description = db.Column(db.String(256), nullable=True)
     category_id = db.Column(db.Integer, db.ForeignKey('service_categories.category_id'), nullable=False)
     provider_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=True)
+    service_duration = db.Column(db.String(50), nullable=True)
     
     # One-to-Many relationships
     bookings = db.relationship('Booking', backref='service', lazy=True)
@@ -112,9 +113,9 @@ class Booking(db.Model):
     client_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
     provider_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
     booking_date = db.Column(db.Date, nullable=False)
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
     status = db.Column(db.String(20), nullable=False)
-    # start time
-    # end time 
     location = db.Column(db.String(256), nullable=False)
     description = db.Column(db.Text)
     
@@ -139,6 +140,7 @@ class ServiceProviderApplication(db.Model):
     service_id = db.Column(db.Integer, db.ForeignKey('services.service_id'), nullable=False)
     status = db.Column(db.String(20), default='pending')
     date_of_application = db.Column(db.DateTime, default=datetime.utcnow)
+    duration = db.Column(db.Integer, nullable=False) 
 
     # Relationships
     service_category = db.relationship('ServiceCategory', backref=db.backref('applications', lazy=True))

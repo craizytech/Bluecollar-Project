@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BookingHistoryList from '../mybooking/_component/BookingHistoryList';
 import { toast, Toaster } from 'sonner';
+import Spinner from '../_components/spinner/Spinner';
 
 function ToDoServices() {
   const [bookingHistory, setBookingHistory] = useState([]);
@@ -49,7 +50,7 @@ function ToDoServices() {
     GetUserBookingHistory();
   }, []);
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <Spinner />;
   if (error) {
     toast.error(`Error: ${error}`);
     return <p>Error loading bookings</p>;

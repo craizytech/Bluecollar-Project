@@ -46,6 +46,26 @@ async function fetchProviderId(serviceId) {
     }
 }
 
+// Fetch the service duration
+async function fetchServiceDetails(serviceId) {
+    try {
+        const response = await fetch(`http://localhost:5000/api/services/${serviceId}`);
+        if (response.ok) {
+            const data = await response.json();
+            return {
+                providerId: data.provider_id,
+                serviceDuration: data.service_duration // Assuming service_duration is returned
+            };
+        } else {
+            console.error('Failed to fetch service details, status:', response.status);
+            return null;
+        }
+    } catch (error) {
+        console.error('Error fetching service details:', error);
+        return null;
+    }
+}
+
 async function fetchUserLocation() {
     try {
         const response = await fetch('http://localhost:5000/api/users/profile', {
@@ -69,29 +89,67 @@ async function fetchUserLocation() {
 function BookingSection({ children, serviceId, onBookingSuccess }) {
     const [providerId, setProviderId] = useState(null);
     const [date, setDate] = useState(null);
+    const [timeSlots, setTimeSlots] = useState([]);
+    const [time, setTime] = useState('');
     const [location, setLocation] = useState('');
     const [searchLocation, setSearchLocation] = useState('');
     const [filteredCounties, setFilteredCounties] = useState([]);
     const [showDropdown, setShowDropdown] = useState(false);
     const [bookedDates, setBookedDates] = useState([]);
-    const [serviceDescription, setServiceDescription] = useState(''); // New state for service description
+    const [serviceDescription, setServiceDescription] = useState('');
+    const [serviceDuration, setServiceDuration] = useState(null);
+    const [error, setError] = useState({ date: false, location: false, description: false });
+    
     const today = new Date(); // Get today's date
 
     useEffect(() => {
         const fetchData = async () => {
             if (serviceId) {
-                const id = await fetchProviderId(serviceId);
-                if (id) {
-                    setProviderId(id);
-                    // const booked = await fetchBookedDates(id);
-                    // setBookedDates(booked);
+                try {
+                    const serviceDetails = await fetchServiceDetails(serviceId);
+                    
+                    // Check if serviceDetails is defined and has the required properties
+                    if (serviceDetails && serviceDetails.providerId && serviceDetails.serviceDuration) {
+                        setProviderId(serviceDetails.providerId);
+                        setServiceDuration(serviceDetails.serviceDuration);
+                        generateTimeSlots(serviceDetails.serviceDuration);
+                    } else {
+                        console.error("Service details are incomplete:", serviceDetails);
+                    }
+                } catch (error) {
+                    console.error("Error fetching service details:", error);
+                    // Optionally set a state to inform the user of the error
                 }
             }
-            const loc = await fetchUserLocation();
-            setLocation(loc);
+            
+            try {
+                const loc = await fetchUserLocation();
+                setLocation(loc);
+            } catch (error) {
+                console.error("Error fetching user location:", error);
+                // Handle location fetching error if needed
+            }
         };
+    
         fetchData();
     }, [serviceId]);
+    
+
+    const generateTimeSlots = (duration) => {
+        const slots = [];
+        const start = moment('08:00', 'HH:mm');
+        const end = moment('19:00', 'HH:mm');
+
+        const roundedDuration = Math.ceil(duration / 60);
+        
+        // Create time slots based on the duration
+        while (start.hour() + roundedDuration <= end.hour()) {
+            slots.push(start.format('hh:mm A'));
+            start.add(roundedDuration, 'hours'); // Increment by rounded duration in hours
+        }
+
+        setTimeSlots(slots);
+    }
 
     const handleLocationChange = (e) => {
         const query = e.target.value;
@@ -121,12 +179,38 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
     };
 
     const handleSaveBooking = async () => {
-        if (!date) {
-            toast('Please select a date.');
-            return;
-        }
+        let hasError = false;
 
-        const isoDate = moment(date).startOf('day').toISOString();
+        // Validate required fields
+        if (!date || !time || !location || !serviceDescription) {
+            setError(prev => ({
+                ...prev,
+                date: !date,
+                time: !time,
+                location: !location,
+                description: !serviceDescription,
+            }));
+            hasError = true;
+        }
+        if (hasError) return;
+
+        const selectedDate = moment(date).startOf('day');
+        const selectedTime = moment(time, 'hh:mm A');
+        
+
+        // const isoDate = moment(date).startOf('day').toISOString();
+
+
+        const start_time = selectedDate
+        .set({
+            hour: selectedTime.hour(),
+            minute: selectedTime.minute(),
+            second: 0,
+            millisecond: 0
+        }).format();
+
+        const booking_date = selectedDate.format();
+        const end_time = moment(start_time).add(serviceDuration, 'minutes').format();
 
         if (bookedDates.some(d => moment(d).startOf('day').toISOString() === isoDate)) {
             toast('Selected date is already booked. Please choose a different date.', {
@@ -140,17 +224,21 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
 
         try {
             if (!providerId) {
-                toast('Error: Provider ID is not available');
+                toast(' Provider is not available');
                 return;
             }
 
             const bookingData = {
                 service_id: Number(serviceId),
                 provider_id: providerId,
-                booking_date: isoDate,
-                location: location,
-                description: serviceDescription // Include service description
+                booking_date,
+                start_time,
+                end_time,
+                location,
+                description: serviceDescription,
             };
+
+            console.log("booking data", bookingData)
 
             const response = await fetch('http://localhost:5000/api/bookings/create', {
                 method: 'POST',
@@ -162,17 +250,32 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
             });
 
             if (response.ok) {
-                toast('Service booked successfully!');
+                toast('Service booked successfully!', {
+                    style: {
+                        backgroundColor: "green",
+                        color: "white"
+                    }
+                });
                 if (onBookingSuccess) {
                     onBookingSuccess();
                 }
             } else {
                 const errorData = await response.json();
-                toast(`Error: ${errorData.error}`);
+                toast(`${errorData.error}`, {
+                    style: {
+                        backgroundColor: "red",
+                        color: "white"
+                    }
+                });
             }
         } catch (error) {
             console.error('Error saving booking:', error);
-            toast('Error saving booking');
+            toast('Error saving booking', {
+                style: {
+                    backgroundColor: "red",
+                    color: "white"
+                }
+            });
         }
     };
 
@@ -193,7 +296,7 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
                     <SheetHeader>
                         <SheetTitle>Book A Service</SheetTitle>
                         <p id="booking-description">
-                            Select a date, enter your location, and provide a description of the service you are seeking.
+                            Select a date and time, enter your location, and provide a description of the service you are seeking.
                         </p>
                         <div>
                             <div className="flex flex-col gap-5 items-baseline">
@@ -201,22 +304,40 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
                                     mode="single"
                                     selected={date}
                                     onSelect={setDate}
-                                    className="rounded-md border"
+                                    className={`rounded-md border ${error.date ? 'border-red-500' : 'border-gray-300'}`}
                                     // modifiers={modifiers}
                                 />
+                                {error.date && <p className="text-red-500">Please select a date.</p>}
                             </div>
                             {/* Time Slot Picker */}
                             <div>
-
+                                <div className="mt-4">
+                                    <label htmlFor="time" className="block text-gray-700">Select Time:</label>
+                                    <select
+                                        type="time"
+                                        id="time"
+                                        value={time}
+                                        onChange={(e) => setTime(e.target.value)}
+                                        className={`rounded-md border p-2 w-full ${error.time ? 'border-red-500' : 'border-gray-300'}`}
+                                    >
+                                        <option value="">Select Time</option>
+                                        {timeSlots.map((slot, index) => (
+                                            <option key={index} value={slot}>{slot}</option>
+                                        ))}
+                                    </select>
+                                    {error.time && <p className="text-red-500">Time is required.</p>}
+                                </div>
                             </div>
+                            {/* Location Input */}
                             <div className="relative mt-4">
                                 <input
                                     type="text"
                                     value={location}
                                     onChange={handleLocationChange}
                                     placeholder="Enter location"
-                                    className="rounded-md border p-2 w-full"
+                                    className={`rounded-md border p-2 w-full" ${error.location ? 'border-red-500' : 'border-gray-300'}`}
                                 />
+                                {error.location && <p className="text-red-500">Location is required.</p>}
                                 {showDropdown && (
                                     <ul className="absolute z-10 bg-white border border-gray-300 mt-1 w-full max-h-60 overflow-y-auto">
                                         {filteredCounties.map((county, index) => (
@@ -231,13 +352,15 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
                                     </ul>
                                 )}
                             </div>
+                            {/* Description Input */}
                             <div className="mt-4">
                                 <textarea
                                     value={serviceDescription}
                                     onChange={handleDescriptionChange}
                                     placeholder="Describe the service you are seeking"
-                                    className="rounded-md border p-2 w-full h-32"
+                                    className={`rounded-md border p-2 w-full h-32 ${error.description ? 'border-red-500' : 'border-gray-300'}`}
                                 />
+                                {error.description && <p className="text-red-500">Description is required.</p>}
                             </div>
                         </div>
                     </SheetHeader>
@@ -245,7 +368,7 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
                         <SheetClose asChild>
                             <div className='flex gap-5'>
                                 <Button
-                                    disabled={!date}
+                                    disabled={!date || !location || !serviceDescription || !time}
                                     onClick={handleSaveBooking}
                                 >
                                     Book

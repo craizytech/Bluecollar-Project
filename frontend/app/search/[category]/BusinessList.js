@@ -1,4 +1,5 @@
 "use client";
+import Spinner from '@/app/_components/spinner/Spinner';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -7,6 +8,7 @@ import React, { useState, useEffect } from 'react';
 function BusinessList({ title, categoryId }) {
     const [services, setServices] = useState([]);
     const [token, setToken] = useState('');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const storedToken = localStorage.getItem('access_token');
@@ -16,7 +18,7 @@ function BusinessList({ title, categoryId }) {
 
         async function fetchServices() {
             try {
-        
+                setLoading(true)
                 const url = categoryId
                     ? `http://localhost:5000/api/services/category/${categoryId}`
                     : 'http://localhost:5000/api/services/all';
@@ -73,6 +75,8 @@ function BusinessList({ title, categoryId }) {
                 }
             } catch (error) {
                 console.error('Error fetching services or details:', error);
+            } finally {
+                setLoading(false);
             }
         }
         
@@ -89,7 +93,13 @@ function BusinessList({ title, categoryId }) {
     return (
         <div className="mt-5 mb-10">
             <h2 className="font-bold text-[22px]">{title}</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-5 shadow-sm">
+
+            {loading ? (
+                <div className="flex justify-center items-center">
+                    <Spinner />
+                </div>
+            ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-5 shadow-sm">
                 {services.map(service => (
                     <div key={service.service_id} className="shadow-md rounded-lg hover:shadow-lg cursor-pointer hover:shadow-primary hover:scale-105 transition-all ease-in-out">
                         <Image
@@ -111,6 +121,8 @@ function BusinessList({ title, categoryId }) {
                     </div>
                 ))}
             </div>
+            )}
+            
         </div>
     );
 }

@@ -2,12 +2,23 @@ from app import create_app, db
 from app.models import Role, Permissions, ServiceCategory, Service, User, Chat, Invoice, Booking, Review, ServiceProviderApplication, Transaction
 from werkzeug.security import generate_password_hash
 from datetime import datetime, date
+from random import randint
 import random
 
 app = create_app()
 
 with app.app_context():
-    db.create_all()
+    db.session.query(Chat).delete()
+    db.session.query(Transaction).delete()
+    db.session.query(Review).delete()
+    db.session.query(Invoice).delete()
+    db.session.query(Booking).delete()
+    db.session.query(Service).delete()
+    db.session.query(ServiceCategory).delete()
+    db.session.query(User).delete()
+    db.session.query(Role).delete()
+    db.session.commit()
+    print("Cleared data in all tables.")
 
     # Create roles and assign permissions
     admin_role = Role(role_name='Admin', permissions=(
@@ -42,7 +53,7 @@ with app.app_context():
         user_email="testadmin@example.com",
         role_id=admin_role.role_id,
         user_password=generate_password_hash("password"),
-        user_location="Nairobi, Kenya",
+        user_location="Nairobi Kenya",
         user_profile_picture="admin_profile_pic.png"
     )
 
@@ -55,12 +66,12 @@ with app.app_context():
             user_email=f"testuser{i}@example.com",
             role_id=general_role.role_id,
             user_password=generate_password_hash("password"),
-            user_location="Nairobi, Kenya",
+            user_location="Nairobi Kenya",
             user_profile_picture=f"user{i}_profile_pic.png"
         ))
 
     service_providers = []
-    counties = ['Nairobi, Kenya', 'Mombasa, Kenya', 'Kisumu, Kenya', 'Nakuru, Kenya', 'Eldoret, Kenya', 'Thika, Kenya', 'Machakos, Kenya', 'Nyeri, Kenya', 'Meru, Kenya', 'Kakamega, Kenya']
+    counties = ['Nairobi Kenya', 'Mombasa Kenya', 'Kisumu Kenya', 'Nakuru Kenya', 'Eldoret Kenya', 'Thika Kenya', 'Machakos Kenya', 'Nyeri Kenya', 'Meru Kenya', 'Kakamega Kenya']
     
     service_provider_data = [
         {"name": "Plumber", "category": "Plumbing", "services": ["Pipe Repairs", "Leak Detection", "Water Heater Installation", "Drain Cleaning", "Toilet Installation", "Faucet Replacement", "Shower Installation", "Bathroom Renovation", "Sewer Line Repair", "Water Softener Installation"]},
@@ -106,7 +117,8 @@ with app.app_context():
                     service_name=service_name,
                     service_description=f"{service_name} services provided by experienced {provider['name'].lower()}s.",
                     category_id=category.category_id,
-                    provider_id=service_providers[i].user_id
+                    provider_id=service_providers[i].user_id,
+                    service_duration=randint(60, 600)
                 )
                 db.session.add(service)
     

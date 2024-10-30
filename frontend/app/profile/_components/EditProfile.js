@@ -102,12 +102,20 @@ function EditProfile() {
           Authorization: `Bearer ${token}`
         }
       });
-
-      console.log('Profile updated successfully:', response.data);
-      toast('Profile updated successfully.');
+      toast('Profile updated successfully.', {
+        style: {
+          backgroundColor: "green",
+          color: "white"
+        }
+      });
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast('Error updating profile. Please try again.');
+      toast('Error updating profile. Please try again.', {
+        style: {
+          backgroundColor: "red",
+          color: "white"
+        }
+      });
     }
   };
 

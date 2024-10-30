@@ -4,12 +4,14 @@ import { useCategory } from '@/app/context/CategoryContext';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
+import Spinner from '@/app/_components/spinner/Spinner';
 
 function BusinessByCategory({ categoryId: initialCategoryId }) {
     const { setCategoryId } = useCategory();
     const [services, setServices] = useState([]);
     const [token, setToken] = useState('');
-    const [categoryName, setCategoryName] = useState(`Services in Category ${initialCategoryId}`); // Initial heading title
+    const [categoryName, setCategoryName] = useState(``);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (initialCategoryId) {
@@ -24,6 +26,7 @@ function BusinessByCategory({ categoryId: initialCategoryId }) {
         }
 
         async function fetchServices() {
+            setLoading(true)
             try {
                 console.log(`Fetching services for category ID: ${initialCategoryId}`);
                 const url = initialCategoryId
@@ -77,6 +80,8 @@ function BusinessByCategory({ categoryId: initialCategoryId }) {
                 }
             } catch (error) {
                 console.error('Error fetching services or details:', error);
+            } finally {
+                setLoading(false)
             }
         }
 
@@ -92,7 +97,12 @@ function BusinessByCategory({ categoryId: initialCategoryId }) {
     return (
         <div className="mt-5 mb-10">
             <h2 className="font-bold text-[22px]">{categoryName}</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-5 shadow-sm">
+            {loading ? (
+                <div className="flex justify-center items-center">
+                    <Spinner />
+                </div>
+            ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-5 shadow-sm">
                 {services.map(service => (
                     <div key={service.service_id} className="shadow-md rounded-lg hover:shadow-lg cursor-pointer hover:shadow-primary hover:scale-105 transition-all ease-in-out">
                         <Image
@@ -114,6 +124,7 @@ function BusinessByCategory({ categoryId: initialCategoryId }) {
                     </div>
                 ))}
             </div>
+            )}
         </div>
     );
 }

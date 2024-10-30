@@ -10,6 +10,7 @@ function ServiceProvider() {
   const [services, setServices] = useState([]);
   const context = useContext(CategoryContext);
   const [error, setError] = useState('');
+  const [serviceDuration, setServiceDuration] = useState('');
 
   if (!context) {
     console.error('CategoryContext is not available');
@@ -92,7 +93,8 @@ function ServiceProvider() {
         {
           email: email,
           service_category_id: categoryId,
-          service_id: selectedService
+          service_id: selectedService,
+          service_duration: serviceDuration
         },
         {
           headers: {
@@ -161,6 +163,24 @@ function ServiceProvider() {
             ))}
           </select>
         </div>
+        <div className="mb-4">
+          <label className="block text-gray-700 mb-2" htmlFor="duration">Service Duration</label>
+          <select
+            id="duration"
+            name="duration"
+            className="w-full px-3 py-2 border rounded-md"
+            value={serviceDuration}
+            onChange={(e) => setServiceDuration(Number(e.target.value))}
+          >
+            <option value="">Select duration of service</option>
+            <option value={60}>1 hour</option>
+            <option value={120}>2 hours</option>
+            <option value={180}>3 hours</option>
+            <option value={240}>4 hours</option>
+            <option value={270}>Half day</option>
+            <option value={540}>Full day</option>
+          </select>
+        </div>
         <div className="mb-6">
           <button
             type="submit"
@@ -170,6 +190,7 @@ function ServiceProvider() {
           </button>
         </div>
         {message && <p className="text-center text-green-500">{message}</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
       </form>
     </div>
   );

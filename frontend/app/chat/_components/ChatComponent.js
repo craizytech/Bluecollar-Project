@@ -7,6 +7,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { useRouter, useSearchParams } from 'next/navigation';
 import InvoiceDisplay from '../../invoice/_components/invoiceDisplay';
 import { toast } from 'sonner';
+import Spinner from '@/app/_components/spinner/Spinner';
 
 function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
   const [chats, setChats] = useState([]);
@@ -261,7 +262,12 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
         const currentStatus = invoiceData[0].status;
     
         if (currentStatus !== 'pending') {
-          toast(`This invoice has already been ${currentStatus}.`);
+          toast(`This invoice has already been ${currentStatus}.`, {
+            style: {
+              backgroundColor: "red",
+              color: "white"
+            }
+          });
           return;
         }
     
@@ -316,7 +322,12 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
         const currentStatus = invoiceData[0].status;
     
         if (currentStatus !== 'pending') {
-          toast(`This invoice has already been ${currentStatus}.`);
+          toast(`This invoice has already been ${currentStatus}.`, {
+            style: {
+              backgroundColor: "red",
+              color: "white"
+            }
+          });
           return;
         }
     
@@ -376,7 +387,7 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
               isEditable={isUserMessage}
               preview={true} 
               onAccept={invoiceStatus === 'pending' ? () => handleAccept(parsedMessage.invoice_id) : null}
-              onDecline={invoiceStatus === 'pending' ? () => handleDecline(parsedMessage.invoice_id) : null}
+              onDecline={invoiceStatus === 'declined' ? () => handleDecline(parsedMessage.invoice_id) : null}
             />
           );
           if (!isUserMessage) {
@@ -435,7 +446,7 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
 
   return (
     <div className="flex flex-col max-h-500 overflow-y-auto border border-gray-300 bg-gray-100">
-      {loading && <p>Loading chat history...</p>}
+      {loading && <Spinner />}
       {error && <p className="text-red-500 font-bold">{error}</p>}
       {success && <p className="text-green-500 font-bold">{success}</p>}
       <div className="flex items-center p-4 bg-teal-600 text-white border-b border-gray-300">

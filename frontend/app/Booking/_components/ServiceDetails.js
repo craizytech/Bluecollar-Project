@@ -48,6 +48,9 @@ function ServiceDetails({ serviceId }) {
             <h2 className='font-bold text-[25px]'>Description</h2>
             <p className='mt-4 text-lg text-gray-600'>{serviceDetails.service_description}</p>
 
+            <h2 className='font-bold text-[20px] mt-4'>Service Duration</h2>
+            <p className='text-lg text-gray-600'>{Math.ceil(serviceDetails.service_duration / 60)} hours</p>
+
             {/* <h2 className='font-bold text-[25px] mt-8'>Gallery</h2>
             <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mt-5'>
                 <Image

@@ -157,6 +157,7 @@ def view_service_details(service_id):
             "service_id": service.service_id,
             "service_name": service.service_name,
             "service_description": service.service_description,
+            "service_duration": service.service_duration,
             "category_id": category.category_id,
             "category_name": category.category_name if category else None,
             "provider_id": service.provider_id,
@@ -221,14 +222,16 @@ def apply_service():
     email = data.get('email')
     service_category_id = data.get('service_category_id')
     service_id = data.get('service_id')
+    duration = data.get('service_duration')
 
-    if not email or not service_category_id or not service_id:
+    if not email or not service_category_id or not service_id or not duration:
         return jsonify({"error": "Missing required fields"}), 400
 
     new_application = ServiceProviderApplication(
         email=email,
         service_category_id=service_category_id,
-        service_id=service_id
+        service_id=service_id,
+        duration=duration
     )
 
     try:
@@ -252,7 +255,8 @@ def get_applications():
             'service_category': application.service_category.category_name,
             'service': application.service.service_name,
             'status': application.status,
-            'date_of_application': application.date_of_application
+            'date_of_application': application.date_of_application,
+            'service_duration': application.duration
         })
 
     return jsonify(applications_data), 200
@@ -267,8 +271,18 @@ def approve_application(application_id):
         return jsonify({"error": "Application is already approved"}), 400
 
     application.status = 'approved'
+    
+    # Create a new service entry for the approved provider
+    new_service = Service(
+        service_name=application.service.service_name,
+        service_description=application.service.service_description,
+        category_id=application.service_category_id,
+        provider_id=User.query.filter_by(user_email=application.email).first().user_id,
+        service_duration=application.duration
+    )
 
     try:
+        db.session.add(new_service)
         db.session.commit()
         return jsonify({"message": "Application approved successfully"}), 200
     except Exception as e:

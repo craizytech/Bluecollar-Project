@@ -194,6 +194,7 @@ export function ApplicationsPage() {
         const rows = filteredApplications.map(application => [
             application.email,
             application.service_category,
+            application.service_duration,
             application.service,
             application.status.charAt(0).toUpperCase() + application.status.slice(1),
             new Date(application.date_of_application).toLocaleDateString(),
@@ -340,6 +341,7 @@ export function ApplicationsPage() {
                                         <TableRow className="bg-muted/50">
                                             <TableHead className="w-[100px]">Email</TableHead>
                                             <TableHead>Service Category</TableHead>
+                                            <TableHead>Duration</TableHead>
                                             <TableHead>Status</TableHead>
                                             <TableHead>Date of Application</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
@@ -355,6 +357,7 @@ export function ApplicationsPage() {
                                                     {application.email}
                                                 </TableCell>
                                                 <TableCell>{application.service_category}</TableCell>
+                                                <TableCell>{(application.service_duration / 60).toFixed(2)} hours</TableCell>
                                                 <TableCell className="hidden sm:table-cell">
                                                     <Badge
                                                         className={`text-xs ${application.status === "approved"
@@ -416,6 +419,7 @@ export function ApplicationsPage() {
                                         <TableRow className="bg-muted/50">
                                             <TableHead className="w-[100px]">Email</TableHead>
                                             <TableHead>Service Category</TableHead>
+                                            <TableHead>Duration</TableHead>
                                             <TableHead>Status</TableHead>
                                             <TableHead>Date of Application</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
@@ -431,6 +435,7 @@ export function ApplicationsPage() {
                                                     {application.email}
                                                 </TableCell>
                                                 <TableCell>{application.service_category}</TableCell>
+                                                <TableCell>{(application.service_duration / 60).toFixed(2)} hours</TableCell>
                                                 <TableCell className="hidden sm:table-cell">
                                                     <Badge
                                                         className={`text-xs ${application.status === "approved"
@@ -491,6 +496,7 @@ export function ApplicationsPage() {
                                         <TableRow className="bg-muted/50">
                                             <TableHead className="w-[100px]">Email</TableHead>
                                             <TableHead>Service Category</TableHead>
+                                            <TableHead>Duration</TableHead>
                                             <TableHead>Status</TableHead>
                                             <TableHead>Date of Application</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
@@ -506,6 +512,7 @@ export function ApplicationsPage() {
                                                     {application.email}
                                                 </TableCell>
                                                 <TableCell>{application.service_category}</TableCell>
+                                                <TableCell>{(application.service_duration / 60).toFixed(2)} hours</TableCell>
                                                 <TableCell>
                                                     <Badge variant={
                                                         application.status === 'approved'
@@ -613,6 +620,15 @@ export function ApplicationsPage() {
                                         <div className="flex items-center gap-2">
                                             <LayoutGrid className="h-4 w-4 text-muted-foreground" />
                                             {selectedApplication.service_category}
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-sm font-medium text-muted-foreground">
+                                            Service Duration
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <Clock className="h-4 w-4 text-muted-foreground" />
+                                            {(selectedApplication.service_duration / 60).toFixed(2)} hours
                                         </div>
                                     </div>
                                     <div className="flex flex-col gap-1">

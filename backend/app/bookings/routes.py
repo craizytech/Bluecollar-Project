@@ -5,6 +5,8 @@ from app.extensions import db
 from app.utils.decorators import permission_required
 from datetime import datetime
 from app.bookings import bookings_bp
+from dateutil import parser
+
 
 @bookings_bp.route('/create', methods=['POST'])
 @jwt_required()
@@ -14,35 +16,48 @@ def create_booking():
     service_id = data.get('service_id')
     provider_id = data.get('provider_id')
     booking_date_str = data.get('booking_date')
+    start_time_str = data.get('start_time')      # Time in 'HH:MM:SS' format
+    end_time_str = data.get('end_time') 
     location = data.get('location')
     service_description = data.get('description')  # Added field
+    
+     # Log the booking details
+    print(f"Booking date: {booking_date_str}, Start time: {start_time_str}, End time: {end_time_str}")
 
-    if not service_id or not provider_id or not booking_date_str or not location:
+
+    if not service_id or not provider_id or not booking_date_str or not start_time_str or not end_time_str or not location:
         return jsonify({"error": "Missing required fields"}), 400
 
     try:
-        # Convert the date string to a datetime object
-        booking_date = datetime.fromisoformat(booking_date_str).date()
-    except ValueError:
-        return jsonify({"error": "Invalid date format"}), 400
+        # Parse date and time separately
+        booking_date = parser.isoparse(booking_date_str).date()
+        start_time = parser.isoparse(start_time_str).time()
+        end_time = parser.isoparse(end_time_str).time()
+        
+        if start_time >= end_time:
+            return jsonify({"error": "End time must be after start time"}), 400
 
-    # Check for existing bookings for the same provider on the same day
-    existing_booking = Booking.query.filter(
-        Booking.provider_id == provider_id,
-        db.func.date(Booking.booking_date) == booking_date,
-        Booking.status != "canceled"
-    ).first()
+        # Check for existing bookings for the same provider on the same day
+        existing_booking = Booking.query.filter(
+            Booking.provider_id == provider_id,
+            Booking.booking_date == booking_date,
+            Booking.start_time < end_time,
+            Booking.end_time > start_time,
+            Booking.status != "canceled"
+        ).first()
 
-    if existing_booking:
-        return jsonify({"error": "Service provider is already booked for the selected day"}), 409
+        if existing_booking:
+            return jsonify({"error": "Service provider is already booked for the selected time"}), 409
 
-    try:
+
         client_id = get_jwt_identity()
         booking = Booking(
             service_id=service_id,
             client_id=client_id,
             provider_id=provider_id,
-            booking_date=datetime.fromisoformat(booking_date_str),
+            booking_date=booking_date,
+            start_time=start_time,
+            end_time=end_time,
             location=location,
             description=service_description,  # Include description
             status="pending"
@@ -52,6 +67,8 @@ def create_booking():
         db.session.commit()
 
         return jsonify({"message": "Booking created successfully"}), 201
+    except ValueError:
+        return jsonify({"error": "Invalid date or time format"}), 400
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -70,15 +87,27 @@ def update_booking(booking_id):
 
     try:
         booking_date_str = data.get('booking_date')
+        start_time_str = data.get('start_time')
+        end_time_str = data.get('end_time')
+        
         if booking_date_str:
-            booking.booking_date = datetime.fromisoformat(booking_date_str)
+            booking.booking_date = datetime.fromisoformat(booking_date_str).date()
+        if start_time_str:
+            booking.start_time = datetime.strptime(start_time_str, "%H:%M:%S").time()
+        if end_time_str:
+            booking.end_time = datetime.strptime(end_time_str, "%H:%M:%S").time()
 
         booking.location = data.get('location', booking.location)
+        booking.description = data.get('description', booking.description)
+        
+        # Ensure start and end times are valid
+        if booking.start_time >= booking.end_time:
+            return jsonify({"error": "End time must be after start time"}), 400
 
         db.session.commit()
         return jsonify({"message": "Booking updated successfully"}), 200
     except ValueError:
-        return jsonify({"error": "Invalid date format"}), 400
+        return jsonify({"error": "Invalid date or time format"}), 400
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -118,7 +147,9 @@ def view_user_bookings():
             "service_name": service.service_name if service else "Unknown Service",
             "provider_id": booking.provider_id,
             "provider_name": provider.user_name if provider else "Unknown Provider",
-            "booking_date": booking.booking_date,
+            "booking_date": booking.booking_date.isoformat(),
+            "start_time": booking.start_time.isoformat(),  # Include start time
+            "end_time": booking.end_time.isoformat(),
             "status": booking.status,
             "location": booking.location,
             "description": booking.description,  # Include description
@@ -134,7 +165,9 @@ def view_user_bookings():
             "service_name": service.service_name if service else "Unknown Service",
             "client_id": booking.client_id,
             "client_name": client.user_name if client else "Unknown Client",
-            "booking_date": booking.booking_date,
+            "booking_date": booking.booking_date.isoformat(),
+            "start_time": booking.start_time.isoformat(),  # Include start time
+            "end_time": booking.end_time.isoformat(),
             "status": booking.status,
             "location": booking.location,
             "description": booking.description,  # Include description

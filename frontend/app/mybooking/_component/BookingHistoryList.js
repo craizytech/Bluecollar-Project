@@ -1,4 +1,4 @@
-import { Calendar as CalendarIcon, MapPin, User, Check, X, Clock, MessageSquare, NotebookIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, MapPin, User, Check, X, Clock, MessageSquare, NotebookIcon, Timer } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -77,7 +77,7 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
       return;
     }
 
-    const isoDate = moment(selectedDate).toISOString();
+    const isoDate = moment(selectedDate).startOf('day').toISOString();
 
     try {
       const response = await fetch(`http://localhost:5000/api/bookings/${selectedBooking}`, {
@@ -92,7 +92,7 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
       if (response.ok) {
         toast.success('Booking updated successfully');
         const updatedBookingIndex = updatedBookings.findIndex(b => b.booking_id === selectedBooking);
-        const updatedBooking = { ...updatedBookings[updatedBookingIndex], booking_date: selectedDate, location: newLocation };
+        const updatedBooking = { ...updatedBookings[updatedBookingIndex], booking_date: isoDate, location: newLocation };
         const updatedBookingList = [...updatedBookings];
         updatedBookingList[updatedBookingIndex] = updatedBooking;
         setUpdatedBookings(updatedBookingList);
@@ -345,6 +345,9 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
                               <h2 className='flex gap-2 text-gray-500'>
                                 <CalendarIcon className='text-primary' /> Service on: {moment(booking.booking_date).format('MMMM D, YYYY')}
                               </h2>
+                              <h2 className='flex gap-2 text-gray-500'>
+                                <Timer className='text-primary' /> Time: {(booking.start_time)}
+                              </h2>
 
                             </>
                           )}
@@ -373,6 +376,9 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
                           <p className='flex gap-2 text-primary'>
                            <NotebookIcon />{booking.description}
                           </p>
+                          <h2 className='flex gap-2 text-gray-500'>
+                                <Timer className='text-primary' /> Time: {(booking.start_time)}
+                              </h2>
                           {booking.showReminder && (
                             <div className={styles.reminderMessage}>
                               <div className={styles.jumpingClock}>
