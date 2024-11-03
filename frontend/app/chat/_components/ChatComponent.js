@@ -8,6 +8,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import InvoiceDisplay from '../../invoice/_components/invoiceDisplay';
 import { toast } from 'sonner';
 import Spinner from '@/app/_components/spinner/Spinner';
+import { io } from 'socket.io-client';
+
+const socket = io('http://localhost:5000');
 
 function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
   const [chats, setChats] = useState([]);
@@ -27,6 +30,26 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
   const searchParams = useSearchParams();
   const bookingIdFromUrl = searchParams.get('bookingId');
   const invoiceId = searchParams.get('invoiceId');
+
+  useEffect(() => {
+    const handleNotification = (notification) => {
+        // Display the notification to the user
+        toast(notification.message, {
+            style: {
+                backgroundColor: "blue", // You can customize this
+                color: "white"
+            }
+        });
+    };
+
+    // Listen for notifications
+    socket.on('notification', handleNotification);
+
+    // Cleanup on unmount
+    return () => {
+        socket.off('notification', handleNotification);
+    };
+}, []);
 
   useEffect(() => {
     const bookingId = propBookingId || bookingIdFromUrl;

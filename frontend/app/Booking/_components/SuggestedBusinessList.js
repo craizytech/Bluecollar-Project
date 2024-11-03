@@ -5,14 +5,15 @@ import { Button } from '@/components/ui/button';
 import { NotebookPen } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useCategory } from '@/app/context/CategoryContext';
+import { useSelector } from 'react-redux';
 
 function SuggestedBusinessList({ serviceId }) {
   const [similarBusinesses, setSimilarBusinesses] = useState([]);
   const [bookingSuccessful, setBookingSuccessful] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { categoryId } = useCategory();
 
+  const categoryId = useSelector((state) => state.category.categoryId);
+  
   useEffect(() => {
     if (!serviceId || !categoryId) {
       setLoading(false);

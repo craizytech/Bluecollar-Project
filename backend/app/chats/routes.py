@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
-from app.extensions import db
-from app.models import User, Chat, Permissions
+from app.extensions import db, socketio
+from app.models import User, Chat, Permissions, Notification
 from app.utils.permissions import permission_required
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
@@ -36,6 +36,25 @@ def send_message():
     try:
         db.session.add(chat)
         db.session.commit()
+        
+        # Create a notification for the receiver
+        sender = User.query.get(sender_id)
+        notification_message = f"New message from {sender.user_name}: {message}"
+        notification = Notification(
+            user_id=receiver_id,
+            type='chat',
+            message=notification_message
+        )
+        db.session.add(notification)
+        db.session.commit()
+
+        # Emit notification to the receiver
+        socketio.emit('notification', {
+            'userId': receiver_id,
+            'type': 'chat',
+            'message': notification_message
+        }, room=receiver_id)
+        
         return jsonify({'message': 'Message sent successfully'}), 201
     except Exception as e:
         db.session.rollback()

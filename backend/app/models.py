@@ -23,6 +23,19 @@ class Permissions:
     MEDIATE = 0b001000000000000  # Mediates the users
     APPROVE_SPECIALIZED_USERS = 0b010000000000000  # Approves the service providers
 
+class Notification(db.Model):
+    __tablename__ = 'notifications'
+    
+    notification_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+    message = db.Column(db.String(256), nullable=False)
+    type = db.Column(db.String(50), nullable=False)
+    read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    user = db.relationship('User', backref='user_notifications', lazy=True)
+    
 class Role(db.Model):
     __tablename__ = 'roles'
     role_id = db.Column(db.Integer, primary_key=True)
@@ -52,6 +65,7 @@ class User(db.Model):
     provider_bookings = db.relationship('Booking', foreign_keys='Booking.provider_id', backref='provider', lazy=True)
     reviews_written = db.relationship('Review', foreign_keys='Review.client_id', backref='client', lazy=True)
     reviews_received = db.relationship('Review', foreign_keys='Review.provider_id', backref='provider', lazy=True)
+    notifications = db.relationship('Notification', backref='user_notifications', lazy=True)
     
     # One-to-Many relationship with Services (as a provider)
     services_provided = db.relationship('Service', backref='provider', lazy=True)

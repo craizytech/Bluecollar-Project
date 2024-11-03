@@ -12,6 +12,7 @@ function BusinessByCategory({ categoryId: initialCategoryId }) {
     const [token, setToken] = useState('');
     const [categoryName, setCategoryName] = useState(``);
     const [loading, setLoading] = useState(true);
+    const [detailLoading, setDetailLoading] = useState(false);
 
     useEffect(() => {
         if (initialCategoryId) {
@@ -91,7 +92,11 @@ function BusinessByCategory({ categoryId: initialCategoryId }) {
     }, [token, initialCategoryId]);
 
     const handleBookNowClick = (serviceId, categoryId, providerId) => {
-        console.log('Clicked Book Now for service ID:', serviceId, 'with category ID:', categoryId, 'and provider ID:', providerId);
+        setDetailLoading(true)
+
+        setTimeout(() => {
+            setDetailLoading(false)
+        }, 2000)
     };
 
     return (
@@ -118,13 +123,24 @@ function BusinessByCategory({ categoryId: initialCategoryId }) {
                             <h2 className="text-primary">{service.details?.provider_name || 'Provider'}</h2>
                             <h2 className="text-gray-500 text-sm">{service.details?.provider_location || 'Location'}</h2>
                             <Link href={`/Booking?serviceId=${service.service_id}&categoryId=${service.details?.category_id || service.category_id}`}>
-                                <Button onClick={() => handleBookNowClick(service.service_id, service.details?.category_id || service.category_id, service.details?.provider_id || service.provider_id)} className="rounded-lg mt-3">View Details</Button>
+                                <Button onClick={() => handleBookNowClick(service.service_id, service.details?.category_id || service.category_id, service.details?.provider_id || service.provider_id)} 
+                                    className="rounded-lg mt-3"
+                                    >
+                                    View Details
+                                </Button>
                             </Link>
                         </div>
                     </div>
                 ))}
             </div>
             )}
+
+            {detailLoading && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                    <Spinner />
+                </div>
+            )}
+            
         </div>
     );
 }

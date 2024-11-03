@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models import Service, ServiceCategory, Review, User, Permissions, ServiceProviderApplication
-from app.extensions import db
+from app.models import Service, ServiceCategory, Review, User, Permissions, ServiceProviderApplication, Notification
+from app.extensions import db, socketio
 from app.utils.decorators import permission_required
 from app.services import services_bp
 
@@ -284,6 +284,26 @@ def approve_application(application_id):
     try:
         db.session.add(new_service)
         db.session.commit()
+        
+        # Notify the applicant about the approval
+        user = User.query.filter_by(user_email=application.email).first()
+        notification_message = "Congratulations! Your application to become a service provider has been approved."
+
+        notification = Notification(
+            user_id=user.user_id,
+            type='service_application_status',
+            message=notification_message
+        )
+        db.session.add(notification)
+        db.session.commit()
+
+        # Emit notification to the applicant
+        socketio.emit('notification', {
+            'userId': user.user_id,
+            'type': 'service_application_status',
+            'message': notification_message
+        }, room=user.user_id)
+        
         return jsonify({"message": "Application approved successfully"}), 200
     except Exception as e:
         db.session.rollback()
@@ -320,6 +340,26 @@ def decline_application(application_id):
 
     try:
         db.session.commit()
+        
+        # Notify the applicant about the decline
+        user = User.query.filter_by(user_email=application.email).first()
+        notification_message = "We regret to inform you that your application to become a service provider has been declined."
+
+        notification = Notification(
+            user_id=user.user_id,
+            type='service_application_status',
+            message=notification_message
+        )
+        db.session.add(notification)
+        db.session.commit()
+
+        # Emit notification to the applicant
+        socketio.emit('notification', {
+            'userId': user.user_id,
+            'type': 'service_application_status',
+            'message': notification_message
+        }, room=user.user_id)
+
         return jsonify({"message": "Application declined successfully"}), 200
     except Exception as e:
         db.session.rollback()

@@ -3,13 +3,14 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Clock, Mail, MapPin, Phone, Share, User } from 'lucide-react';
-import { useCategory } from '@/app/context/CategoryContext';
+import { useDispatch } from 'react-redux';
+import { setCategoryId } from '@/app/store/slices/categorySlice';
 import Spinner from '@/app/_components/spinner/Spinner';
 
 function UserProfile({ setServiceId }) {
     const searchParams = useSearchParams();
     const serviceId = searchParams.get('serviceId');
-    const { setCategoryId } = useCategory();
+    const dispatch = useDispatch();
     const [providerDetails, setProviderDetails] = useState({});
     const [serviceDetails, setServiceDetails] = useState({});
     const [loading, setLoading] = useState(true);
@@ -69,10 +70,8 @@ function UserProfile({ setServiceId }) {
                         setServiceId(serviceId); 
 
                         if (serviceData.category_id) {
-                            setCategoryId(serviceData.category_id);
-                        } else {
-                            console.log('CategoryId is not available in service data.');
-                        }                    
+                            dispatch(serviceData.category_id);
+                        }                  
                     } else {
                         console.error('Failed to fetch provider profile:', providerResponse.statusText);
                     }
@@ -87,7 +86,7 @@ function UserProfile({ setServiceId }) {
         }
 
         fetchData();
-    }, [serviceId, setServiceId, setCategoryId]);
+    }, [serviceId, setServiceId, dispatch]);
 
     return (
         <div className='md:flex gap-4 items-center'>

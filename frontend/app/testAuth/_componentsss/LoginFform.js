@@ -27,9 +27,7 @@ const LoginFform = ({ setToken }) => {
             if (response.ok) {
                 updateToken(data.access_token);
                 setToken(data.access_token);
-                if (typeof window !== 'undefined') {
                     localStorage.setItem('access_token', data.access_token);
-                }
                 
                 // fetchUserProfile(data.access_token);
 

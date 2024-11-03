@@ -5,26 +5,9 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import moment from 'moment';
 import counties from "@/app/data/counties";
+import { io } from 'socket.io-client';
 
-// async function fetchBookedDates(providerId) {
-//     try {
-//         const response = await fetch(`http://localhost:5000/api/bookings/booked-dates?providerId=${providerId}`, {
-//             headers: {
-//                 'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-//             }
-//         });
-//         if (response.ok) {
-//             const data = await response.json();
-//             return data.bookedDates.map(date => moment(date).startOf('day').toDate());
-//         } else {
-//             console.error('Failed to fetch booked dates, status:', response.status);
-//             return [];
-//         }
-//     } catch (error) {
-//         console.error('Error fetching booked dates:', error);
-//         return [];
-//     }
-// }
+const socket = io('http://localhost:5000');
 
 async function fetchProviderId(serviceId) {
     try {
@@ -101,6 +84,26 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
     const [error, setError] = useState({ date: false, location: false, description: false });
     
     const today = new Date(); // Get today's date
+
+    useEffect(() => {
+        const handleNotification = (notification) => {
+            // Display the notification to the user
+            toast(notification.message, {
+                style: {
+                    backgroundColor: "blue", // You can customize this
+                    color: "white"
+                }
+            });
+        };
+
+        // Listen for notifications
+        socket.on('notification', handleNotification);
+
+        // Cleanup on unmount
+        return () => {
+            socket.off('notification', handleNotification);
+        };
+    }, []);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -250,6 +253,9 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
             });
 
             if (response.ok) {
+                const bookingDataResponse = await response.json(); // Capture response data
+                const bookingId = bookingDataResponse.booking_id;
+
                 toast('Service booked successfully!', {
                     style: {
                         backgroundColor: "green",
@@ -257,7 +263,7 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
                     }
                 });
                 if (onBookingSuccess) {
-                    onBookingSuccess();
+                    onBookingSuccess(bookingId);
                 }
             } else {
                 const errorData = await response.json();

@@ -1,7 +1,6 @@
 import { Roboto } from "next/font/google";
 import "./globals.css";
-import Header from "./_components/Header";
-import { CategoryProvider } from "./context/CategoryContext";
+import ClientLayout from "./_components/ClientLayout";
 
 const inter = Roboto({ subsets: ["latin"], weight: ['400', '700'] });
 
@@ -12,15 +11,14 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <CategoryProvider>
     <html lang="en">
       <body className={inter.className}>
         <div className="mx-6 md:mx-16">
-          <Header/>
+          <ClientLayout>
             {children}
+          </ClientLayout>
         </div>
         </body>
     </html>
-    </CategoryProvider>
   );
 }

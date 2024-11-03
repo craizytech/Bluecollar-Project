@@ -15,12 +15,17 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+import { useDispatch } from 'react-redux';
+import { setUser } from '../../store/slices/userSlice';
+import { fetchNotifications } from '../../store/slices/notificationSlice';
+
 const LoginForm = ({ setToken }) => {
   const [user_email, setEmail] = useState('');
   const [user_password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,12 +43,21 @@ const LoginForm = ({ setToken }) => {
         if (setToken){
           setToken(data.access_token);
         }
-        if (typeof window !== 'undefined') {
+
           localStorage.setItem('access_token', data.access_token);
           localStorage.setItem('user_email', user_email);
           localStorage.setItem('user_role', data.user_role);
           localStorage.setItem('user_id', data.user_id);
-        }
+
+        // Dispatch the user details to Redux store
+        dispatch(setUser({
+          userEmail: user_email,
+          userRole: data.user_role,
+          userId: data.user_id,
+        }));
+
+        dispatch(fetchNotifications(data.user_id));
+
         router.push('/Home');
       } else {
         setError(data.error || 'Invalid username or password');

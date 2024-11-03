@@ -1,7 +1,7 @@
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models import Booking, Service, User, Permissions
-from app.extensions import db
+from app.models import Booking, Service, User, Permissions, Notification
+from app.extensions import db, socketio
 from app.utils.decorators import permission_required
 from datetime import datetime
 from app.bookings import bookings_bp
@@ -20,10 +20,6 @@ def create_booking():
     end_time_str = data.get('end_time') 
     location = data.get('location')
     service_description = data.get('description')  # Added field
-    
-     # Log the booking details
-    print(f"Booking date: {booking_date_str}, Start time: {start_time_str}, End time: {end_time_str}")
-
 
     if not service_id or not provider_id or not booking_date_str or not start_time_str or not end_time_str or not location:
         return jsonify({"error": "Missing required fields"}), 400
@@ -51,6 +47,8 @@ def create_booking():
 
 
         client_id = get_jwt_identity()
+        client = User.query.get(client_id)
+        
         booking = Booking(
             service_id=service_id,
             client_id=client_id,
@@ -65,6 +63,23 @@ def create_booking():
 
         db.session.add(booking)
         db.session.commit()
+        
+         # Create a notification for the provider
+        notification_message = f"You have a new booking from {client.user_name} for {service_description}."
+        notification = Notification(
+            user_id=provider_id,
+            type='booking',  # or any type that represents a booking
+            message=notification_message
+        )
+        db.session.add(notification)  # Use add instead of save
+        db.session.commit()  # Commit the notification
+
+        # Emit notification to the provider
+        socketio.emit('notification', {
+            'userId': provider_id,
+            'type': 'booking',
+            'message': notification_message,
+        }, room=provider_id)  # Emit to specific user
 
         return jsonify({"message": "Booking created successfully"}), 201
     except ValueError:
@@ -194,6 +209,35 @@ def update_booking_status(booking_id):
     try:
         booking.status = new_status
         db.session.commit()
+        
+         # Get the client and provider details
+        client = User.query.get(booking.client_id)
+        provider = User.query.get(booking.provider_id)
+
+        # Define notification message based on status
+        if new_status == "accepted":
+            notification_message = f"Your booking for {booking.description} has been accepted by {provider.user_name}."
+        elif new_status == "declined":
+            notification_message = f"Your booking for {booking.description} was declined by {provider.user_name}."
+        elif new_status == "completed":
+            notification_message = f"Your booking for {booking.description} has been marked as completed by {provider.user_name}."
+
+        # Create a notification record for the client
+        notification = Notification(
+            user_id=client.user_id,
+            type='booking_status',
+            message=notification_message
+        )
+        db.session.add(notification)
+        db.session.commit()
+
+        # Emit notification to the client
+        socketio.emit('notification', {
+            'userId': client.user_id,
+            'type': 'booking_status',
+            'message': notification_message
+        }, room=client.user_id)
+
         return jsonify({"message": "Booking status updated successfully"}), 200
     except Exception as e:
         db.session.rollback()

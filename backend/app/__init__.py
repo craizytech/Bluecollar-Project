@@ -2,8 +2,9 @@ import os
 from dotenv import load_dotenv
 
 from flask import Flask
-from app.extensions import db, migrate, cors, jwt
+from app.extensions import db, migrate, cors, jwt, socketio
 from app.config import config
+
 
 def create_app(config_name='default'):
     load_dotenv()  # Load environment variables from .env file
@@ -16,6 +17,7 @@ def create_app(config_name='default'):
     migrate.init_app(app, db)
     cors.init_app(app)  # Enable CORS for the app
     jwt.init_app(app)
+    socketio.init_app(app)  # Initialize SocketIO with the app
 
     # Register blueprints with /api prefix
     from app.auth import auth_bp
@@ -29,6 +31,7 @@ def create_app(config_name='default'):
     from app.categories import categories_bp
     from app.mpesa import mpesa_bp
     from app.transactions import transactions_bp
+    from app.notifications import notifications_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(users_bp, url_prefix='/api/users')
@@ -41,6 +44,7 @@ def create_app(config_name='default'):
     app.register_blueprint(categories_bp, url_prefix='/api/categories')
     app.register_blueprint(mpesa_bp, url_prefix='/api/mpesa')
     app.register_blueprint(transactions_bp, url_prefix='/api/transactions')
+    app.register_blueprint(notifications_bp, url_prefix='/api/notifications')
 
 
     return app

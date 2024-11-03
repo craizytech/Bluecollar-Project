@@ -30,7 +30,7 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
   
       return {
         ...booking,
-        showReminder: daysUntilBooking <= reminderDays && daysUntilBooking > 0,
+        showReminder: booking.status !== 'declined' && daysUntilBooking <= reminderDays && daysUntilBooking > 0,
       };
     });
   
