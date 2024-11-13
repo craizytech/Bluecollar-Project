@@ -1,23 +1,23 @@
 "use client";
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
-import { CategoryContext } from '@/app/context/CategoryContext';
+// import { CategoryContext } from '@/app/context/CategoryContext';
+import { useDispatch, useSelector  } from 'react-redux';
+import { setCategoryId } from '@/app/store/slices/categorySlice';
 
 function ServiceProvider() {
   const [userId, setUserId] = useState('');
   const [email, setEmail] = useState('');
   const [categories, setCategories] = useState([]);
   const [services, setServices] = useState([]);
-  const context = useContext(CategoryContext);
+  // const context = useContext(CategoryContext);
   const [error, setError] = useState('');
   const [serviceDuration, setServiceDuration] = useState('');
+  const dispatch = useDispatch();
 
-  if (!context) {
-    console.error('CategoryContext is not available');
-    return null;
-  }
+  const categoryId = useSelector((state) => state.category.categoryId )
 
-  const { categoryId, setCategoryId } = context;
+
   const [selectedService, setSelectedService] = useState('');
   const [message, setMessage] = useState('');
 
@@ -135,7 +135,7 @@ function ServiceProvider() {
             name="category"
             className="w-full px-3 py-2 border rounded-md"
             value={categoryId || ''}
-            onChange={(e) => setCategoryId(e.target.value)}
+            onChange={(e) => dispatch(setCategoryId(e.target.value))}
           >
             <option value="">Select a category</option>
             {categories.map((category) => (
