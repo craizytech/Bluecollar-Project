@@ -34,7 +34,7 @@ class Notification(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationships
-    user = db.relationship('User', backref='user_notifications', lazy=True)
+    user = db.relationship('User', back_populates='notifications')
     
 class Role(db.Model):
     __tablename__ = 'roles'
@@ -56,6 +56,8 @@ class User(db.Model):
     date_of_creation = db.Column(db.DateTime, default=datetime.utcnow)
     user_password = db.Column(db.String(128), nullable=False)
     user_location = db.Column(db.String(256), nullable=False)
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
     user_profile_picture = db.Column(db.String(256), nullable=False)
     
     # One-to-Many relationships
@@ -65,7 +67,7 @@ class User(db.Model):
     provider_bookings = db.relationship('Booking', foreign_keys='Booking.provider_id', backref='provider', lazy=True)
     reviews_written = db.relationship('Review', foreign_keys='Review.client_id', backref='client', lazy=True)
     reviews_received = db.relationship('Review', foreign_keys='Review.provider_id', backref='provider', lazy=True)
-    notifications = db.relationship('Notification', backref='user_notifications', lazy=True)
+    notifications = db.relationship('Notification', back_populates='user', lazy=True)
     
     # One-to-Many relationship with Services (as a provider)
     services_provided = db.relationship('Service', backref='provider', lazy=True)

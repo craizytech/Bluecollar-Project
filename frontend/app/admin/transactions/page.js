@@ -83,7 +83,7 @@ export function TransactionsPage() {
 
   const filterTransactions = (data, filters) => {
     const filtered = data.filter(transaction => 
-      (filters.paid && transaction.status === "paid") ||
+      (filters.completed && transaction.status === "completed") ||
       (filters.cancelled && transaction.status === "cancelled") ||
       (filters.failed && transaction.status === "failed")
     );
@@ -160,10 +160,10 @@ export function TransactionsPage() {
                       <DropdownMenuLabel>Filter by</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuCheckboxItem 
-                        checked={filters.paid}
-                        onCheckedChange={() => handleFilterChange('paid')}
+                        checked={filters.completed}
+                        onCheckedChange={() => handleFilterChange('completed')}
                       >
-                        paid
+                        completed
                       </DropdownMenuCheckboxItem>
                       <DropdownMenuCheckboxItem 
                         checked={filters.cancelled}

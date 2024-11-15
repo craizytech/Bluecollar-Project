@@ -1,7 +1,7 @@
 from app import create_app, db
 from app.models import Role, Permissions, ServiceCategory, Service, User, Chat, Invoice, Booking, Review, ServiceProviderApplication, Transaction
 from werkzeug.security import generate_password_hash
-from datetime import datetime, date
+from datetime import datetime, date, time
 from random import randint
 import random
 
@@ -45,6 +45,13 @@ with app.app_context():
     db.session.add_all([admin_role, specialized_role, general_role])
     db.session.commit()
 
+    # Define a helper function for random latitude and longitude
+    def generate_random_coordinates():
+        # These coordinates are for Kenya, adjust as needed for other locations
+        latitude = random.uniform(-4.6, 4.5)   # Random latitude within Kenya's approximate bounds
+        longitude = random.uniform(33.9, 41.9) # Random longitude within Kenya's approximate bounds
+        return latitude, longitude
+
     # Create test users
     admin_user = User(
         user_name="Test Admin",
@@ -54,24 +61,40 @@ with app.app_context():
         role_id=admin_role.role_id,
         user_password=generate_password_hash("password"),
         user_location="Nairobi Kenya",
-        user_profile_picture="admin_profile_pic.png"
+        user_profile_picture="admin_profile_pic.png",
+        latitude= -1.286389,
+        longitude=36.817223
     )
 
     general_users = []
     for i in range(1, 4):
+        lat, lon = generate_random_coordinates()
         general_users.append(User(
             user_name=f"Test User {i}",
             user_phone_number=f"071234567{i}",
-            user_address=f"Nairobi, Kenya",
+            user_address="Nairobi, Kenya",
             user_email=f"testuser{i}@example.com",
             role_id=general_role.role_id,
             user_password=generate_password_hash("password"),
             user_location="Nairobi Kenya",
-            user_profile_picture=f"user{i}_profile_pic.png"
+            user_profile_picture=f"user{i}_profile_pic.png",
+            latitude=lat,
+            longitude=lon
         ))
 
     service_providers = []
-    counties = ['Nairobi Kenya', 'Mombasa Kenya', 'Kisumu Kenya', 'Nakuru Kenya', 'Eldoret Kenya', 'Thika Kenya', 'Machakos Kenya', 'Nyeri Kenya', 'Meru Kenya', 'Kakamega Kenya']
+    counties = [
+        ('Nairobi Kenya', -1.286389, 36.817223),
+        ('Mombasa Kenya', -4.043477, 39.668206),
+        ('Kisumu Kenya', -0.091702, 34.767956),
+        ('Nakuru Kenya', -0.303099, 36.080026),
+        ('Eldoret Kenya', 0.520360, 35.269779),
+        ('Thika Kenya', -1.03326, 37.06933),
+        ('Machakos Kenya', -1.518024, 37.26343),
+        ('Nyeri Kenya', -0.427780, 36.959980),
+        ('Meru Kenya', 0.047035, 37.649803),
+        ('Kakamega Kenya', 0.282730, 34.752058)
+    ]
     
     service_provider_data = [
         {"name": "Plumber", "category": "Plumbing", "services": ["Pipe Repairs", "Leak Detection", "Water Heater Installation", "Drain Cleaning", "Toilet Installation", "Faucet Replacement", "Shower Installation", "Bathroom Renovation", "Sewer Line Repair", "Water Softener Installation"]},
@@ -82,7 +105,7 @@ with app.app_context():
     
     for provider in service_provider_data:
         for i in range(1, 11):
-            county = counties[i % len(counties)]
+            county, lat, lon = counties[i % len(counties)]
             user = User(
                 user_name=f"{provider['name']} {i}",
                 user_phone_number=f"072345678{i}",
@@ -91,7 +114,9 @@ with app.app_context():
                 role_id=specialized_role.role_id,
                 user_password=generate_password_hash("password"),
                 user_location=county,
-                user_profile_picture=f"{provider['name'].lower()}{i}_profile_pic.png"
+                user_profile_picture=f"{provider['name'].lower()}{i}_profile_pic.png",
+                latitude=lat,
+                longitude=lon
             )
             service_providers.append(user)
             db.session.add(user)
@@ -126,6 +151,8 @@ with app.app_context():
 
     # Simulate interactions (chats, bookings, invoices, reviews, transactions)
     def simulate_interactions(user, provider, service):
+        start_time = time(10, 0)  # 10:00 AM
+        end_time = time(12, 0)
         # Create a chat
         chat = Chat(
             sent_from=user.user_id,
@@ -142,6 +169,8 @@ with app.app_context():
             client_id=user.user_id,
             provider_id=provider.user_id,
             booking_date=date.today(),
+            start_time = start_time,
+            end_time = end_time,
             status="confirmed",
             location=user.user_location,
             description=f"Please provide the {service.service_name} at my location."
@@ -178,23 +207,17 @@ with app.app_context():
                 client_id=user.user_id,
                 provider_id=provider.user_id,
                 rating=random.randint(1, 5),
-                comment=random.choice([
-                    f"Excellent {service.service_name} by {provider.user_name}. Highly recommended!",
-                    f"{service.service_name} by {provider.user_name} was okay, but could be improved.",
-                    f"Terrible experience with {provider.user_name}. The {service.service_name} was unsatisfactory.",
-                    f"{service.service_name} provided by {provider.user_name} was good, but not the best.",
-                    f"Outstanding {service.service_name} service from {provider.user_name}. Will use again!"
-                ]),
+                comment=random.choice(["Great service!", "Very satisfied.", "Could be better.", "Highly recommended!"]),
                 date_of_creation=datetime.utcnow()
             )
             db.session.add(review)
 
-    for i, user in enumerate(general_users):
-        provider = service_providers[i]
-        service = next((s for s in provider.services_provided), None)
-        if service:
-            simulate_interactions(user, provider, service)
-    
-    db.session.commit()
+        db.session.commit()
 
-    print("Database fully seeded with users, services, and interactions!")
+    for user in general_users:
+        for provider in service_providers[:4]:  # Limit interactions to the first four providers
+            service = db.session.query(Service).filter_by(provider_id=provider.user_id).order_by(db.func.random()).first()
+            if service:
+                simulate_interactions(user, provider, service)
+
+    print("Seeding complete.")

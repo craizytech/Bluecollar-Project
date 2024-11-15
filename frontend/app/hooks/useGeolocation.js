@@ -18,7 +18,7 @@ const useGeolocation = () => {
                         console.log('Geolocation - Longitude:', longitude);
 
                         try {
-                            const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyDeOZ6drkVM9-7UXiAIoLv6cVslMcNqUfM`);
+                            const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyC8OT8Hovirl_zEQ-msWssOVCdD4DGWh30`);
                             const data = await response.json();
                             console.log('Geocoding API Response:', data);
 

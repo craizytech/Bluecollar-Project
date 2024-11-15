@@ -1,9 +1,11 @@
+import math
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import Service, ServiceCategory, Review, User, Permissions, ServiceProviderApplication, Notification
 from app.extensions import db, socketio
 from app.utils.decorators import permission_required
 from app.services import services_bp
+from sqlalchemy import func
 
 # Helper function to validate required fields
 def validate_fields(data, required_fields):
@@ -172,47 +174,38 @@ def view_service_details(service_id):
         return jsonify({"error": str(e)}), 500
   
     
-# Route to search services by location and term
-@services_bp.route('/search', methods=['GET'])
+def haversine(lat1, lon1, lat2, lon2):
+    # Radius of earth in kilometers
+    R = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat/2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
+
+# Route to search services by geolocation and term
+@services_bp.route('/services/search', methods=['GET'])
 def search_services():
     term = request.args.get('term')
     location = request.args.get('location')
-    
-    if not term or not location:
-        return jsonify({"error": "Search term and location are required"}), 400
-    
-    # Normalize location input
-    normalized_location = location.replace(',', '').strip().lower()
 
-    try:
-        # Log the search parameters for debugging
-        print(f"Searching for term: {term} and location: {normalized_location}")
+    # Basic search logic; update with your desired search filters
+    query = Service.query.filter(
+        Service.service_name.ilike(f"%{term}%"),
+        Service.location.ilike(f"%{location}%")
+    ).all()
 
-        # Join the User model to access provider_location
-        services = db.session.query(Service, User.user_location).join(User, Service.provider_id == User.user_id).filter(
-            Service.service_name.ilike(f'%{term}%'),
-            User.user_location.ilike(f'%{normalized_location}%')
-        ).all()
-        
-        # Log the number of results
-        print(f"Found {len(services)} services")
-        
-        service_list = [
-            {
-                "service_id": service.service_id,
-                "service_name": service.service_name,
-                "service_description": service.service_description,
-                "category_id": service.category_id,
-                "provider_id": service.provider_id,
-                "provider_location": user_location  # Use the joined attribute
-            }
-            for service, user_location in services
-        ]
-        
-        return jsonify({"services": service_list}), 200
-    
-    except Exception as e:
-        return jsonify({"error": f"Error during search: {str(e)}"}), 500
+    results = [
+        {
+            'service_id': service.id,
+            'service_name': service.service_name,
+            'location': service.location,
+            'latitude': service.latitude,
+            'longitude': service.longitude
+        }
+        for service in query
+    ]
+    return jsonify({'services': results}), 200
 
 
 @services_bp.route('/apply_service', methods=['POST'])
