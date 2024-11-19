@@ -1,12 +1,14 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { useCategory } from '@/app/context/CategoryContext';
+import { useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
 import Spinner from '@/app/_components/spinner/Spinner';
 
-function BusinessByCategory({ categoryId: initialCategoryId }) {
+function BusinessByCategory() {
+    const categoryId = useSelector(state => state.category.categoryId); 
     const { setCategoryId } = useCategory();
     const [services, setServices] = useState([]);
     const [token, setToken] = useState('');
@@ -14,11 +16,30 @@ function BusinessByCategory({ categoryId: initialCategoryId }) {
     const [loading, setLoading] = useState(true);
     const [detailLoading, setDetailLoading] = useState(false);
 
-    useEffect(() => {
-        if (initialCategoryId) {
-            setCategoryId(initialCategoryId);
+    const getGeocodedAddress = async (latitude, longitude) => {
+        try {
+            const response = await fetch(
+                `https://geocode.maps.co/reverse?lat=${latitude}&lon=${longitude}&api_key=672958dc30760969524851ktj2e0ae5`
+                // `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyCj4JagRCSg_xOd8GtDUEfYaNIdZHYhDX0`
+            );
+            const data = await response.json();
+            if (data && data.address) {
+                const fullAddress = data.address;
+                return `${fullAddress.road || ''}, ${fullAddress.city || ''}, ${fullAddress.state || ''}`;
+            } else {
+                return 'No address found';
+            }
+        } catch (error) {
+            console.error('Geocoding Error:', error);
+            return 'Error fetching address';
         }
-    }, [initialCategoryId, setCategoryId]);
+    };
+
+    useEffect(() => {
+        if (categoryId) {
+            setCategoryId(categoryId);
+        }
+    }, [categoryId, setCategoryId]);
 
     useEffect(() => {
         const storedToken = localStorage.getItem('access_token');
@@ -29,9 +50,9 @@ function BusinessByCategory({ categoryId: initialCategoryId }) {
         async function fetchServices() {
             setLoading(true)
             try {
-                console.log(`Fetching services for category ID: ${initialCategoryId}`);
-                const url = initialCategoryId
-                    ? `http://localhost:5000/api/services/category/${initialCategoryId}`
+                console.log(`Fetching services for category ID: ${categoryId}`);
+                const url = categoryId
+                    ? `http://localhost:5000/api/services/category/${categoryId}`
                     : 'http://localhost:5000/api/services/all';
 
                 const response = await fetch(url, {
@@ -47,7 +68,7 @@ function BusinessByCategory({ categoryId: initialCategoryId }) {
                 const servicesData = await response.json();
                 console.log('Fetched Services Data:', servicesData);
 
-                if (initialCategoryId) {
+                if (categoryId) {
                     // Fetch details for each service based on the service_id
                     const servicesWithDetails = await Promise.all(servicesData.map(async (service) => {
                         const detailsResponse = await fetch(`http://localhost:5000/api/services/${service.service_id}`, {
@@ -61,11 +82,25 @@ function BusinessByCategory({ categoryId: initialCategoryId }) {
                         }
 
                         const detailsData = await detailsResponse.json();
-                        console.log(`Details for Service ID ${service.service_id}:`, detailsData);
+                        const providerLocation = detailsData?.provider_location;
+
+                        // Geocode provider location if available
+                        let geocodedAddress = '';
+                        if (providerLocation) {
+                            // Split the provider_location string to get latitude and longitude
+                            const [latitude, longitude] = providerLocation.split(',').map(coord => parseFloat(coord.trim()));
+                            if (latitude && longitude) {
+                                geocodedAddress = await getGeocodedAddress(latitude, longitude);
+                            }
+                        }
 
                         return {
                             ...service,
-                            details: detailsData
+                            details: {
+                                ...detailsData,
+                                provider_id: service.provider_id,
+                                geocodedAddress,
+                            }
                         };
                     }));
 
@@ -79,8 +114,6 @@ function BusinessByCategory({ categoryId: initialCategoryId }) {
                     // No categoryId, just set the services as they are
                     setServices(servicesData);
                 }
-            } catch (error) {
-                console.error('Error fetching services or details:', error);
             } finally {
                 setLoading(false)
             }
@@ -89,7 +122,7 @@ function BusinessByCategory({ categoryId: initialCategoryId }) {
         if (token) {
             fetchServices();
         }
-    }, [token, initialCategoryId]);
+    }, [token, categoryId]);
 
     const handleBookNowClick = (serviceId, categoryId, providerId) => {
         setDetailLoading(true)
@@ -121,7 +154,7 @@ function BusinessByCategory({ categoryId: initialCategoryId }) {
                             <h2 className="p-1 bg-blue-100 text-primary rounded-full px-2 text-[12px]">{service.details?.category_name || 'Category'}</h2>
                             <h2 className="font-bold text-lg">{service.details?.service_name || service.service_name}</h2>
                             <h2 className="text-primary">{service.details?.provider_name || 'Provider'}</h2>
-                            <h2 className="text-gray-500 text-sm">{service.details?.provider_location || 'Location'}</h2>
+                            <h2 className="text-gray-500 text-sm">{service.details?.geocodedAddress || 'Location'}</h2>
                             <Link href={`/Booking?serviceId=${service.service_id}&categoryId=${service.details?.category_id || service.category_id}`}>
                                 <Button onClick={() => handleBookNowClick(service.service_id, service.details?.category_id || service.category_id, service.details?.provider_id || service.provider_id)} 
                                     className="rounded-lg mt-3"

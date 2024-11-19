@@ -2,8 +2,11 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useDispatch } from 'react-redux';
+import { setCategoryId } from '../store/slices/categorySlice';
 
-function CategorySideBar({ setCategoryId }) {
+function CategorySideBar() {
+    const dispatch = useDispatch();
     const [categories, setCategories] = useState([]);
 
     useEffect(() => {
@@ -25,7 +28,7 @@ function CategorySideBar({ setCategoryId }) {
 
     const handleClick = (categoryId) => {
         console.log(`Category ${categoryId} clicked`);
-        setCategoryId(categoryId);
+        dispatch(setCategoryId(categoryId));
     };
 
     return (

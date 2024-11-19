@@ -1,6 +1,7 @@
 from datetime import datetime
 from app.extensions import db
 from sqlalchemy.orm import validates
+import re
 
 class Permissions:
     # All users
@@ -75,7 +76,7 @@ class User(db.Model):
     def validate_email(self, key, address):
         assert '@' in address, "Provided email is not valid"
         return address
-
+    
 class ServiceCategory(db.Model):
     __tablename__ = 'service_categories'
     category_id = db.Column(db.Integer, primary_key=True)

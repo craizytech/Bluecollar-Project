@@ -4,6 +4,18 @@ from app.models import Service, ServiceCategory, Review, User, Permissions, Serv
 from app.extensions import db, socketio
 from app.utils.decorators import permission_required
 from app.services import services_bp
+import requests
+import re
+from math import radians, cos, sin, sqrt, atan2
+
+# Function to calculate distance between two coordinates using the Haversine formula
+def haversine_distance(lat1, lon1, lat2, lon2):
+    R = 6371  # Earth radius in kilometers
+    dlat = radians(lat2 - lat1)
+    dlon = radians(lon2 - lon1)
+    a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    return R * c
 
 # Helper function to validate required fields
 def validate_fields(data, required_fields):
@@ -176,44 +188,77 @@ def view_service_details(service_id):
 @services_bp.route('/search', methods=['GET'])
 def search_services():
     term = request.args.get('term')
-    location = request.args.get('location')
-    
-    if not term or not location:
+    address = request.args.get('location')
+    search_radius = 10  # Radius in kilometers
+
+    if not term or not address:
         return jsonify({"error": "Search term and location are required"}), 400
-    
-    # Normalize location input
-    normalized_location = location.replace(',', '').strip().lower()
 
     try:
-        # Log the search parameters for debugging
-        print(f"Searching for term: {term} and location: {normalized_location}")
+        # Use a geocoding API (e.g., OpenStreetMap Nominatim) to convert address to latitude and longitude
+        geocode_url = f"https://nominatim.openstreetmap.org/search?format=json&q={address}&countrycodes=KE"
+        headers = {'User-Agent': 'MyApp/1.0'}
+        response = requests.get(geocode_url, headers=headers)
 
-        # Join the User model to access provider_location
-        services = db.session.query(Service, User.user_location).join(User, Service.provider_id == User.user_id).filter(
-            Service.service_name.ilike(f'%{term}%'),
-            User.user_location.ilike(f'%{normalized_location}%')
-        ).all()
+        if response.status_code != 200:
+            return jsonify({"error": f"Geocoding API request failed with status code {response.status_code}"}), 500
+
+        geocode_data = response.json()
+
+        if not geocode_data:
+            return jsonify({"error": "Invalid address or address not found"}), 400
         
-        # Log the number of results
-        print(f"Found {len(services)} services")
-        
-        service_list = [
-            {
-                "service_id": service.service_id,
-                "service_name": service.service_name,
-                "service_description": service.service_description,
-                "category_id": service.category_id,
-                "provider_id": service.provider_id,
-                "provider_location": user_location  # Use the joined attribute
-            }
-            for service, user_location in services
-        ]
-        
-        return jsonify({"services": service_list}), 200
-    
+        latitude = float(geocode_data[0]['lat'])
+        longitude = float(geocode_data[0]['lon'])
+
+        print(f"Searching for term: {term} near address: {address} (Lat: {latitude}, Lng: {longitude})")
+
+        # Fetch all services and their locations
+        all_services = db.session.query(Service, User.user_location).join(
+            User, Service.provider_id == User.user_id).filter(
+                Service.service_name.ilike(f'%{term}%')
+            ).all()
+
+        # Filter services within the specified search radius by extracting lat/lng from user_location
+        nearby_services = []
+        location_pattern = r"([-+]?\d*\.\d+|\d+),\s*([-+]?\d*\.\d+|\d+)"  # Regex to match latitude and longitude
+
+        for service, user_location in all_services:
+            match = re.search(location_pattern, user_location)
+            if match:
+                user_lat, user_lon = float(match.group(1)), float(match.group(2))
+                distance = haversine_distance(latitude, longitude, user_lat, user_lon)
+
+                if distance <= search_radius:
+                    # Reverse-geocode the provider's location
+                    reverse_geocode_url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={user_lat}&lon={user_lon}"
+                    reverse_response = requests.get(reverse_geocode_url, headers=headers)
+
+                    if reverse_response.status_code == 200:
+                        reverse_data = reverse_response.json()
+                        provider_address = reverse_data.get('display_name', 'Address not found')
+                    else:
+                        provider_address = "Address not found"
+                    nearby_services.append({
+                        "service_id": service.service_id,
+                        "service_name": service.service_name,
+                        "service_description": service.service_description,
+                        "category_id": service.category_id,
+                        "provider_id": service.provider_id,
+                        "provider_location": provider_address,
+                        "distance_km": round(distance, 2)
+                    })
+
+        print(f"Found {len(nearby_services)} services within {search_radius} km")
+
+        return jsonify({"services": nearby_services}), 200
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"Error making request to geocoding API: {str(e)}"}), 500
+    except ValueError as e:
+        return jsonify({"error": f"Error parsing JSON response: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Error during search: {str(e)}"}), 500
-
 
 @services_bp.route('/apply_service', methods=['POST'])
 @jwt_required()

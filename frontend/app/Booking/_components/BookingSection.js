@@ -6,6 +6,9 @@ import { toast } from 'sonner';
 import moment from 'moment';
 import counties from "@/app/data/counties";
 import { io } from 'socket.io-client';
+import axios from 'axios';
+import { useSelector, useDispatch } from 'react-redux';
+import { setAddress, setLocation } from '@/app/store/slices/location';
 
 const socket = io('http://localhost:5000');
 
@@ -70,20 +73,25 @@ async function fetchUserLocation() {
 }
 
 function BookingSection({ children, serviceId, onBookingSuccess }) {
+    const dispatch = useDispatch();
+    const geocodedLocation = useSelector(state => state.location.address);
+    const { latitude, longitude } = useSelector(state => state.location.location);
     const [providerId, setProviderId] = useState(null);
     const [date, setDate] = useState(null);
     const [timeSlots, setTimeSlots] = useState([]);
     const [time, setTime] = useState('');
     const [location, setLocation] = useState('');
-    const [searchLocation, setSearchLocation] = useState('');
-    const [filteredCounties, setFilteredCounties] = useState([]);
     const [showDropdown, setShowDropdown] = useState(false);
     const [bookedDates, setBookedDates] = useState([]);
     const [serviceDescription, setServiceDescription] = useState('');
     const [serviceDuration, setServiceDuration] = useState(null);
     const [error, setError] = useState({ date: false, location: false, description: false });
+    const [suggestedAddresses, setSuggestedAddresses] = useState([]);
+    const [inputAddress, setInputAddress] = useState(geocodedLocation);
+    const [selectedLatitude, setSelectedLatitude] = useState(null);
+    const [selectedLongitude, setSelectedLongitude] = useState(null);
     
-    const today = new Date(); // Get today's date
+    const today = new Date();
 
     useEffect(() => {
         const handleNotification = (notification) => {
@@ -154,27 +162,38 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
         setTimeSlots(slots);
     }
 
-    const handleLocationChange = (e) => {
+    const handleLocationChange = async (e) => {
         const query = e.target.value;
-        setSearchLocation(query);
+        setInputAddress(query)
+        setSuggestedAddresses([]);
+        setShowDropdown(false);
 
+       
         if (query) {
-            const filtered = counties.filter(county =>
-                county.toLowerCase().startsWith(query.toLowerCase())
-            );
-            setFilteredCounties(filtered);
-            setShowDropdown(true);
-        } else {
-            setShowDropdown(false);
+            try {
+                // Fetch address suggestions from Nominatim API
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=KE`);
+                const data = await response.json();
+                setSuggestedAddresses(data);  // Store the suggested addresses
+                setShowDropdown(true);
+            } catch (error) {
+                console.error('Error fetching address suggestions:', error);
+                setSuggestedAddresses([]);
+                setShowDropdown(false);
+            }
         }
-
-        setLocation(query);
     };
 
-    const handleSelectCounty = (county) => {
-        setLocation(county);
-        setSearchLocation(county);
+    const handleSelectAddress = (address) => {
+        setInputAddress(address.display_name);
         setShowDropdown(false);
+
+        const lat = address.lat;
+        const lon = address.lon;
+
+        console.log("Location before sending:", location);
+
+        setLocation({ latitude: lat, longitude: lon });
     };
 
     const handleDescriptionChange = (e) => {
@@ -230,14 +249,13 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
                 toast(' Provider is not available');
                 return;
             }
-
             const bookingData = {
                 service_id: Number(serviceId),
                 provider_id: providerId,
                 booking_date,
                 start_time,
                 end_time,
-                location,
+                location: location ? `${location.latitude}, ${location.longitude}` : `${latitude}, ${longitude}`,
                 description: serviceDescription,
             };
 
@@ -311,7 +329,7 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
                                     selected={date}
                                     onSelect={setDate}
                                     className={`rounded-md border ${error.date ? 'border-red-500' : 'border-gray-300'}`}
-                                    // modifiers={modifiers}
+                                    modifiers={modifiers}
                                 />
                                 {error.date && <p className="text-red-500">Please select a date.</p>}
                             </div>
@@ -338,7 +356,7 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
                             <div className="relative mt-4">
                                 <input
                                     type="text"
-                                    value={location}
+                                    value={inputAddress}
                                     onChange={handleLocationChange}
                                     placeholder="Enter location"
                                     className={`rounded-md border p-2 w-full" ${error.location ? 'border-red-500' : 'border-gray-300'}`}
@@ -346,13 +364,13 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
                                 {error.location && <p className="text-red-500">Location is required.</p>}
                                 {showDropdown && (
                                     <ul className="absolute z-10 bg-white border border-gray-300 mt-1 w-full max-h-60 overflow-y-auto">
-                                        {filteredCounties.map((county, index) => (
+                                        {suggestedAddresses.map((address, index) => (
                                             <li
                                                 key={index}
                                                 className="p-2 cursor-pointer hover:bg-gray-200"
-                                                onClick={() => handleSelectCounty(county)}
+                                                onClick={() => handleSelectAddress(address)}
                                             >
-                                                {county}
+                                                {address.display_name}
                                             </li>
                                         ))}
                                     </ul>

@@ -14,6 +14,25 @@ function UserProfile({ setServiceId }) {
     const [providerDetails, setProviderDetails] = useState({});
     const [serviceDetails, setServiceDetails] = useState({});
     const [loading, setLoading] = useState(true);
+    const [geocodedAddress, setGeocodedAddress] = useState('');
+
+    const getGeocodedAddress = async (latitude, longitude) => {
+        try {
+            const response = await fetch(
+                `https://geocode.maps.co/reverse?lat=${latitude}&lon=${longitude}&api_key=672958dc30760969524851ktj2e0ae5`
+            );
+            const data = await response.json();
+            if (data && data.address) {
+                const fullAddress = data.address;
+                return `${fullAddress.road || ''}, ${fullAddress.city || ''}, ${fullAddress.state || ''}`;
+            } else {
+                return 'No address found';
+            }
+        } catch (error) {
+            console.error('Geocoding Error:', error);
+            return 'Error fetching address';
+        }
+    };
 
     useEffect(() => {
         if (!serviceId) {
@@ -67,6 +86,17 @@ function UserProfile({ setServiceId }) {
                             provider_profile_picture: providerData.user_profile_picture,
                         });
 
+                         // Extract latitude and longitude from provider_location (if it's in "lat,lon" format)
+                         const location = providerData.user_location.split(',');
+                         if (location.length === 2) {
+                             const latitude = parseFloat(location[0]);
+                             const longitude = parseFloat(location[1]);
+ 
+                             // Get geocoded address
+                             const address = await getGeocodedAddress(latitude, longitude);
+                             setGeocodedAddress(address);
+                         }
+
                         setServiceId(serviceId); 
 
                         if (serviceData.category_id) {
@@ -117,7 +147,7 @@ function UserProfile({ setServiceId }) {
 
                     <h2 className='flex gap-2 text-lg text-gray-500'>
                         <MapPin />
-                        {providerDetails.provider_location || 'Location not available'}
+                        {geocodedAddress || 'Location not available'}
                     </h2>
                     <h2 className='flex gap-2 text-lg text-gray-500'>
                         <Phone />

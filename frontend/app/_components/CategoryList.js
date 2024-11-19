@@ -3,11 +3,14 @@ import Image from 'next/image'
 import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
 import Spinner from './spinner/Spinner';
+import { useDispatch } from 'react-redux';
+import { setCategoryId } from '../store/slices/categorySlice';
 
 function CategoryList() {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isLoadingCategory, setIsLoadingCategory] = useState(false);
+    const dispatch = useDispatch();
 
     useEffect(() => {
         async function fetchCategories() {
@@ -29,7 +32,8 @@ function CategoryList() {
     }, []);
 
 
-    const handleCategoryClick = () => {
+    const handleCategoryClick = (categoryId) => {
+        dispatch(setCategoryId(categoryId))
         setIsLoadingCategory(true); // Set loading state when a category is clicked
         setTimeout(() => {
             setIsLoadingCategory(false); // Simulate loading time; replace this with actual navigation logic
@@ -40,14 +44,14 @@ function CategoryList() {
         return <div className="bg-blue-200 p-3 rounded-lg text-blue-700">No categories found</div>;
     }
     return (
-        <div className="mt-14 mx-4 md:mx-22 lg:mx-52 grid grid-cols md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="mt-14 mx-4 pb-6 md:mx-22 lg:mx-52 grid grid-cols md:grid-cols-2 lg:grid-cols-4 gap-6">
             {categories.map((category) => (
             <Link 
                 key={category.id} 
                 href={`/search/${category.id}`} 
                 passHref 
                 className="flex flex-col items-center justify-center gap-2 bg-blue-50 p-4 rounded-lg hover:cursor-pointer hover:scale-110 transition-all ease-in-out"
-                onClick={handleCategoryClick}
+                onClick={() => handleCategoryClick(category.id)}
             >
                 <Image src={`/${category.name.toLowerCase()}.png`}
                     alt="icon"

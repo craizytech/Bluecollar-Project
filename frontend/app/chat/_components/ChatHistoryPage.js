@@ -89,27 +89,6 @@ function ChatHistoryPage() {
     fetchChatHistory();
   }, [selectedPartner]);
 
-  // const fetchInvoice = async (invoiceId) => {
-  //   try {
-  //     const response = await fetch(`http://localhost:5000/api/invoices/${invoiceId}`, {
-  //       headers: {
-  //         'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-  //       },
-  //     });
-
-  //     if (!response.ok) {
-  //       const errorData = await response.json();
-  //       console.error('Fetch error:', errorData.error);
-  //       return null;
-  //     }
-
-  //     return await response.json();
-  //   } catch (error) {
-  //     console.error('An error occurred while fetching invoice:', error);
-  //     return null;
-  //   }
-  // };
-
   const handlePartnerClick = (userId) => {
     setSelectedPartner(userId);
   };
@@ -139,23 +118,6 @@ function ChatHistoryPage() {
         {selectedPartner ? (
           <div>
             <ChatComponent userId={localStorage.getItem('user_id')} receiverId={selectedPartner} />
-            {/* <div className="mt-8">
-              {chatHistory.map(chat => (
-                <div key={chat.chat_id}>
-                  {chat.invoice && (
-                    <div className="mt-4">
-                      <InvoiceDisplay
-                        userProfile={null} // Adjust or fetch user profile if necessary
-                        serviceCost={chat.invoice.service_cost || ''} // Extract the service cost from invoice
-                        existingInvoice={[chat.invoice]} // Pass the invoice array
-                        isEditable={false} // Default value; adjust as needed
-                        preview={true} // Default value; adjust as needed
-                      />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div> */}
           </div>
         ) : (
           <p>Select a user to start chatting.</p>

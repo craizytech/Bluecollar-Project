@@ -56,9 +56,7 @@ function Header() {
       } else {
         console.error('No notifications found');
       }
-    } catch (err) {
-      console.error('Error fetching notifications:', err);
-    }  finally {
+    } finally {
       setLoading(false); // Reset loading state after fetching notifications
     }
   };
@@ -133,7 +131,7 @@ function Header() {
                 { userInitial}
               </button>
               {dropdownOpen && (
-                <div ref={dropdownRef} className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg z-10">
+                <div ref={dropdownRef} className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg z-20">
                   <ul className="list-none p-2">
                     <li>
                       <Link href="/profile" className="block px-4 py-2 hover:bg-gray-100" onClick={() => handleDropdownItemClick('/profile')}>Profile</Link>

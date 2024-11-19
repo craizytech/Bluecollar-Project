@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { format } from 'date-fns';
 
@@ -14,7 +14,17 @@ function InvoiceDisplay({
   success,
   isEditable = true,  // For sender (editable) and receiver (read-only)
   preview = false,
+  closeDisplay,
 }) {
+
+  const [isVisible, setIsVisible] = useState(true);
+
+  const handleClose = () => {
+    setIsVisible(false);
+    if (closeDisplay) closeDisplay(); // Optional: Use closeDisplay callback if provided
+  };
+
+  if (!isVisible) return null;
 
   const invoice = existingInvoice || {};
   const extractedServiceCost = serviceCost || invoice.service_cost || '';
@@ -26,6 +36,13 @@ function InvoiceDisplay({
 
   return (
     <div className="max-w-2xl mx-auto bg-gray-100 p-8 rounded-lg shadow-lg">
+     {/* Close button at the top right */}
+     <button
+        onClick={handleClose}
+        className="absolute top-4 right-4 text-xl text-gray-700 hover:text-gray-900"
+      >
+        &times;
+      </button>
       <div className="flex justify-between items-start mb-6">
         <Image src="/logo.png" alt="logo" width={100} height={100} />
         <div>

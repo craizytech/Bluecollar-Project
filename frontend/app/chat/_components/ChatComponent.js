@@ -51,6 +51,27 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
     };
 }, []);
 
+useEffect(() => {
+  socket.on('messageReceived', (newMessage) => {
+    setChats((prevChats) => {
+      const isDuplicate = prevChats.some(
+        (msg) => msg.id === newMessage.id
+      );
+      return isDuplicate ? prevChats : [...prevChats, newMessage];
+    });
+  });
+  
+  return () => {
+    socket.off('messageReceived');
+  };
+}, [socket]);
+
+useEffect(() => {
+  console.log('Chats updated:', chats);
+}, [chats]);
+
+
+
   useEffect(() => {
     const bookingId = propBookingId || bookingIdFromUrl;
 
@@ -173,18 +194,29 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
 
   const handleSendMessage = async (content, type = 'text') => {
     const messageContent = content.trim();
-
-    if (!messageContent) {
-      console.error('Message content is empty');
-      return;
-    }
-
-    if (!receiverId) {
-      console.error('Receiver ID is missing');
-      return;
-    }
+    if (!messageContent) return;
 
     setSending(true);
+
+    const tempMessage = {
+      id: Date.now(), // Temporary unique ID, could be replaced with server-generated ID
+      senderId: userId,
+      receiverId,
+      message: messageContent,
+      type,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Log before adding to state
+    console.log('Sending message:', tempMessage);
+  
+    // Optimistically update the UI
+    setChats((prevChats) => {
+      const updatedChats = [...prevChats, tempMessage];
+      console.log('Chats after adding temp message:', updatedChats);
+      return updatedChats;
+    });
+    setMessage('');
 
     try {
       const response = await fetch('http://localhost:5000/api/chats/send', {
@@ -200,20 +232,31 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
         }),
       });
 
-      if (!response.ok) {
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Message sent successfully:', data);
+
+        console.log('Chats before updating with server response:', chats);
+
+        setChats((prevChats) => {
+          const updatedChats = prevChats.map((msg) =>
+            msg.id === tempMessage.id ? data : msg
+          );
+          console.log('Chats after updating with server response:', updatedChats);
+          return updatedChats;
+        });
+        socket.emit('sendMessage', data);
+      } else {
         const errorData = await response.json();
         console.error('Send message error:', errorData.error);
         setError(errorData.error || 'An error occurred while sending the message.');
-        return;
+        setChats((prevChats) => prevChats.filter((msg) => msg.id !== tempMessage.id));
+        // return;
       }
-
-      const newChat = await response.json();
-      console.log('Message sent successfully:', newChat);
-      setChats((prevChats) => [...prevChats, newChat]);
-      setMessage(''); // Clear message input if it's used
     } catch (error) {
       console.error('An error occurred while sending the message:', error);
       setError('An error occurred while sending the message.');
+      setChats((prevChats) => prevChats.filter((msg) => msg.id !== tempMessage.id));
     } finally {
       setSending(false);
     }
@@ -241,6 +284,7 @@ function ChatComponent({ userId, receiverId, bookingId: propBookingId }) {
       });
       await handleSendMessage(invoiceMessage, 'invoice');
       console.log('Invoice sent successfully');
+      setInvoice(null);
     } catch (error) {
       console.error('Failed to send invoice:', error);
     }

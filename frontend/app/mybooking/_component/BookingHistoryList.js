@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { Calendar } from "@/components/ui/calendar";
 import { Day } from 'react-day-picker';
 import moment from 'moment';
+import axios from 'axios';
 import styles from './styles/BookingHistoryList.module.css'
 
 function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
@@ -18,6 +19,41 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
   const [selectedDate, setSelectedDate] = useState(null);
   const [newLocation, setNewLocation] = useState('');
   const router = useRouter();
+
+  // Function to geocode coordinates to an address
+  const geocodeCoordinatesToAddress = async (latitude, longitude) => {
+    try {
+      const response = await axios.get(`https://geocode.maps.co/reverse?lat=${latitude}&lon=${longitude}&api_key=672958dc30760969524851ktj2e0ae5`);
+      if (response.data && response.data.address) {
+        const { road, city, state, country } = response.data.address;
+        const formatted = `${road || ''}, ${city || ''}, ${state || ''}, ${country || ''}`;
+        return formatted.trim().replace(/^,|,$/g, ''); // Remove trailing commas
+      } else {
+        return 'Address not found';
+      }
+    } catch (error) {
+      console.error('Geocoding Error:', error);
+      return 'Error fetching address';
+    }
+  };
+
+  useEffect(() => {
+    const updateBookingAddresses = async () => {
+      for (const booking of bookingHistory) {
+        if (booking.location) {
+          const [latitude, longitude] = booking.location.split(',');
+          if (latitude && longitude) {
+            const address = await geocodeCoordinatesToAddress(latitude, longitude);
+            setUpdatedBookings(prevBookings => prevBookings.map(b =>
+              b.booking_id === booking.booking_id ? { ...b, formattedAddress: address } : b
+            ));
+          }
+        }
+      }
+    };
+
+    updateBookingAddresses();
+  }, [bookingHistory]);
 
   useEffect(() => {
     const sortedBookings = [...bookingHistory].sort((a, b) => new Date(a.booking_date) - new Date(b.booking_date));
@@ -219,7 +255,7 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
               />
             </div>
           </div>
-          <div className="mb-4">
+          {/* <div className="mb-4">
             <label className='block mb-2 text-gray-700'>New Location</label>
             <input
               type="text"
@@ -228,7 +264,7 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
               className='border border-gray-300 p-2 w-full'
               placeholder='Enter new location'
             />
-          </div>
+          </div> */}
           <button
             onClick={handleSaveChanges}
             className='bg-blue-500 text-white px-4 py-2 rounded-lg'
@@ -274,7 +310,7 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
                 {booking.status !== 'completed' && (
                   <>
                     <h2 className='flex gap-2 text-gray-500'>
-                      <MapPin className='text-primary' /> {booking.location}
+                      <MapPin className='text-primary' /> {booking.formattedAddress}
                     </h2>
                     <h2 className='flex gap-2 text-gray-500'>
                       <CalendarIcon className='text-primary' /> Service on: {moment(booking.booking_date).format('MMMM D, YYYY')}
@@ -340,7 +376,7 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
                           {(booking.status !== 'declined' && booking.status !== 'accepted') && (
                             <>
                               <h2 className='flex gap-2 text-gray-500'>
-                                <MapPin className='text-primary' /> {booking.location}
+                                <MapPin className='text-primary' /> {booking.formattedAddress}
                               </h2>
                               <h2 className='flex gap-2 text-gray-500'>
                                 <CalendarIcon className='text-primary' /> Service on: {moment(booking.booking_date).format('MMMM D, YYYY')}
@@ -405,7 +441,7 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
                           {(booking.status !== 'declined' && booking.status !== 'accepted') && (
                             <>
                               <h2 className='flex gap-2 text-gray-500'>
-                                <MapPin className='text-primary' /> {booking.location}
+                                <MapPin className='text-primary' /> {booking.formattedAddress}
                               </h2>
                               <h2 className='flex gap-2 text-gray-500'>
                                 <CalendarIcon className='text-primary' /> Service on: {moment(booking.booking_date).format('MMMM D, YYYY')}

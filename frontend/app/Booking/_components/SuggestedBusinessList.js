@@ -21,6 +21,24 @@ function SuggestedBusinessList({ serviceId }) {
       return;
     }
 
+    async function geocodeLocation(lat, lng) {
+      try {
+        const response = await fetch(
+           `https://geocode.maps.co/reverse?lat=${lat}&lon=${lng}&api_key=672958dc30760969524851ktj2e0ae5`
+        );
+        const data = await response.json();
+        if (data && data.display_name) {
+          return data.display_name;
+        } else {
+          console.error('Geocoding failed:', data.status);
+          return 'Unknown location';
+        }
+      } catch (error) {
+        console.error('Error in geocoding:', error);
+        return 'Unknown location';
+      }
+    }
+
     async function fetchSimilarBusinesses() {
       try {
         const response = await fetch(`http://localhost:5000/api/services/category/${categoryId}`);
@@ -41,6 +59,15 @@ function SuggestedBusinessList({ serviceId }) {
                 throw new Error('Failed to fetch provider details');
               }
               const providerDetails = await providerResponse.json();
+
+             // Split provider_location if it contains latitude and longitude as a string
+          if (providerDetails.provider_location) {
+            const [lat, lng] = providerDetails.provider_location.split(',').map(coord => parseFloat(coord.trim()));
+            if (!isNaN(lat) && !isNaN(lng)) {
+              providerDetails.provider_location = await geocodeLocation(lat, lng);
+            }
+          }
+
               return { ...business, providerDetails };
             })
           );
