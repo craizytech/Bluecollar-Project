@@ -10,7 +10,13 @@ export const fetchServiceProviders = createAsyncThunk(
             const servicesData = await servicesResponse.json();
 
             const providersPromises = servicesData.map(async (service) => {
-                const profileResponse = await fetch(`http://localhost:5000/api/users/profile/${service.provider_id}`, {
+                const providerId = service.provider_id;
+
+                if (!providerId) {
+                    console.log('skipping provider with null id');
+                    return null;
+                }
+                const profileResponse = await fetch(`http://localhost:5000/api/users/profile/${providerId}`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                     }
@@ -31,7 +37,7 @@ export const fetchServiceProviders = createAsyncThunk(
 
 
             const providers = await Promise.all(providersPromises);
-            return providers.filter(provider => provider.provider.user_location && provider.provider.user_name);
+            return providers.filter(provider => provider !== null && provider.provider.user_location && provider.provider.user_name);
         } catch (error) {
             return rejectWithValue(error.message);
         }

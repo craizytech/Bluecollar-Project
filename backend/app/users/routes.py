@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models import User, Permissions, Booking, Chat
+from app.models import User, Permissions, Booking, Chat, Notification
 from app.extensions import db
 from app.utils.decorators import permission_required
 from app.users import users_bp
@@ -60,6 +60,12 @@ def delete_user(user_id):
     chats = Chat.query.filter_by(sent_to=user_id).all()
     for chat in chats:
         chat.sent_to = ''  # or some default value
+    db.session.commit()
+    
+    # Delete notifications associated with the user
+    notifications = Notification.query.filter_by(user_id=user_id).all()
+    for notification in notifications:
+        db.session.delete(notification)
     db.session.commit()
 
     # Now delete the user

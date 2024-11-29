@@ -18,6 +18,26 @@ function EditProfile() {
   const [profilePicture, setProfilePicture] = useState(null);
   const [profilePictureUrl, setProfilePictureUrl] = useState('');
   const [userId, setUserId] = useState(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
+
+  const getGeocodedAddress = async (latitude, longitude) => {
+    try {
+        const response = await fetch(
+            `https://geocode.maps.co/reverse?lat=${latitude}&lon=${longitude}&api_key=672958dc30760969524851ktj2e0ae5`
+        );
+        const data = await response.json();
+        if (data && data.address) {
+            const fullAddress = data.address;
+            return `${fullAddress.road || ''}, ${fullAddress.city || ''}, ${fullAddress.state || ''}`;
+        } else {
+            return 'No address found';
+        }
+    } catch (error) {
+        console.error('Geocoding Error:', error);
+        return 'Error fetching address';
+    }
+};
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -41,6 +61,8 @@ function EditProfile() {
         setLocation(userData.user_location);
         setProfilePictureUrl(userData.user_profile_picture);
         setUserId(userData.user_id);
+
+        
       } catch (error) {
         console.error('Error fetching profile data:', error);
       }
@@ -60,6 +82,7 @@ function EditProfile() {
         break;
       case 'address':
         setAddress(value);
+        fetchAddressSuggestions(value);
         break;
       case 'location':
         setLocation(value);
@@ -67,6 +90,37 @@ function EditProfile() {
       default:
         break;
     }
+  };
+
+  const fetchAddressSuggestions = async (query) => {
+    if (!query) return;
+    try {
+      const response = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=KE`);
+      const results = response.data;
+      if (results && results.length > 0) {
+        setAddressSuggestions(results.map((result) => ({
+          formatted: result.display_name,
+          lat: result.lat,
+          lon: result.lon,
+        })));
+        setShowDropdown(true);
+      } else {
+        setShowDropdown(false);
+        setAddressSuggestions([]);
+      }
+    } catch (error) {
+      console.error('Error fetching address suggestions:', error);
+      setShowDropdown(false);
+      setAddressSuggestions([]);
+    }
+  };
+
+  // Function to handle selection of address from dropdown
+  const handleAddressSelect = async (selectedAddress) => {
+    setAddress(selectedAddress.formatted);
+    setLocation(`${selectedAddress.lat}, ${selectedAddress.lon}`);
+    setAddressSuggestions([]);
+    setShowDropdown(false);
   };
 
   const handleFileChange = (e) => {
@@ -176,7 +230,6 @@ function EditProfile() {
             name="email"
             className="w-full px-3 py-2 border rounded-md"
             value={email}
-            readOnly
           />
         </div>
         <div className="mb-4">
@@ -200,6 +253,19 @@ function EditProfile() {
             value={address}
             onChange={handleInputChange}
           />
+          {showDropdown && addressSuggestions.length > 0 && (
+            <ul className="mt-2 border rounded-md max-h-40 overflow-y-auto">
+              {addressSuggestions.map((addressItem, index) => (
+                <li
+                  key={index}
+                  className="p-2 hover:bg-gray-200 cursor-pointer"
+                  onClick={() => handleAddressSelect(addressItem)}
+                >
+                  {addressItem.formatted}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className="mb-4">
           <label className="block text-gray-700 mb-2" htmlFor="location">Location</label>
@@ -208,8 +274,9 @@ function EditProfile() {
             id="location"
             name="location"
             className="w-full px-3 py-2 border rounded-md"
-            value={location}
-            onChange={handleInputChange}
+            value={address}
+            // onChange={handleInputChange}
+            readOnly
           />
         </div>
         <div className="mb-6">

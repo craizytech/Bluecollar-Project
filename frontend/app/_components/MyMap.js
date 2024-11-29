@@ -65,9 +65,6 @@ function MyMap({ serviceProviders, setListData }) {
         return { ...provider, distance };
       });
 
-      console.log("All Providers with Distances: ", updatedProviders);
-
-
        // Filter only providers within the specified radius
        const nearbyProviders = updatedProviders.filter(
         (provider) => provider.distance <= NEARBY_RADIUS

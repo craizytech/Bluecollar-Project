@@ -183,7 +183,7 @@ export function UsersPage() {
       });
 
       if (response.ok) {
-        setData((prevData) => prevData.filter((user) => user.user_id != userId));
+        setData((prevData) => prevData.filter((user) => user.user_id !== userId));
         setAlert({
           variant: "success",
           title: "Success",

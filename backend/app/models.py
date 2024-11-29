@@ -28,7 +28,7 @@ class Notification(db.Model):
     __tablename__ = 'notifications'
     
     notification_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE',  name='fk_notifications_user_id'), nullable=False)
     message = db.Column(db.String(256), nullable=False)
     type = db.Column(db.String(50), nullable=False)
     read = db.Column(db.Boolean, default=False)

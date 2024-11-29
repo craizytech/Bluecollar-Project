@@ -39,8 +39,6 @@ function Hero({ listData, setListData }) {
         }
     }, [location, dispatch]);
 
-    console.log("address", address)
-
     useEffect(() => {
         // Initialize inputAddress with the address from Redux when component mounts
         setInputAddress(address);
