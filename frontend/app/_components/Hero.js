@@ -146,14 +146,14 @@ function Hero({ listData, setListData }) {
                     <Input
                         placeholder='Search'
                         className="rounded-lg w-full max-w-md h-20"
-                        value={searchTerm}
+                        value={searchTerm || ''}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                     <div className="relative w-full max-w-md">
                         <Input
                             placeholder='Enter location'
                             className="rounded-lg w-full h-20"
-                            value={inputAddress }
+                            value={inputAddress || ''}
                             onChange={handleLocationChange}
                         />
                         {showDropdown && (

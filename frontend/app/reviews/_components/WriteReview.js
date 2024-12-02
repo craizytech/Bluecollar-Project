@@ -48,10 +48,10 @@ function WriteReview({ service_id, provider_id }) {
           }
         } else {
           const error = await response.json();
-          console.error('Error fetching existing review:', error);
+          // console.error('Error fetching existing review:', error);
         }
       } catch (error) {
-        console.error('Error fetching existing review:', error);
+        // console.error('Error fetching existing review:', error);
         setMessage('Error fetching existing review');
       }
     };
@@ -67,48 +67,46 @@ function WriteReview({ service_id, provider_id }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     console.log('Submitting review...');
-    if (existingReview) {
-      // Update existing review
-      const response = await fetch(`http://localhost:5000/api/reviews/${existingReview.review_id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        },
-        body: JSON.stringify({ rating, comment })
-      });
-
+    try {
+      let response;
+      if (existingReview) {
+        // Update existing review
+        response = await fetch(`http://localhost:5000/api/reviews/${existingReview.review_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          },
+          body: JSON.stringify({ rating, comment })
+        });
+      } else {
+        // Submit new review
+        response = await fetch('http://localhost:5000/api/reviews/write', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          },
+          body: JSON.stringify({ service_id, provider_id, rating, comment })
+        });
+      }
+  
       if (response.ok) {
-        setMessage('Review updated successfully!');
+        setMessage(existingReview ? 'Review updated successfully!' : 'Review submitted successfully!');
+        window.location.reload(); // Reloads the page to show the updated review
       } else {
         const data = await response.json();
-        console.error('Error updating review:', data);
+        console.error('Error submitting/updating review:', data);
         setMessage(`Error: ${data.message}`);
       }
-    } else {
-      // Submit new review
-      const response = await fetch('http://localhost:5000/api/reviews/write', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        },
-        body: JSON.stringify({ service_id, provider_id, rating, comment })
-      });
-
-      if (response.ok) {
-        setMessage('Review submitted successfully!');
-        setRating(0);
-        setComment('');
-      } else {
-        const data = await response.json();
-        console.error('Error submitting review:', data);
-        setMessage(`Error: ${data.message}`);
-      }
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      setMessage('Error submitting review');
     }
   };
+  
 
   const handleDelete = async () => {
     if (existingReview) {

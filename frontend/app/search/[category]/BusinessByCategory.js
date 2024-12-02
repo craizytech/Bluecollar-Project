@@ -30,7 +30,7 @@ function BusinessByCategory() {
                 return 'No address found';
             }
         } catch (error) {
-            console.error('Geocoding Error:', error);
+            // console.error('Geocoding Error:', error);
             return 'Error fetching address';
         }
     };
@@ -40,6 +40,10 @@ function BusinessByCategory() {
             setCategoryId(categoryId);
         }
     }, [categoryId, setCategoryId]);
+
+    async function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
 
     useEffect(() => {
         const storedToken = localStorage.getItem('access_token');
@@ -91,6 +95,7 @@ function BusinessByCategory() {
                             const [latitude, longitude] = providerLocation.split(',').map(coord => parseFloat(coord.trim()));
                             if (latitude && longitude) {
                                 geocodedAddress = await getGeocodedAddress(latitude, longitude);
+                                await sleep(1000);
                             }
                         }
 

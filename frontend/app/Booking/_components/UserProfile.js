@@ -100,7 +100,7 @@ function UserProfile({ setServiceId }) {
                         setServiceId(serviceId); 
 
                         if (serviceData.category_id) {
-                            dispatch(serviceData.category_id);
+                            dispatch(setCategoryId(serviceData.category_id));
                         }                  
                     } else {
                         console.error('Failed to fetch provider profile:', providerResponse.statusText);

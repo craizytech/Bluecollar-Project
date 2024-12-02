@@ -235,7 +235,7 @@ export function TransactionsPage() {
                               ).toLocaleDateString()}
                             </TableCell>
                             <TableCell className="text-right">
-                              ${transaction.amount_paid.toFixed(2)}
+                              Ksh{transaction.amount_paid.toFixed(2)}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -298,7 +298,7 @@ export function TransactionsPage() {
                       Amount Paid
                     </div>
                     <div className="text-xl font-bold text-foreground">
-                      ${selectedTransaction.amount_paid.toFixed(2)}
+                      Ksh{selectedTransaction.amount_paid.toFixed(2)}
                     </div>
                   </div>
                 </CardContent>

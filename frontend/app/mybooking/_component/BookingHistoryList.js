@@ -23,7 +23,22 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
   // Function to geocode coordinates to an address
   const geocodeCoordinatesToAddress = async (latitude, longitude) => {
     try {
-      const response = await axios.get(`https://geocode.maps.co/reverse?lat=${latitude}&lon=${longitude}&api_key=672958dc30760969524851ktj2e0ae5`);
+      console.log('coordinates:', latitude, longitude);
+      // Parse latitude and longitude to floats
+    const parsedLat = parseFloat(latitude);
+    const parsedLon = parseFloat(longitude);
+
+    // Validate parsed coordinates
+    if (isNaN(parsedLat) || isNaN(parsedLon)) {
+      throw new Error('Invalid latitude or longitude values.');
+    }
+
+    // Check valid latitude/longitude ranges
+    if (parsedLat < -90 || parsedLat > 90 || parsedLon < -180 || parsedLon > 180) {
+      throw new Error('Latitude or longitude out of range.');
+    }
+
+      const response = await axios.get(`https://geocode.maps.co/reverse?lat=${parsedLat}&lon=${parsedLon}&api_key=672958dc30760969524851ktj2e0ae5`);
       if (response.data && response.data.address) {
         const { road, city, state, country } = response.data.address;
         const formatted = `${road || ''}, ${city || ''}, ${state || ''}, ${country || ''}`;
@@ -32,7 +47,7 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
         return 'Address not found';
       }
     } catch (error) {
-      console.error('Geocoding Error:', error);
+      // console.error('Geocoding Error:', error);
       return 'Error fetching address';
     }
   };
@@ -41,6 +56,7 @@ function BookingHistoryList({ bookingHistory, role, userId, statuses = [] }) {
     const updateBookingAddresses = async () => {
       for (const booking of bookingHistory) {
         if (booking.location) {
+          console.log("booking location", booking.location);
           const [latitude, longitude] = booking.location.split(',');
           if (latitude && longitude) {
             const address = await geocodeCoordinatesToAddress(latitude, longitude);

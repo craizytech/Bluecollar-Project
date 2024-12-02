@@ -82,8 +82,6 @@ useEffect(() => {
 
     if (bookingId) {
       console.log('Using Booking ID:', bookingId);
-    } else {
-      console.error('Booking ID is missing');
     }
 
     const fetchChatHistory = async () => {
@@ -106,7 +104,9 @@ useEffect(() => {
 
         const profileData = await profileResponse.json();
         setReceiverName(profileData.user_name); 
-        setReceiverProfilePicture(profileData.user_profile_picture);
+        const profilePic = profileData.user_profile_picture;
+        console.log('Receiver Profile Picture:', profilePic);
+        setReceiverProfilePicture(profilePic);
 
         // Fetch chat history
         const chatResponse = await fetch(`http://localhost:5000/api/chats/history/${receiverId}`, {
@@ -236,6 +236,8 @@ useEffect(() => {
         const data = await response.json();
         console.log('Message sent successfully:', data);
 
+        window.location.reload();
+
         console.log('Chats before updating with server response:', chats);
 
         setChats((prevChats) => {
@@ -284,6 +286,7 @@ useEffect(() => {
       });
       await handleSendMessage(invoiceMessage, 'invoice');
       console.log('Invoice sent successfully');
+      window.location.reload();
       setInvoice(null);
     } catch (error) {
       console.error('Failed to send invoice:', error);
@@ -518,7 +521,7 @@ useEffect(() => {
       {success && <p className="text-green-500 font-bold">{success}</p>}
       <div className="flex items-center p-4 bg-teal-600 text-white border-b border-gray-300">
         <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
-          <img src={receiverProfilePicture} alt={`${receiverName}'s profile`} />
+          <img src={receiverProfilePicture || 'defaultProfilePictureUrl'} alt={`${receiverName}'s profile`} />
         </div>
         <div className="header-info">
           <h2 className="m-0 text-lg">{receiverName}</h2>

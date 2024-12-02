@@ -36,18 +36,24 @@ const SignupForm = ({ setToken }) => {
 
             const fetchAddress = async () => {
                 try {
-                    const response = await fetch(`https://geocode.maps.co/reverse?lat=${latitude}&lon=${longitude}&api_key=672958dc30760969524851ktj2e0ae5`);
+                    const response = await fetch(`https://geocode.maps.co/reverse?lat=${location.latitude}&lon=${location.longitude}&api_key=672958dc30760969524851ktj2e0ae5`);
                     const data = await response.json();
-                    if (data.status === 'OK') {
-                        const formattedAddress = data.results[0].formatted_address;
+                    
+                    if (data.address) {
+                        const formattedAddress = data.address.amenity
+                            ? `${data.address.amenity}, ${data.address.road}, ${data.address.county}`
+                            : `${data.display_name}`;
+                        
                         setAddressLocal(formattedAddress);
+                        dispatch(setAddress(formattedAddress)); // Update Redux store if needed
                     } else {
-                        console.error('Geocoding error:', data.status);
+                        console.error('Geocoding error: Address not found');
                     }
                 } catch (error) {
                     console.error('Error fetching address:', error);
                 }
             };
+            
 
             fetchAddress();
         }
@@ -122,7 +128,7 @@ const SignupForm = ({ setToken }) => {
                                     name="username"
                                     type="text"
                                     placeholder="username"
-                                    value={user_name}
+                                    value={user_name || ''}
                                     onChange={(e) => setName(e.target.value)}
                                     required
                                 />
@@ -134,7 +140,7 @@ const SignupForm = ({ setToken }) => {
                                     name="email"
                                     type="email"
                                     placeholder="name@example.com"
-                                    value={user_email}
+                                    value={user_email || ''}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
                                 />
@@ -146,7 +152,7 @@ const SignupForm = ({ setToken }) => {
                                     id="phone"
                                     name="phone"
                                     type="number"
-                                    value={user_phone_number}
+                                    value={user_phone_number || ''}
                                     onChange={(e) => setPhoneNumber(e.target.value)}
                                     required
                                 />
@@ -158,7 +164,7 @@ const SignupForm = ({ setToken }) => {
                                     id="address"
                                     name="address"
                                     type="text"
-                                    value={user_address}
+                                    value={user_address || ''}
                                     onChange={(e) => setAddressLocal(e.target.value)} // Use the renamed state
                                     required
                                 />
@@ -170,7 +176,7 @@ const SignupForm = ({ setToken }) => {
                                     id="location"
                                     name="location"
                                     type="text"
-                                    value={user_address}
+                                    value={user_address || ''}
                                     disabled
                                 />
                                 {geoErrorLocation && <p style={{ color: 'red' }}>{geoErrorLocation}</p>}
@@ -195,7 +201,7 @@ const SignupForm = ({ setToken }) => {
                                     name="password"
                                     type="password"
                                     placeholder="password"
-                                    value={user_password}
+                                    value={user_password || ''}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
                                 />
@@ -207,7 +213,7 @@ const SignupForm = ({ setToken }) => {
                                     name="confirm_password"
                                     type="password"
                                     placeholder="confirm password"
-                                    value={confirm_password}
+                                    value={confirm_password || ''}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     required
                                 />

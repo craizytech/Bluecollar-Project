@@ -34,9 +34,13 @@ function SuggestedBusinessList({ serviceId }) {
           return 'Unknown location';
         }
       } catch (error) {
-        console.error('Error in geocoding:', error);
+        // console.error('Error in geocoding:', error);
         return 'Unknown location';
       }
+    }
+
+    async function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
     async function fetchSimilarBusinesses() {
@@ -65,6 +69,7 @@ function SuggestedBusinessList({ serviceId }) {
             const [lat, lng] = providerDetails.provider_location.split(',').map(coord => parseFloat(coord.trim()));
             if (!isNaN(lat) && !isNaN(lng)) {
               providerDetails.provider_location = await geocodeLocation(lat, lng);
+              await sleep(1000);
             }
           }
 

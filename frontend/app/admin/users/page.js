@@ -49,7 +49,6 @@ export function UsersPage() {
   const [deleteUserId, setDeleteUserId] = useState(null);
   const [alert, setAlert] = useState(null); // State for managing alerts
   const token = localStorage.getItem('access_token');
-  console.log(token);
 
   useEffect(() => {
     fetch("http://localhost:5000/api/users/all")

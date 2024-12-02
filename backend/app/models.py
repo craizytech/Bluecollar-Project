@@ -60,17 +60,17 @@ class User(db.Model):
     user_profile_picture = db.Column(db.String(256), nullable=False)
     
     # One-to-Many relationships
-    sent_chats = db.relationship('Chat', foreign_keys='Chat.sent_from', backref='sender', lazy=True)
-    received_chats = db.relationship('Chat', foreign_keys='Chat.sent_to', backref='receiver', lazy=True)
-    client_bookings = db.relationship('Booking', foreign_keys='Booking.client_id', backref='client', lazy=True)
-    provider_bookings = db.relationship('Booking', foreign_keys='Booking.provider_id', backref='provider', lazy=True)
-    reviews_written = db.relationship('Review', foreign_keys='Review.client_id', backref='client', lazy=True)
-    reviews_received = db.relationship('Review', foreign_keys='Review.provider_id', backref='provider', lazy=True)
+    sent_chats = db.relationship('Chat', foreign_keys='Chat.sent_from', backref='sender', lazy=True, cascade='all, delete-orphan')
+    received_chats = db.relationship('Chat', foreign_keys='Chat.sent_to', backref='receiver', lazy=True, cascade='all, delete-orphan')
+    client_bookings = db.relationship('Booking', foreign_keys='Booking.client_id', backref='client', lazy=True, cascade='all, delete-orphan')
+    provider_bookings = db.relationship('Booking', foreign_keys='Booking.provider_id', backref='provider', lazy=True, cascade='all, delete-orphan')
+    reviews_written = db.relationship('Review', foreign_keys='Review.client_id', backref='client', lazy=True, cascade='all, delete-orphan')
+    reviews_received = db.relationship('Review', foreign_keys='Review.provider_id', backref='provider', lazy=True, cascade='all, delete-orphan')
     notifications = db.relationship('Notification', backref='user_notifications', lazy=True)
     
     # One-to-Many relationship with Services (as a provider)
     services_provided = db.relationship('Service', backref='provider', lazy=True)
-    invoices = db.relationship('Invoice', foreign_keys='Invoice.user_id', backref='user', lazy=True)
+    invoices = db.relationship('Invoice', foreign_keys='Invoice.user_id', backref='user', lazy=True, cascade='all, delete-orphan')
 
     @validates('user_email')
     def validate_email(self, key, address):

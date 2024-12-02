@@ -86,7 +86,7 @@ function RecentTransactions() {
                                     ).toLocaleDateString()}
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    ${transaction.amount_paid.toFixed(2)}
+                                    Ksh{transaction.amount_paid.toFixed(2)}
                                 </TableCell>
                             </TableRow>
                         ))}

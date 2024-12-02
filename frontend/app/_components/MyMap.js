@@ -73,12 +73,11 @@ function MyMap({ serviceProviders, setListData }) {
        console.log("Nearby Providers: ", nearbyProviders);
 
        // Update the state only if nearbyProviders have changed
-      if (
-        JSON.stringify(nearbyProviders) !== JSON.stringify(prevNearbyProvidersRef.current)
-      ) {
-        prevNearbyProvidersRef.current = nearbyProviders;
-        setListData(nearbyProviders);
-      }
+       const isChanged = JSON.stringify(nearbyProviders) !== JSON.stringify(prevNearbyProvidersRef.current);
+       if (isChanged) {
+         prevNearbyProvidersRef.current = nearbyProviders;
+         setListData([...nearbyProviders]);
+       }
     } else {
         setListData([]);
     }

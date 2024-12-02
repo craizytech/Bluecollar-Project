@@ -218,11 +218,7 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
 
         const selectedDate = moment(date).startOf('day');
         const selectedTime = moment(time, 'hh:mm A');
-        
-
-        // const isoDate = moment(date).startOf('day').toISOString();
-
-
+   
         const start_time = selectedDate
         .set({
             hour: selectedTime.hour(),
@@ -249,13 +245,31 @@ function BookingSection({ children, serviceId, onBookingSuccess }) {
                 toast(' Provider is not available');
                 return;
             }
+
+            let locationToSend = '';
+
+            if (latitude && longitude) {
+                locationToSend = `${latitude}, ${longitude}`; // Use geocoded location (lat, lon)
+            } else if (location && location.latitude && location.longitude) {
+                locationToSend = `${location.latitude}, ${location.longitude}`; // Use selected address location (lat, lon)
+            } else if (inputAddress) {
+                locationToSend = inputAddress; // Fallback to input address if no location selected
+            } else {
+                setError(prev => ({
+                    ...prev,
+                    location: true
+                }));
+                toast('Please select a location.');
+                return;
+            }
+
             const bookingData = {
                 service_id: Number(serviceId),
                 provider_id: providerId,
                 booking_date,
                 start_time,
                 end_time,
-                location: location ? `${location.latitude}, ${location.longitude}` : `${latitude}, ${longitude}`,
+                location: locationToSend,
                 description: serviceDescription,
             };
 

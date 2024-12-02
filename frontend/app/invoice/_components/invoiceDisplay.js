@@ -12,16 +12,20 @@ function InvoiceDisplay({
   setServiceCost,
   error,
   success,
-  isEditable = true,  // For sender (editable) and receiver (read-only)
+  isEditable = true, // For sender (editable) and receiver (read-only)
   preview = false,
   closeDisplay,
 }) {
-
   const [isVisible, setIsVisible] = useState(true);
 
   const handleClose = () => {
     setIsVisible(false);
     if (closeDisplay) closeDisplay(); // Optional: Use closeDisplay callback if provided
+  };
+
+  const handleSendAndClose = () => {
+    if (handleSendInvoice) handleSendInvoice(); // Call the provided send invoice function
+    handleClose(); // Close the modal after sending
   };
 
   if (!isVisible) return null;
@@ -30,14 +34,13 @@ function InvoiceDisplay({
   const extractedServiceCost = serviceCost || invoice.service_cost || '';
 
   const formattedDate = existingInvoice?.date
-  ? format(new Date(existingInvoice.date), 'dd/MM/yyyy')
-  : format(new Date(), 'dd/MM/yyyy');
-
+    ? format(new Date(existingInvoice.date), 'dd/MM/yyyy')
+    : format(new Date(), 'dd/MM/yyyy');
 
   return (
     <div className="max-w-2xl mx-auto bg-gray-100 p-8 rounded-lg shadow-lg">
-     {/* Close button at the top right */}
-     <button
+      {/* Close button at the top right */}
+      <button
         onClick={handleClose}
         className="absolute top-4 right-4 text-xl text-gray-700 hover:text-gray-900"
       >
@@ -119,7 +122,7 @@ function InvoiceDisplay({
       </form>
       {!preview && existingInvoice && isEditable && (
         <button
-          onClick={handleSendInvoice}
+          onClick={handleSendAndClose}
           className="mt-6 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
         >
           Select Invoice
